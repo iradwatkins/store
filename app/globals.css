@@ -1,0 +1,267 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Twitter-Inspired Theme */
+:root {
+  --background: #ffffff;
+  --foreground: #0f1419;
+  --card: #f7f8f8;
+  --card-foreground: #0f1419;
+  --popover: #ffffff;
+  --popover-foreground: #0f1419;
+  --primary: #1e9df1;
+  --primary-foreground: #ffffff;
+  --secondary: #0f1419;
+  --secondary-foreground: #ffffff;
+  --muted: #e5e5e6;
+  --muted-foreground: #536471;
+  --accent: #e3ecf6;
+  --accent-foreground: #1e9df1;
+  --destructive: #f4212e;
+  --destructive-foreground: #ffffff;
+  --border: #e1eaef;
+  --input: #f7f9fa;
+  --ring: #1da1f2;
+  --chart-1: #1e9df1;
+  --chart-2: #00b87a;
+  --chart-3: #f7b928;
+  --chart-4: #17bf63;
+  --chart-5: #e0245e;
+  --sidebar: #f7f8f8;
+  --sidebar-foreground: #0f1419;
+  --sidebar-primary: #1e9df1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e3ecf6;
+  --sidebar-accent-foreground: #1e9df1;
+  --sidebar-border: #e1e8ed;
+  --sidebar-ring: #1da1f2;
+  --font-sans: "Open Sans", sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 1.3rem;
+  --shadow-x: 0px;
+  --shadow-y: 2px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0;
+  --shadow-color: rgba(29, 161, 242, 0.15);
+  --shadow-2xs: 0px 2px 0px 0px rgba(30, 157, 241, 0);
+  --shadow-xs: 0px 2px 0px 0px rgba(30, 157, 241, 0);
+  --shadow-sm: 0px 2px 0px 0px rgba(30, 157, 241, 0), 0px 1px 2px -1px rgba(30, 157, 241, 0.05);
+  --shadow: 0px 2px 0px 0px rgba(30, 157, 241, 0), 0px 1px 2px -1px rgba(30, 157, 241, 0.05);
+  --shadow-md: 0px 2px 0px 0px rgba(30, 157, 241, 0), 0px 2px 4px -1px rgba(30, 157, 241, 0.08);
+  --shadow-lg: 0px 2px 0px 0px rgba(30, 157, 241, 0), 0px 4px 6px -1px rgba(30, 157, 241, 0.1);
+  --shadow-xl: 0px 2px 0px 0px rgba(30, 157, 241, 0), 0px 8px 10px -1px rgba(30, 157, 241, 0.12);
+  --shadow-2xl: 0px 2px 0px 0px rgba(30, 157, 241, 0), 0px 16px 20px -2px rgba(30, 157, 241, 0.15);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #e7e9ea;
+  --card: #17181c;
+  --card-foreground: #d9d9d9;
+  --popover: #000000;
+  --popover-foreground: #e7e9ea;
+  --primary: #1c9cf0;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f3f4;
+  --secondary-foreground: #0f1419;
+  --muted: #181818;
+  --muted-foreground: #72767a;
+  --accent: #061622;
+  --accent-foreground: #1c9cf0;
+  --destructive: #f4212e;
+  --destructive-foreground: #ffffff;
+  --border: #242628;
+  --input: #22303c;
+  --ring: #1da1f2;
+  --chart-1: #1e9df1;
+  --chart-2: #00b87a;
+  --chart-3: #f7b928;
+  --chart-4: #17bf63;
+  --chart-5: #e0245e;
+  --sidebar: #17181c;
+  --sidebar-foreground: #d9d9d9;
+  --sidebar-primary: #1da1f2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #061622;
+  --sidebar-accent-foreground: #1c9cf0;
+  --sidebar-border: #38444d;
+  --sidebar-ring: #1da1f2;
+  --font-sans: "Open Sans", sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 1.3rem;
+  --shadow-x: 0px;
+  --shadow-y: 2px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0;
+  --shadow-color: rgba(29, 161, 242, 0.25);
+  --shadow-2xs: 0px 2px 0px 0px rgba(28, 156, 240, 0);
+  --shadow-xs: 0px 2px 0px 0px rgba(28, 156, 240, 0);
+  --shadow-sm: 0px 2px 0px 0px rgba(28, 156, 240, 0), 0px 1px 2px -1px rgba(28, 156, 240, 0.08);
+  --shadow: 0px 2px 0px 0px rgba(28, 156, 240, 0), 0px 1px 2px -1px rgba(28, 156, 240, 0.08);
+  --shadow-md: 0px 2px 0px 0px rgba(28, 156, 240, 0), 0px 2px 4px -1px rgba(28, 156, 240, 0.12);
+  --shadow-lg: 0px 2px 0px 0px rgba(28, 156, 240, 0), 0px 4px 6px -1px rgba(28, 156, 240, 0.15);
+  --shadow-xl: 0px 2px 0px 0px rgba(28, 156, 240, 0), 0px 8px 10px -1px rgba(28, 156, 240, 0.18);
+  --shadow-2xl: 0px 2px 0px 0px rgba(28, 156, 240, 0), 0px 16px 20px -2px rgba(28, 156, 240, 0.2);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+/* CSS Reset and Normalization */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevent font size adjustment after orientation change */
+  -webkit-text-size-adjust: 100%;
+  /* Smooth scroll behavior */
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  /* Prevent layout shift by reserving scrollbar space */
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent text size adjustment on mobile */
+  text-size-adjust: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Prevent layout shift for loading states */
+.min-h-nav {
+  min-height: 64px; /* Matches nav height */
+}
+
+/* Skeleton loader for preventing content shift */
+.skeleton {
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--accent) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+/* Loading spinner with fixed dimensions to prevent shift */
+.spinner-container {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Beautiful gradient backgrounds - Twitter Blue theme */
+.gradient-primary {
+  background: linear-gradient(135deg,
+    var(--primary) 0%,
+    #1da1f2 50%,
+    #1c9cf0 100%);
+}
+
+.gradient-primary-hover {
+  background: linear-gradient(135deg,
+    #1c9cf0 0%,
+    #1a99e8 50%,
+    #1892e0 100%);
+}
+
+/* Twitter-specific gradients */
+.gradient-twitter {
+  background: linear-gradient(to right, var(--primary), var(--ring));
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, var(--chart-2), var(--chart-4));
+}
+
+/* Layout stability */
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Form element normalization */
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+/* Prevent transition on theme change for better UX */
+.no-transition * {
+  transition: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000000;
+    --foreground: #e7e9ea;
+  }
+}

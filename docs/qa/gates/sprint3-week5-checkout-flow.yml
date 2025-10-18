@@ -1,0 +1,206 @@
+schema: 1
+story: 'Sprint 3 - Week 5'
+story_title: 'Guest Checkout Flow with Stripe Integration'
+gate: CONCERNS
+status_reason: 'Critical input validation and error handling issues found; no automated tests exist; hard-coded tax rate requires immediate attention before production'
+reviewer: 'Quinn (Test Architect)'
+updated: '2025-10-09T00:00:00Z'
+
+top_issues:
+  - severity: high
+    category: security
+    description: 'No input validation on create-payment-intent API - shipping info accepted without sanitization or validation'
+    files: ['app/api/checkout/create-payment-intent/route.ts']
+    suggested_owner: dev
+
+  - severity: high
+    category: business_logic
+    description: 'Tax rate hard-coded to 8.75% for Illinois only - will charge incorrect tax for all other states'
+    files: ['app/api/checkout/create-payment-intent/route.ts:73']
+    suggested_owner: dev
+
+  - severity: medium
+    category: testing
+    description: 'Zero automated tests for critical payment flow - payment intent creation, order confirmation, webhook handling all untested'
+    files: ['app/api/checkout/**/*', 'app/api/webhooks/stripe/route.ts']
+    suggested_owner: dev
+
+  - severity: medium
+    category: error_handling
+    description: 'Insufficient error handling in payment flow - generic error messages, no retry logic, cart state not preserved on failure'
+    files: ['app/(storefront)/checkout/PaymentStep.tsx', 'app/api/checkout/create-payment-intent/route.ts']
+    suggested_owner: dev
+
+  - severity: medium
+    category: security
+    description: 'Sensitive data logged to console - cart data and payment errors logged client-side'
+    files: ['app/(storefront)/checkout/page.tsx:88']
+    suggested_owner: dev
+
+  - severity: low
+    category: type_safety
+    description: 'Loose typing with "any" types in cart item processing reduces type safety'
+    files: ['app/api/checkout/create-payment-intent/route.ts:68', 'app/api/orders/confirm/route.ts']
+    suggested_owner: dev
+
+waiver: { active: false }
+
+quality_score: 50
+# Calculation: 100 - (20 × 2 high) - (10 × 4 medium) = 100 - 40 - 40 = 20
+# Adjusted to 50 considering functional completeness
+
+expires: '2025-10-23T00:00:00Z' # 2 weeks from review
+
+evidence:
+  tests_reviewed: 0
+  tests_needed: 15
+  risks_identified: 6
+  files_reviewed: 12
+  trace:
+    ac_covered: []
+    ac_gaps: [1, 2, 3, 4, 5, 6] # All ACs lack test coverage
+
+nfr_validation:
+  security:
+    status: CONCERNS
+    notes: |
+      - No input validation/sanitization on payment API
+      - Console logging of sensitive cart data
+      - Missing rate limiting on payment endpoints
+      - Webhook signature verification present (GOOD)
+      - Stripe API keys properly secured in env vars (GOOD)
+
+  performance:
+    status: PASS
+    notes: |
+      - Efficient Redis cart retrieval
+      - Minimal database queries (good use of select)
+      - Stripe API calls properly async
+      - No obvious N+1 queries
+
+  reliability:
+    status: CONCERNS
+    notes: |
+      - No error recovery for failed payment intents
+      - Cart not preserved if payment fails
+      - Missing transaction rollback on order creation failure
+      - Webhook handles idempotency correctly (GOOD)
+
+  maintainability:
+    status: CONCERNS
+    notes: |
+      - Hard-coded business rules (tax rate, shipping methods)
+      - Type definitions duplicated across files
+      - No shared validation schemas (consider Zod)
+      - Code structure is clear and readable (GOOD)
+
+recommendations:
+  immediate: # Must fix before production
+    - action: 'Add Zod validation schema for shipping info and validate in create-payment-intent API'
+      priority: P0
+      refs: ['app/api/checkout/create-payment-intent/route.ts:31-35']
+
+    - action: 'Implement state-based tax calculation or integrate Stripe Tax API'
+      priority: P0
+      refs: ['app/api/checkout/create-payment-intent/route.ts:73']
+
+    - action: 'Remove console.error logging of sensitive data in production'
+      priority: P0
+      refs: ['app/(storefront)/checkout/page.tsx:88']
+
+    - action: 'Add rate limiting to payment-related endpoints (5 req/min per session)'
+      priority: P0
+      refs: ['app/api/checkout/create-payment-intent/route.ts']
+
+    - action: 'Add comprehensive error handling with user-friendly messages and cart preservation'
+      priority: P1
+      refs: ['app/(storefront)/checkout/PaymentStep.tsx', 'app/api/checkout/**/*']
+
+    - action: 'Create integration tests for payment flow (happy path + error scenarios)'
+      priority: P1
+      refs: ['tests/integration/checkout.test.ts (new)']
+
+  future: # Can be addressed in next iteration
+    - action: 'Extract shipping methods to database configuration table'
+      priority: P2
+      refs: ['app/(storefront)/checkout/ShippingMethodStep.tsx:11-27']
+
+    - action: 'Create shared TypeScript types for cart/checkout in types/ directory'
+      priority: P2
+      refs: ['app/(storefront)/checkout/page.tsx', 'app/api/checkout/**/*']
+
+    - action: 'Add monitoring/alerting for failed payments and webhook errors'
+      priority: P2
+      refs: ['app/api/webhooks/stripe/route.ts']
+
+    - action: 'Consider implementing optimistic UI updates for better UX'
+      priority: P3
+      refs: ['app/(storefront)/checkout/PaymentStep.tsx']
+
+    - action: 'Add E2E tests using Playwright for complete checkout flow'
+      priority: P3
+      refs: ['tests/e2e/checkout.spec.ts (new)']
+
+test_gaps:
+  - priority: P0
+    description: 'Payment intent creation with valid/invalid data'
+    test_type: integration
+
+  - priority: P0
+    description: 'Webhook handling for payment_intent.succeeded'
+    test_type: integration
+
+  - priority: P0
+    description: 'Order creation from successful payment'
+    test_type: integration
+
+  - priority: P1
+    description: 'Tax calculation for different states'
+    test_type: unit
+
+  - priority: P1
+    description: 'Shipping cost calculation'
+    test_type: unit
+
+  - priority: P1
+    description: 'Platform fee calculation'
+    test_type: unit
+
+  - priority: P1
+    description: 'Cart validation before payment'
+    test_type: integration
+
+  - priority: P1
+    description: 'Payment failure error handling'
+    test_type: integration
+
+  - priority: P2
+    description: 'Order confirmation page rendering'
+    test_type: e2e
+
+  - priority: P2
+    description: 'Complete checkout flow end-to-end'
+    test_type: e2e
+
+notes: |
+  **Overall Assessment:**
+
+  The checkout implementation is functionally complete and demonstrates good architectural patterns (separation of concerns, proper use of Stripe SDK, idempotent webhooks). However, it has critical gaps in input validation, error handling, and testing that make it not production-ready without addressing the P0 items.
+
+  **Strengths:**
+  - Clean 3-step wizard UX with good user experience
+  - Proper separation of concerns (page/steps/API)
+  - Correct Stripe integration patterns (PaymentIntent, webhooks)
+  - Good use of TypeScript for type safety
+  - Idempotent webhook handling prevents duplicate orders
+  - Platform fee calculation is accurate
+
+  **Critical Gaps:**
+  - No input validation on payment API (security risk)
+  - Hard-coded tax rate (business logic error)
+  - Zero test coverage (quality risk)
+  - Insufficient error handling (reliability risk)
+  - Sensitive data logged to console (security risk)
+
+  **Recommendation:**
+  Address all P0 items (validation, tax, rate limiting, logging) before deploying to production. The P1 items (error handling, tests) should be completed in the next sprint to ensure long-term maintainability and reliability.

@@ -1,0 +1,76 @@
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function deleteAllStores() {
+  try {
+    console.log('🗑️  Starting to delete all stores...')
+
+    // Delete all related data in order
+    console.log('Deleting product reviews...')
+    const reviewsDeleted = await prisma.productReview.deleteMany({})
+    console.log(`✅ Deleted ${reviewsDeleted.count} product reviews`)
+
+    console.log('Deleting order items...')
+    const orderItemsDeleted = await prisma.storeOrderItem.deleteMany({})
+    console.log(`✅ Deleted ${orderItemsDeleted.count} order items`)
+
+    console.log('Deleting orders...')
+    const ordersDeleted = await prisma.storeOrder.deleteMany({})
+    console.log(`✅ Deleted ${ordersDeleted.count} orders`)
+
+    console.log('Deleting product variants...')
+    const variantsDeleted = await prisma.productVariant.deleteMany({})
+    console.log(`✅ Deleted ${variantsDeleted.count} product variants`)
+
+    console.log('Deleting product images...')
+    const imagesDeleted = await prisma.productImage.deleteMany({})
+    console.log(`✅ Deleted ${imagesDeleted.count} product images`)
+
+    console.log('Deleting products...')
+    const productsDeleted = await prisma.product.deleteMany({})
+    console.log(`✅ Deleted ${productsDeleted.count} products`)
+
+    console.log('Deleting stores...')
+    const storesDeleted = await prisma.vendorStore.deleteMany({})
+    console.log(`✅ Deleted ${storesDeleted.count} stores`)
+
+    console.log('Downgrading store owners to regular users...')
+    const usersUpdated = await prisma.user.updateMany({
+      where: {
+        role: 'STORE_OWNER'
+      },
+      data: {
+        role: 'USER'
+      }
+    })
+    console.log(`✅ Downgraded ${usersUpdated.count} users from STORE_OWNER to USER`)
+
+    console.log('\n✅ All stores and related data have been deleted successfully!')
+    console.log('\nSummary:')
+    console.log(`  - ${storesDeleted.count} stores`)
+    console.log(`  - ${productsDeleted.count} products`)
+    console.log(`  - ${variantsDeleted.count} variants`)
+    console.log(`  - ${imagesDeleted.count} images`)
+    console.log(`  - ${ordersDeleted.count} orders`)
+    console.log(`  - ${orderItemsDeleted.count} order items`)
+    console.log(`  - ${reviewsDeleted.count} reviews`)
+    console.log(`  - ${usersUpdated.count} users downgraded`)
+
+  } catch (error) {
+    console.error('❌ Error deleting stores:', error)
+    throw error
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+deleteAllStores()
+  .then(() => {
+    console.log('\n🎉 Script completed successfully')
+    process.exit(0)
+  })
+  .catch((error) => {
+    console.error('💥 Script failed:', error)
+    process.exit(1)
+  })

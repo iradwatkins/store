@@ -1,0 +1,221 @@
+import NextAuth from "next-auth"
+import type { NextAuthConfig } from "next-auth"
+import Google from "next-auth/providers/google"
+import Resend from "next-auth/providers/resend"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import prisma from "@/lib/db"
+
+export const authConfig = {
+  adapter: PrismaAdapter(prisma),
+
+  session: {
+    strategy: "database",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+
+  pages: {
+    signIn: "/login",
+    signOut: "/",
+    error: "/login",
+    newUser: "/onboarding",
+  },
+
+  // 🔥 SSO MAGIC - Cookie domain sharing (MUST match main site)
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        domain: '.stepperslife.com', // ← KEY: Enables SSO across all subdomains
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
+
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true, // Auto-link accounts with same email
+    }),
+
+    Resend({
+      apiKey: process.env.RESEND_API_KEY,
+      from: process.env.EMAIL_FROM || "SteppersLife Stores <noreply@stepperslife.com>",
+    }),
+  ],
+
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id
+        token.role = user.role
+
+        // Check if user has a vendor store
+        const vendorStore = await prisma.vendorStore.findFirst({
+          where: {
+            userId: user.id,
+          },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+          },
+        })
+
+        token.vendorStore = vendorStore
+      }
+
+      // Handle session updates - refresh vendorStore data
+      if (trigger === "update") {
+        if (token.id) {
+          // Re-fetch vendor store data on session update
+          const vendorStore = await prisma.vendorStore.findFirst({
+            where: {
+              userId: token.id as string,
+            },
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+            },
+          })
+          token.vendorStore = vendorStore
+        }
+
+        if (session) {
+          token = { ...token, ...session }
+        }
+      }
+
+      return token
+    },
+
+    async session({ session, token, user }) {
+      // With database strategy, we get 'user' from the database
+      // We need to fetch fresh data every time to ensure role and vendorStore are current
+      if (user?.id || token?.id) {
+        const userId = (user?.id || token?.id) as string
+
+        // Fetch fresh user data from database
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            role: true,
+            email: true,
+            name: true,
+          },
+        })
+
+        // Fetch vendor store if exists
+        const vendorStore = await prisma.vendorStore.findFirst({
+          where: { userId },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+          },
+        })
+
+        if (dbUser && session.user) {
+          session.user.id = dbUser.id
+          session.user.role = dbUser.role
+          session.user.vendorStore = vendorStore
+        }
+      }
+
+      return session
+    },
+
+    async redirect({ url, baseUrl }) {
+      // If there's a specific relative callback URL, use it
+      if (url.startsWith("/")) {
+        // Don't intercept specific callback URLs
+        return `${baseUrl}${url}`
+      }
+
+      // If URL is on same origin, use it
+      if (new URL(url).origin === baseUrl) return url
+
+      // Default: redirect to smart routing page
+      return `${baseUrl}/auth-redirect`
+    },
+
+    async signIn({ user, account, profile }) {
+      // Auto-assign ADMIN role for platform administrators
+      const adminEmails = ['iradwatkins@gmail.com', 'bobbygwatkins@gmail.com']
+      if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+        // Try to update existing user, but don't fail if user doesn't exist yet (new users)
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { role: 'ADMIN' }
+          })
+          user.role = 'ADMIN'
+        } catch (error) {
+          // User doesn't exist yet - will be handled in events.signIn for new users
+          console.log("⏳ User not yet in DB, will set role after creation:", user.email)
+        }
+      }
+      return true
+    },
+  },
+
+  events: {
+    async signIn({ user, account, profile, isNewUser }) {
+      // Assign ADMIN role for new admin users after they're created in DB
+      if (isNewUser && user.email) {
+        const adminEmails = ['iradwatkins@gmail.com', 'bobbygwatkins@gmail.com']
+        if (adminEmails.includes(user.email.toLowerCase())) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { role: 'ADMIN' }
+            })
+            console.log("✅ New admin user registered:", user.email)
+          } catch (error) {
+            console.error("Failed to set admin role for new user:", user.email, error)
+          }
+        }
+      }
+
+      console.log("✅ User signed in:", user.email, "| Role:", user.role)
+
+      // Log audit trail for new users
+      if (isNewUser) {
+        console.log("New user registered:", {
+          userId: user.id,
+          email: user.email,
+          provider: account?.provider,
+          role: user.role,
+        })
+      }
+    },
+
+    async signOut({ session, token }) {
+      console.log("👋 User signed out")
+
+      // Explicitly delete database session if it exists
+      if (session) {
+        try {
+          // Delete the session from database
+          await prisma.session.deleteMany({
+            where: {
+              userId: session.user?.id
+            }
+          })
+          console.log("✅ Database session cleared for user:", session.user?.email)
+        } catch (error) {
+          console.error("Error clearing database session:", error)
+        }
+      }
+    },
+  },
+
+  debug: process.env.NODE_ENV === "development",
+} satisfies NextAuthConfig
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
