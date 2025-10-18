@@ -36,16 +36,26 @@ export const authConfig = {
   },
 
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true, // Auto-link accounts with same email
-    }),
+    // Only include Google OAuth if credentials are configured
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true, // Auto-link accounts with same email
+          }),
+        ]
+      : []),
 
-    Resend({
-      apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM || "SteppersLife Stores <noreply@stepperslife.com>",
-    }),
+    // Only include Resend if API key is configured
+    ...(process.env.RESEND_API_KEY
+      ? [
+          Resend({
+            apiKey: process.env.RESEND_API_KEY,
+            from: process.env.EMAIL_FROM || "SteppersLife Stores <noreply@stepperslife.com>",
+          }),
+        ]
+      : []),
   ],
 
   callbacks: {
