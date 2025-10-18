@@ -11,7 +11,13 @@ const emailSchema = z.object({
   email: z.string().email("Invalid email address"),
 })
 
+const credentialsSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+})
+
 type EmailFormData = z.infer<typeof emailSchema>
+type CredentialsFormData = z.infer<typeof credentialsSchema>
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -25,29 +31,31 @@ function LoginForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<EmailFormData>({
-    resolver: zodResolver(emailSchema),
+  } = useForm<CredentialsFormData>({
+    resolver: zodResolver(credentialsSchema),
   })
 
-  const onSubmit = async (data: EmailFormData) => {
+  const onSubmit = async (data: CredentialsFormData) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const result = await signIn("resend", {
+      const result = await signIn("credentials", {
         email: data.email,
+        password: data.password,
         redirect: false,
         callbackUrl,
       })
 
       if (result?.error) {
-        setError("Failed to send magic link. Please try again.")
+        setError("Invalid email or password")
         setIsLoading(false)
         return
       }
 
-      setEmailSent(true)
-      setIsLoading(false)
+      if (result?.ok) {
+        window.location.href = callbackUrl
+      }
     } catch {
       setError("Something went wrong")
       setIsLoading(false)
@@ -120,7 +128,7 @@ function LoginForm() {
           </div>
         )}
 
-        {/* Magic Link Sign In - FIRST */}
+        {/* Email/Password Sign In */}
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label htmlFor="email" className="sr-only">
@@ -140,19 +148,30 @@ function LoginForm() {
           </div>
 
           <div>
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
+            <input
+              {...register("password")}
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Enter your password"
+            />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div>
             <button
               type="submit"
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Sending magic link..." : "Login/Register"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              We&apos;ll send you a secure link to sign in without a password
-            </p>
           </div>
         </form>
 
