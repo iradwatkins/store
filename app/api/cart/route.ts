@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { redisHelpers } from "@/lib/redis"
+import { logger } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
       itemCount,
     })
   } catch (error) {
-    console.error("Get cart error:", error)
+    logger.error("Get cart error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -64,7 +65,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: "Cart cleared" })
   } catch (error) {
-    console.error("Clear cart error:", error)
+    logger.error("Clear cart error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

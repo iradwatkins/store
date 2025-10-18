@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import Image from "next/image"
 import prisma from "@/lib/db"
 import { storageHelpers } from "@/lib/storage"
 import CategoryFilter from "./CategoryFilter"
@@ -80,22 +81,26 @@ export default async function StorePage({
   params,
   searchParams,
 }: {
-  params: { slug: string }
-  searchParams?: { category?: string; search?: string }
+  params: Promise<{ slug: string }>
+  searchParams?: Promise<{ category?: string; search?: string }>
 }) {
   // Check authentication first
   const session = await auth()
 
+  // Await params and searchParams since they're now async in Next.js 15
+  const resolvedParams = await params
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
+
   // Try to get store first without isOwner check to determine ownership
   const storeForOwnerCheck = await prisma.vendorStore.findUnique({
-    where: { slug: params.slug },
+    where: { slug: resolvedParams.slug },
     select: { userId: true }
   })
 
   const isOwner = session?.user?.id === storeForOwnerCheck?.userId
 
   // Now get the full store data with owner privileges if applicable
-  const store = await getStore(params.slug, isOwner)
+  const store = await getStore(resolvedParams.slug, isOwner)
 
   if (!store) {
     notFound()
@@ -104,8 +109,8 @@ export default async function StorePage({
   const products = await getProducts(
     store.id,
     isOwner,
-    searchParams?.category,
-    searchParams?.search
+    resolvedSearchParams?.category,
+    resolvedSearchParams?.search
   )
 
   const categories = [
@@ -166,12 +171,12 @@ export default async function StorePage({
               <input
                 type="text"
                 name="search"
-                defaultValue={searchParams?.search}
+                defaultValue={resolvedSearchParams?.search}
                 placeholder="Search products..."
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
-              {searchParams?.category && (
-                <input type="hidden" name="category" value={searchParams.category} />
+              {resolvedSearchParams?.category && (
+                <input type="hidden" name="category" value={resolvedSearchParams.category} />
               )}
             </form>
           </div>
@@ -181,13 +186,13 @@ export default async function StorePage({
             <CategoryFilter
               storeSlug={store.slug}
               categories={categories}
-              currentCategory={searchParams?.category}
-              currentSearch={searchParams?.search}
+              currentCategory={resolvedSearchParams?.category}
+              currentSearch={resolvedSearchParams?.search}
             />
           </div>
 
           {/* Clear Filters */}
-          {(searchParams?.category || searchParams?.search) && (
+          {(resolvedSearchParams?.category || resolvedSearchParams?.search) && (
             <a
               href={`/store/${store.slug}`}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -215,7 +220,7 @@ export default async function StorePage({
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchParams?.search || searchParams?.category
+              {resolvedSearchParams?.search || resolvedSearchParams?.category
                 ? "Try adjusting your filters"
                 : "This store hasn't added any products yet"}
             </p>
@@ -234,13 +239,14 @@ export default async function StorePage({
                     DRAFT
                   </div>
                 )}
-                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200">
+                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 relative">
                   {product.images[0] ? (
-                    <img
+                    <Image
                       src={product.images[0].medium || product.images[0].url}
                       alt={product.images[0].altText || product.name}
-                      className="h-64 w-full object-cover object-center group-hover:opacity-75"
-                      loading="lazy"
+                      fill
+                      className="object-cover object-center group-hover:opacity-75"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     />
                   ) : (
                     <div className="h-64 w-full flex items-center justify-center bg-gray-100">

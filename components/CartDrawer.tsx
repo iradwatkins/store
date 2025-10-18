@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { logger } from "@/lib/logger"
 
 type CartItem = {
   cartItemId: string
@@ -46,7 +47,7 @@ export default function CartDrawer() {
       setCart(data.cart || { items: [], storeSlug: null })
       setTotal(data.total || 0)
     } catch (error) {
-      console.error("Failed to fetch cart:", error)
+      logger.error("Failed to fetch cart:", error)
     } finally {
       setIsLoading(false)
     }
@@ -68,7 +69,7 @@ export default function CartDrawer() {
 
       await fetchCart()
     } catch (error) {
-      console.error("Failed to remove item:", error)
+      logger.error("Failed to remove item:", error)
     }
   }
 

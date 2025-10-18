@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
@@ -55,7 +55,7 @@ type Order = {
 
 export default function OrderTrackingPage() {
   const params = useParams()
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -70,9 +70,9 @@ export default function OrderTrackingPage() {
     if (status === "authenticated") {
       fetchOrder()
     }
-  }, [status, params.id])
+  }, [status, params.id, router, fetchOrder])
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/account/orders/${params.id}`)
@@ -89,7 +89,7 @@ export default function OrderTrackingPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.id])
 
   const getStatusColor = (status: string) => {
     switch (status) {

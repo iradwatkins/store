@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -169,7 +170,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ order: orderData })
   } catch (error) {
-    console.error("Error confirming order:", error)
+    logger.error("Error confirming order:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to confirm order",

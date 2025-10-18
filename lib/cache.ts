@@ -1,4 +1,5 @@
 import redis from "./redis"
+import { logger } from "./logger"
 
 /**
  * Redis caching utilities for application-wide caching
@@ -20,7 +21,7 @@ export async function getCached<T>(key: string): Promise<T | null> {
     }
     return JSON.parse(cached) as T
   } catch (error) {
-    console.error(`Cache get error for key ${key}:`, error)
+    logger.error(`Cache get error for key ${key}`, error)
     return null
   }
 }
@@ -47,7 +48,7 @@ export async function setCache<T>(
       }
     }
   } catch (error) {
-    console.error(`Cache set error for key ${key}:`, error)
+    logger.error(`Cache set error for key ${key}`, error)
   }
 }
 
@@ -58,7 +59,7 @@ export async function deleteCache(key: string): Promise<void> {
   try {
     await redis.del(key)
   } catch (error) {
-    console.error(`Cache delete error for key ${key}:`, error)
+    logger.error(`Cache delete error for key ${key}`, error)
   }
 }
 
@@ -73,7 +74,7 @@ export async function invalidateCacheByTag(tag: string): Promise<void> {
     }
     await redis.del(`cache-tag:${tag}`)
   } catch (error) {
-    console.error(`Cache invalidation error for tag ${tag}:`, error)
+    logger.error(`Cache invalidation error for tag ${tag}`, error)
   }
 }
 

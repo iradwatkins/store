@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { logger } from "@/lib/logger"
 
 const CACHE_TTL = 300 // 5 minutes in seconds
 
@@ -95,7 +96,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(responseData)
   } catch (error) {
-    console.error("Error fetching daily sales:", error)
+    logger.error("Error fetching daily sales:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to fetch daily sales",

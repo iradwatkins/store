@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { invalidateProductCache, invalidateVendorCache } from "@/lib/cache"
+import { logger } from "@/lib/logger"
 
 export async function POST(
   request: NextRequest,
@@ -72,7 +73,7 @@ export async function POST(
 
     // Generate new name and slug
     const newName = `${originalProduct.name} (Copy)`
-    let slug = newName
+    const slug = newName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "")
@@ -161,7 +162,7 @@ export async function POST(
       { status: 201 }
     )
   } catch (error) {
-    console.error("Product duplication error:", error)
+    logger.error("Product duplication error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

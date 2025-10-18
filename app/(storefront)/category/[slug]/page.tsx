@@ -1,14 +1,14 @@
 import Link from "next/link"
+import Image from "next/image"
 import prisma from "@/lib/db"
 import { Suspense } from "react"
-import { notFound } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 async function CategoryProducts({ category }: { category: string }) {
@@ -61,10 +61,12 @@ async function CategoryProducts({ category }: { category: string }) {
         >
           <div className="aspect-square bg-muted relative overflow-hidden rounded-lg mb-2">
             {product.images[0] ? (
-              <img
+              <Image
                 src={product.images[0].medium || product.images[0].url}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
@@ -83,9 +85,12 @@ async function CategoryProducts({ category }: { category: string }) {
   )
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  // Await params since they're now async in Next.js 15
+  const resolvedParams = await params
+  
   // Format category name for display
-  const categoryName = decodeURIComponent(params.slug)
+  const categoryName = decodeURIComponent(resolvedParams.slug)
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
@@ -108,7 +113,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             ))}
           </div>
         }>
-          <CategoryProducts category={params.slug} />
+          <CategoryProducts category={resolvedParams.slug} />
         </Suspense>
       </div>
     </div>

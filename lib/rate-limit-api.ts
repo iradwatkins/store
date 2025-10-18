@@ -1,5 +1,6 @@
 import redis from './redis'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from "@/lib/logger"
 
 export interface RateLimitConfig {
   windowMs: number // Time window in milliseconds
@@ -70,7 +71,7 @@ export async function rateLimit(
       reset,
     }
   } catch (error) {
-    console.error('Rate limit error:', error)
+    logger.error("Rate limit error:", error)
     // Fail open - allow request if Redis is down
     return {
       success: true,

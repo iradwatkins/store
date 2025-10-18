@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 /**
  * Monthly Usage Reset Cron Job
@@ -22,14 +23,14 @@ export async function GET(request: Request) {
     const token = authHeader?.replace("Bearer ", "")
 
     if (!token || token !== process.env.CRON_SECRET) {
-      console.error("Unauthorized cron request: Invalid or missing token")
+      logger.error("Unauthorized cron request: Invalid or missing token")
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       )
     }
 
-    console.log("Starting monthly usage reset...")
+    logger.info("Starting monthly usage reset...")
 
     // 2. Get current date for logging
     const now = new Date()
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
       },
     })
 
-    console.log(`Monthly usage reset complete: ${result.count} tenants updated for ${month}`)
+    logger.info(`Monthly usage reset complete: ${result.count} tenants updated for ${month}`)
 
     // 4. Optionally: Create usage records for historical tracking
     const tenants = await prisma.tenant.findMany({
@@ -56,7 +57,7 @@ export async function GET(request: Request) {
     })
 
     // Log reset summary (optional)
-    console.log("Reset Summary:", {
+    logger.info("Reset Summary:", {
       month,
       tenantsReset: result.count,
       timestamp: now.toISOString(),
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
       timestamp: now.toISOString(),
     })
   } catch (error) {
-    console.error("Error resetting monthly usage:", error)
+    logger.error("Error resetting monthly usage:", error)
     return NextResponse.json(
       {
         error: "Failed to reset monthly usage",

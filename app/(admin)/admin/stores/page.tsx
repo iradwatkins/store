@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 type Store = {
@@ -28,7 +27,6 @@ type Store = {
 }
 
 export default function AdminStoresPage() {
-  const router = useRouter()
   const [stores, setStores] = useState<Store[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

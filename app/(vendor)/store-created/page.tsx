@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 function StoreCreatedContent() {
   const router = useRouter()
@@ -31,7 +32,7 @@ function StoreCreatedContent() {
           }
         })
         .catch((err) => {
-          console.error("Failed to fetch store:", err)
+          logger.error("Failed to fetch store:", err)
         })
         .finally(() => {
           setLoading(false)

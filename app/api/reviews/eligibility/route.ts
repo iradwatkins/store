@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // GET /api/reviews/eligibility?orderItemId=xxx
 export async function GET(request: NextRequest) {
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error checking review eligibility:", error)
+    logger.error("Error checking review eligibility:", error)
     return NextResponse.json(
       { error: "Failed to check eligibility" },
       { status: 500 }

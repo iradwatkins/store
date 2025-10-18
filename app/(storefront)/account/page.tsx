@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Package, ShoppingBag, User, CreditCard, TrendingUp } from "lucide-react"
+import { Package, ShoppingBag, User, CreditCard } from "lucide-react"
+import { logger } from "@/lib/logger"
 
 interface OrderSummary {
   id: string
@@ -42,7 +43,7 @@ export default function CustomerAccountPage() {
           setError(null)
         })
         .catch((err) => {
-          console.error("Failed to load orders:", err)
+          logger.error("Failed to load orders:", err)
           setError(err.message || "Failed to load orders")
         })
         .finally(() => {
@@ -144,7 +145,7 @@ export default function CustomerAccountPage() {
                     </div>
                     <div className="ml-4 flex-1">
                       <h3 className="text-xl font-bold text-white mb-1">
-                        You're Now a Vendor!
+                        You&apos;re Now a Vendor!
                       </h3>
                       <p className="text-green-50 text-sm mb-3">
                         Your store is ready to go. Start adding products and customizing your storefront.

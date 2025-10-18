@@ -337,7 +337,7 @@ export default function HowItWorksPage() {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Transparent Pricing</h2>
             <p className="text-xl text-gray-600">
-              Know exactly what you'll pay. No hidden fees.
+              Know exactly what you&apos;ll pay. No hidden fees.
             </p>
           </div>
 

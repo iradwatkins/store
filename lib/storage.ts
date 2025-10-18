@@ -1,4 +1,5 @@
 import * as Minio from 'minio';
+import { logger } from "@/lib/logger"
 
 // MinIO client configuration
 const minioClient = new Minio.Client({
@@ -17,7 +18,7 @@ async function ensureBucket() {
     const exists = await minioClient.bucketExists(BUCKET_NAME);
     if (!exists) {
       await minioClient.makeBucket(BUCKET_NAME, 'us-east-1');
-      console.log(`✅ MinIO bucket created: ${BUCKET_NAME}`);
+      logger.info(`✅ MinIO bucket created: ${BUCKET_NAME}`);
 
       // Set bucket policy to public for product images
       const policy = {
@@ -34,7 +35,7 @@ async function ensureBucket() {
       await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
     }
   } catch (error) {
-    console.error('MinIO bucket setup error:', error);
+    logger.error("MinIO bucket setup error:", error);
   }
 }
 
@@ -49,7 +50,7 @@ export const storageHelpers = {
    * Upload a file to MinIO
    */
   async uploadFile(
-    file: Buffer | ReadableStream,
+    file: Buffer | string,
     path: string,
     contentType: string = 'application/octet-stream'
   ): Promise<string> {
@@ -57,11 +58,8 @@ export const storageHelpers = {
       'Content-Type': contentType,
     };
 
-    if (file instanceof Buffer) {
-      await minioClient.putObject(BUCKET_NAME, path, file, file.length, metadata);
-    } else {
-      await minioClient.putObject(BUCKET_NAME, path, file, metadata);
-    }
+    // Upload using the proper minio API  
+    await minioClient.putObject(BUCKET_NAME, path, file, undefined, metadata);
 
     return this.getPublicUrl(path);
   },

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import LowStockBadge from "../components/LowStockBadge"
 import ProductPreviewModal from "./components/ProductPreviewModal"
+import { logger } from "@/lib/logger"
 
 type Product = {
   id: string
@@ -70,7 +71,7 @@ export default function ProductsPage() {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch store slug:", err)
+      logger.error("Failed to fetch store slug:", err)
     }
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 import {
   requestCertificate,
   getCertificateInfo,
@@ -89,7 +90,7 @@ export async function POST(
     })
 
     // 6. Request SSL certificate
-    console.log(`Requesting SSL certificate for ${tenant.customDomain}`)
+    logger.info(`Requesting SSL certificate for ${tenant.customDomain}`)
 
     const certResult = await requestCertificate(
       tenant.customDomain,
@@ -146,7 +147,7 @@ export async function POST(
       )
     }
   } catch (error: any) {
-    console.error("Error requesting SSL certificate:", error)
+    logger.error("Error requesting SSL certificate:", error)
 
     // Revert status to PENDING on error
     try {
@@ -157,7 +158,7 @@ export async function POST(
         },
       })
     } catch (updateError) {
-      console.error("Failed to revert SSL status:", updateError)
+      logger.error("Failed to revert SSL status:", updateError)
     }
 
     return NextResponse.json(
@@ -270,7 +271,7 @@ export async function GET(
         : null,
     })
   } catch (error: any) {
-    console.error("Error fetching SSL status:", error)
+    logger.error("Error fetching SSL status:", error)
     return NextResponse.json(
       { error: "Failed to fetch SSL status", message: error.message },
       { status: 500 }
@@ -333,7 +334,7 @@ export async function PUT(
     }
 
     // 5. Renew certificate
-    console.log(`Renewing SSL certificate for ${tenant.customDomain}`)
+    logger.info(`Renewing SSL certificate for ${tenant.customDomain}`)
 
     const renewResult = await renewCertificate(tenant.customDomain)
 
@@ -370,7 +371,7 @@ export async function PUT(
       )
     }
   } catch (error: any) {
-    console.error("Error renewing SSL certificate:", error)
+    logger.error("Error renewing SSL certificate:", error)
     return NextResponse.json(
       {
         error: "Failed to renew SSL certificate",
@@ -424,7 +425,7 @@ export async function DELETE(
     }
 
     // 4. Revoke certificate
-    console.log(`Revoking SSL certificate for ${tenant.customDomain}`)
+    logger.info(`Revoking SSL certificate for ${tenant.customDomain}`)
 
     const revokeResult = await revokeCertificate(tenant.customDomain)
 
@@ -444,7 +445,7 @@ export async function DELETE(
       domain: tenant.customDomain,
     })
   } catch (error: any) {
-    console.error("Error revoking SSL certificate:", error)
+    logger.error("Error revoking SSL certificate:", error)
     return NextResponse.json(
       {
         error: "Failed to revoke SSL certificate",

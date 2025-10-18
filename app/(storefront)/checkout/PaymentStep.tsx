@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   PaymentElement,
@@ -34,7 +34,7 @@ type Props = {
 }
 
 export default function PaymentStep({
-  clientSecret,
+  clientSecret: _clientSecret,
   shippingInfo,
   shippingMethod,
   onBack,
@@ -76,7 +76,7 @@ export default function PaymentStep({
         setErrorMessage("Payment failed. Please try again.")
         setIsProcessing(false)
       }
-    } catch (err) {
+    } catch {
       setErrorMessage("An unexpected error occurred. Please try again.")
       setIsProcessing(false)
     }

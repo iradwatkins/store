@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import Stripe from "stripe"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -198,7 +199,7 @@ export async function POST(request: Request) {
         : "Plan downgraded successfully. Changes will take effect at the end of your billing period.",
     })
   } catch (error) {
-    console.error("Error changing plan:", error)
+    logger.error("Error changing plan:", error)
 
     if (error instanceof Stripe.errors.StripeError) {
       return NextResponse.json(

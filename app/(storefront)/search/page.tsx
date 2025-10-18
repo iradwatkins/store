@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 type Product = {
   id: string
@@ -67,7 +68,7 @@ function SearchContent() {
       const data = await response.json()
       setResults(data)
     } catch (error) {
-      console.error("Search failed:", error)
+      logger.error("Search failed:", error)
     } finally {
       setIsLoading(false)
     }

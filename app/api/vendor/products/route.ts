@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { storageHelpers } from "@/lib/storage"
+import { logger } from "@/lib/logger"
 import {
   validateImage,
   generateImageSizes,
@@ -37,8 +39,16 @@ const createProductSchema = z.object({
   sku: z.string().nullish(),
   trackInventory: z.string(),
   inventoryQuantity: z.string().nullish(),
-  variantType: z.enum(["NONE", "SIZE", "COLOR"]),
-  variants: z.string().nullish(), // JSON string
+  
+  // OLD VARIANT SYSTEM (backward compatibility)
+  variantType: z.enum(["NONE", "SIZE", "COLOR"]).optional(),
+  variants: z.string().nullish(), // JSON string for old variants
+  
+  // NEW MULTI-VARIANT SYSTEM
+  useMultiVariants: z.string().optional(), // "true" | "false"
+  variantTypes: z.string().nullish(), // JSON string array: ["SIZE", "COLOR"]
+  variantOptions: z.string().nullish(), // JSON string for variant options
+  generateCombinations: z.string().optional(), // "true" | "false"
 })
 
 export async function POST(request: NextRequest) {
@@ -94,8 +104,16 @@ export async function POST(request: NextRequest) {
       sku: formData.get("sku") as string | null,
       trackInventory: formData.get("trackInventory") as string,
       inventoryQuantity: formData.get("inventoryQuantity") as string | null,
+      
+      // OLD VARIANT SYSTEM
       variantType: formData.get("variantType") as string,
       variants: formData.get("variants") as string | null,
+      
+      // NEW MULTI-VARIANT SYSTEM
+      useMultiVariants: formData.get("useMultiVariants") as string | null,
+      variantTypes: formData.get("variantTypes") as string | null,
+      variantOptions: formData.get("variantOptions") as string | null,
+      generateCombinations: formData.get("generateCombinations") as string | null,
     }
 
     // Validate input
@@ -127,7 +145,20 @@ export async function POST(request: NextRequest) {
       ? parseFloat(validatedData.compareAtPrice)
       : null
     const trackInventory = validatedData.trackInventory === "true"
-    const hasVariants = validatedData.variantType !== "NONE" && validatedData.variants
+    
+    // Determine variant system being used
+    const useMultiVariants = validatedData.useMultiVariants === "true"
+    const hasOldVariants = validatedData.variantType !== "NONE" && validatedData.variants
+    const hasVariants = useMultiVariants || hasOldVariants
+    
+    // Parse multi-variant data if provided
+    let variantTypes: string[] = []
+    let variantOptions: any = null
+    
+    if (useMultiVariants) {
+      variantTypes = validatedData.variantTypes ? JSON.parse(validatedData.variantTypes) : []
+      variantOptions = validatedData.variantOptions ? JSON.parse(validatedData.variantOptions) : null
+    }
 
     // Create product
     // Important: If product has variants, product-level inventory is ignored (set to 0)
@@ -150,11 +181,47 @@ export async function POST(request: NextRequest) {
           ? 0
           : (validatedData.inventoryQuantity ? parseInt(validatedData.inventoryQuantity) : 0),
         status: "DRAFT", // Start as draft
+        
+        // OLD VARIANT SYSTEM
+        hasVariants,
+        variantType: hasOldVariants ? validatedData.variantType as any : null,
+        
+        // NEW MULTI-VARIANT SYSTEM
+        useMultiVariants,
+        variantTypes,
       },
     })
 
     // Handle variants
-    if (hasVariants) {
+    if (useMultiVariants && variantOptions && validatedData.generateCombinations === "true") {
+      // NEW MULTI-VARIANT SYSTEM: Call the combinations API internally
+      try {
+        const combinationsResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/vendor/products/${product.id}/variants/combinations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': request.headers.get('Cookie') || '',
+          },
+          body: JSON.stringify({
+            variantTypes,
+            options: variantOptions,
+            generateCombinations: true,
+            defaults: {
+              quantity: 0,
+              price: null,
+            },
+          }),
+        })
+
+        if (!combinationsResponse.ok) {
+          throw new Error('Failed to create variant combinations')
+        }
+      } catch (error) {
+        logger.error("Error creating variant combinations:", error)
+        // Continue without variants rather than failing the entire product creation
+      }
+    } else if (hasOldVariants) {
+      // OLD VARIANT SYSTEM: Create ProductVariant records
       const variants = JSON.parse(validatedData.variants!)
 
       for (const variant of variants) {
@@ -239,9 +306,11 @@ export async function POST(request: NextRequest) {
       const originalSize = buffer.length
       const optimizedSize = optimizedSizes.large.size
       const savings = calculateCompressionRatio(originalSize, optimizedSize)
-      console.log(
-        `Image optimized: ${file.name} | Saved ${savings.savedPercent}% (${savings.savedBytes} bytes)`
-      )
+      logger.info("Image optimized", { 
+        fileName: file.name, 
+        savedPercent: savings.savedPercent, 
+        savedBytes: savings.savedBytes 
+      })
 
       // Track total uploaded size (all variants combined)
       const allSizesTotal = Object.values(optimizedSizes).reduce((sum, img) => sum + img.size, 0)
@@ -297,7 +366,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error("Product creation error:", error)
+    logger.error("Product creation error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -406,7 +475,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Get products error:", error)
+    logger.error("Get products error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

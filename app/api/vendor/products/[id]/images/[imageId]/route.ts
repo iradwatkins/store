@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { storageHelpers } from "@/lib/storage"
+import { logger } from "@/lib/logger"
 
 export async function DELETE(
   request: NextRequest,
@@ -71,7 +72,7 @@ export async function DELETE(
             pathsToDelete.push(pathAfterBucket)
           }
         } catch (err) {
-          console.error(`Failed to parse URL: ${url}`, err)
+          logger.error(`Failed to parse URL: ${url}`, err ? err : undefined)
         }
       }
     }
@@ -80,9 +81,9 @@ export async function DELETE(
     if (pathsToDelete.length > 0) {
       try {
         await storageHelpers.deleteFiles(pathsToDelete)
-        console.log(`Deleted ${pathsToDelete.length} files from MinIO`)
+        logger.info(`Deleted ${pathsToDelete.length} files from MinIO`)
       } catch (err) {
-        console.error("Failed to delete files from MinIO:", err)
+        logger.error("Failed to delete files from MinIO:", err)
         // Continue even if MinIO deletion fails - we still want to remove the database record
       }
     }
@@ -109,13 +110,13 @@ export async function DELETE(
       })
     }
 
-    console.log(`${isAdmin ? 'Admin' : 'Vendor'} deleted image from product: ${product.name}`)
+    logger.info(`${isAdmin ? 'Admin' : 'Vendor'} deleted image from product: ${product.name}`)
 
     return NextResponse.json({
       message: "Image deleted successfully",
     })
   } catch (error) {
-    console.error("Image deletion error:", error)
+    logger.error("Image deletion error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

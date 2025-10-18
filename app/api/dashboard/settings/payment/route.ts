@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const paymentSettingsSchema = z.object({
   primaryPaymentProcessor: z.enum(["STRIPE", "PAYPAL", "SQUARE", "CASH"]),
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(vendorStore)
   } catch (error) {
-    console.error("Error fetching payment settings:", error)
+    logger.error("Error fetching payment settings:", error)
     return NextResponse.json(
       { error: "Failed to fetch payment settings" },
       { status: 500 }
@@ -112,7 +113,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(updated)
   } catch (error) {
-    console.error("Error updating payment settings:", error)
+    logger.error("Error updating payment settings:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

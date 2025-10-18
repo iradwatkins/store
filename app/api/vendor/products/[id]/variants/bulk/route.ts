@@ -11,6 +11,7 @@ import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import { logger } from "@/lib/logger"
 
 // Validation schema for bulk updates
 const bulkUpdateSchema = z.object({
@@ -73,7 +74,7 @@ export async function PATCH(
     const { filter, updates, applyToAll } = validatedData
 
     // Build where clause
-    let where: Prisma.VariantCombinationWhereInput = {
+    const where: Prisma.VariantCombinationWhereInput = {
       productId,
     }
 
@@ -133,7 +134,7 @@ export async function PATCH(
       updated: result.count,
     })
   } catch (error: any) {
-    console.error('Error bulk updating variants:', error)
+    logger.error("Error bulk updating variants:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -236,7 +237,7 @@ export async function POST(
       processed: results.length,
     })
   } catch (error: any) {
-    console.error('Error bulk creating/updating variants:', error)
+    logger.error("Error bulk creating/updating variants:", error)
     return NextResponse.json(
       { error: 'Failed to process variants' },
       { status: 500 }

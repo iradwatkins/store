@@ -1,7 +1,7 @@
 import { exec } from "child_process"
 import { promisify } from "util"
 import fs from "fs/promises"
-import path from "path"
+import { logger } from "@/lib/logger"
 
 const execAsync = promisify(exec)
 
@@ -36,7 +36,7 @@ export async function requestCertificate(
   email: string = "ssl@stepperslife.com"
 ): Promise<CertbotResult> {
   try {
-    console.log(`🔐 Requesting SSL certificate for ${domain}...`)
+    logger.info(`🔐 Requesting SSL certificate for ${domain}...`)
 
     // Certbot command using standalone mode
     // Note: This requires port 80 to be available temporarily
@@ -56,14 +56,14 @@ export async function requestCertificate(
       "--redirect", // Auto-redirect HTTP to HTTPS
     ].join(" ")
 
-    console.log(`Executing: ${command}`)
+    logger.info(`Executing: ${command}`)
 
     const { stdout, stderr } = await execAsync(command, {
       timeout: 120000, // 2 minute timeout
     })
 
-    console.log("Certbot stdout:", stdout)
-    if (stderr) console.log("Certbot stderr:", stderr)
+    logger.info("Certbot stdout:", { data: stdout })
+    if (stderr) logger.info("Certbot stderr:", { data: stderr })
 
     // Check if certificate was successfully created
     const certPath = `/etc/letsencrypt/live/${domain}/fullchain.pem`
@@ -88,7 +88,7 @@ export async function requestCertificate(
       }
     }
   } catch (error: any) {
-    console.error(`Failed to request certificate for ${domain}:`, error)
+    logger.error(`Failed to request certificate for ${domain}:`, error ? error : undefined)
 
     return {
       success: false,
@@ -184,7 +184,7 @@ export async function getCertificateInfo(
  */
 export async function renewCertificate(domain: string): Promise<CertbotResult> {
   try {
-    console.log(`🔄 Renewing SSL certificate for ${domain}...`)
+    logger.info(`🔄 Renewing SSL certificate for ${domain}...`)
 
     const command = [
       "sudo",
@@ -195,14 +195,14 @@ export async function renewCertificate(domain: string): Promise<CertbotResult> {
       "--non-interactive",
     ].join(" ")
 
-    console.log(`Executing: ${command}`)
+    logger.info(`Executing: ${command}`)
 
     const { stdout, stderr } = await execAsync(command, {
       timeout: 120000, // 2 minute timeout
     })
 
-    console.log("Certbot renew stdout:", stdout)
-    if (stderr) console.log("Certbot renew stderr:", stderr)
+    logger.info("Certbot renew stdout:", { data: stdout })
+    if (stderr) logger.info("Certbot renew stderr:", { data: stderr })
 
     // Check if renewal was successful
     if (stdout.includes("Certificate not yet due for renewal")) {
@@ -233,7 +233,7 @@ export async function renewCertificate(domain: string): Promise<CertbotResult> {
       stderr,
     }
   } catch (error: any) {
-    console.error(`Failed to renew certificate for ${domain}:`, error)
+    logger.error(`Failed to renew certificate for ${domain}:`, error ? error : undefined)
 
     return {
       success: false,
@@ -252,7 +252,7 @@ export async function revokeCertificate(
   domain: string
 ): Promise<CertbotResult> {
   try {
-    console.log(`🗑️ Revoking SSL certificate for ${domain}...`)
+    logger.info(`🗑️ Revoking SSL certificate for ${domain}...`)
 
     const command = [
       "sudo",
@@ -263,14 +263,14 @@ export async function revokeCertificate(
       "--non-interactive",
     ].join(" ")
 
-    console.log(`Executing: ${command}`)
+    logger.info(`Executing: ${command}`)
 
     const { stdout, stderr } = await execAsync(command, {
       timeout: 60000, // 1 minute timeout
     })
 
-    console.log("Certbot delete stdout:", stdout)
-    if (stderr) console.log("Certbot delete stderr:", stderr)
+    logger.info("Certbot delete stdout:", { data: stdout })
+    if (stderr) logger.info("Certbot delete stderr:", { data: stderr })
 
     return {
       success: true,
@@ -279,7 +279,7 @@ export async function revokeCertificate(
       stderr,
     }
   } catch (error: any) {
-    console.error(`Failed to revoke certificate for ${domain}:`, error)
+    logger.error(`Failed to revoke certificate for ${domain}:`, error ? error : undefined)
 
     return {
       success: false,
@@ -359,17 +359,17 @@ export async function checkCertbotInstalled(): Promise<{
  */
 export async function reloadNginx(): Promise<CertbotResult> {
   try {
-    console.log("🔄 Reloading Nginx to apply SSL certificates...")
+    logger.info("🔄 Reloading Nginx to apply SSL certificates...")
 
     // Test configuration first
     const testResult = await execAsync("sudo nginx -t", { timeout: 10000 })
-    console.log("Nginx test:", testResult.stdout)
+    logger.info("Nginx test:", { data: testResult.stdout })
 
     // Reload Nginx
     const reloadResult = await execAsync("sudo systemctl reload nginx", {
       timeout: 10000,
     })
-    console.log("Nginx reload:", reloadResult.stdout)
+    logger.info("Nginx reload:", { data: reloadResult.stdout })
 
     return {
       success: true,
@@ -377,7 +377,7 @@ export async function reloadNginx(): Promise<CertbotResult> {
       stdout: reloadResult.stdout,
     }
   } catch (error: any) {
-    console.error("Failed to reload Nginx:", error)
+    logger.error("Failed to reload Nginx:", error)
 
     return {
       success: false,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(results)
   } catch (error) {
-    console.error("Search error:", error)
+    logger.error("Search error:", error)
     return NextResponse.json(
       { error: "Failed to perform search" },
       { status: 500 }

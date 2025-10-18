@@ -3,6 +3,7 @@ import prisma from "@/lib/db"
 import { z } from "zod"
 import { redis } from "@/lib/redis"
 import { getClientIp } from "@/lib/utils/ip"
+import { logger } from "@/lib/logger"
 
 const voteSchema = z.object({
   type: z.enum(["helpful", "unhelpful"]),
@@ -116,7 +117,7 @@ export async function POST(
       )
     }
 
-    console.error("Vote error:", error)
+    logger.error("Vote error:", error)
     return NextResponse.json(
       {
         error: "Failed to record vote",
@@ -147,7 +148,7 @@ export async function GET(
       voteType: existingVote || null,
     })
   } catch (error) {
-    console.error("Error checking vote:", error)
+    logger.error("Error checking vote:", error)
     return NextResponse.json(
       { hasVoted: false, voteType: null },
       { status: 200 }

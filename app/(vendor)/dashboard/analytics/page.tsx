@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { logger } from "@/lib/logger"
 
 type Analytics = {
   sales: {
@@ -77,7 +78,7 @@ export default function AnalyticsPage() {
       setDailySales(dailySalesData.dailySales)
       setError(null)
     } catch (err) {
-      console.error("Analytics fetch error:", err)
+      logger.error("Analytics fetch error:", err)
       setError(err instanceof Error ? err.message : "Failed to load analytics. Please try again.")
     } finally {
       setIsLoading(false)

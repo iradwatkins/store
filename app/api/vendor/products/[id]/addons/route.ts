@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
+import { logger } from "@/lib/logger"
 
 // Validation schema for creating addons
 const createAddonSchema = z.object({
@@ -69,7 +70,7 @@ export async function GET(
       total: product.addons.length,
     })
   } catch (error: any) {
-    console.error('Error fetching addons:', error)
+    logger.error("Error fetching addons:", error)
     return NextResponse.json(
       { error: 'Failed to fetch addons' },
       { status: 500 }
@@ -142,7 +143,7 @@ export async function POST(
       { status: 201 }
     )
   } catch (error: any) {
-    console.error('Error creating addon:', error)
+    logger.error("Error creating addon:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

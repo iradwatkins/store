@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 import {
   generateNginxConfig,
   writeNginxConfig,
@@ -149,7 +150,7 @@ export async function POST(
       status: hasSSL ? "ACTIVE" : "VERIFIED",
     })
   } catch (error: any) {
-    console.error("Error generating Nginx config:", error)
+    logger.error("Error generating Nginx config:", error)
     return NextResponse.json(
       {
         error: "Failed to generate Nginx configuration",
@@ -272,7 +273,7 @@ export async function PUT(
       status: "ACTIVE",
     })
   } catch (error: any) {
-    console.error("Error updating Nginx config:", error)
+    logger.error("Error updating Nginx config:", error)
     return NextResponse.json(
       {
         error: "Failed to update Nginx configuration",
@@ -362,7 +363,7 @@ export async function DELETE(
       domain: tenant.customDomain,
     })
   } catch (error: any) {
-    console.error("Error removing Nginx config:", error)
+    logger.error("Error removing Nginx config:", error)
     return NextResponse.json(
       {
         error: "Failed to remove Nginx configuration",
@@ -432,7 +433,7 @@ export async function GET(
         : null,
     })
   } catch (error: any) {
-    console.error("Error checking Nginx config status:", error)
+    logger.error("Error checking Nginx config status:", error)
     return NextResponse.json(
       { error: "Failed to check Nginx configuration status" },
       { status: 500 }

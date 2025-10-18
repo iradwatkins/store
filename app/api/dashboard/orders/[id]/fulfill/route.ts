@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { sendShippingNotification } from "@/lib/email"
+import { logger } from "@/lib/logger"
 
 
 export async function POST(
@@ -156,9 +157,9 @@ export async function POST(
           },
         })
 
-        console.log(`Shipping notification email sent to ${updatedOrder.customerEmail}`)
+        logger.info(`Shipping notification email sent to ${updatedOrder.customerEmail}`)
       } catch (emailError) {
-        console.error("Failed to send shipping notification email:", emailError)
+        logger.error("Failed to send shipping notification email:", emailError)
         // Don't fail the fulfillment if email fails
       }
     }
@@ -177,7 +178,7 @@ export async function POST(
       },
     })
   } catch (error) {
-    console.error("Error fulfilling order:", error)
+    logger.error("Error fulfilling order:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to fulfill order",

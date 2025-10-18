@@ -1,4 +1,5 @@
 import { ReactNode } from "react"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 
@@ -54,7 +55,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         {/* Sidebar Navigation */}
         <aside className="w-64 bg-white shadow-sm min-h-screen">
           <nav className="mt-5 px-2 space-y-1">
-            <a
+            <Link
               href="/admin"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:bg-gray-50"
             >
@@ -72,9 +73,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 />
               </svg>
               Dashboard
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/admin/users"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -92,9 +93,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 />
               </svg>
               Users
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/admin/stores"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -112,9 +113,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 />
               </svg>
               Stores
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/admin/orders"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -132,7 +133,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 />
               </svg>
               Orders
-            </a>
+            </Link>
           </nav>
         </aside>
 

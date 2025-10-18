@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { logger } from "@/lib/logger"
 
 const CACHE_TTL = 300 // 5 minutes in seconds
 
@@ -185,7 +186,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(analyticsData)
   } catch (error) {
-    console.error("Error fetching analytics:", error)
+    logger.error("Error fetching analytics:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to fetch analytics",

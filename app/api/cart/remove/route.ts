@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { cookies } from "next/headers"
 import { redisHelpers } from "@/lib/redis"
+import { logger } from "@/lib/logger"
 
 const removeFromCartSchema = z.object({
   cartItemId: z.string(),
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
       cart,
     })
   } catch (error) {
-    console.error("Remove from cart error:", error)
+    logger.error("Remove from cart error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

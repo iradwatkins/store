@@ -3,6 +3,7 @@
 import { useState } from "react"
 import StarRating from "./StarRating"
 import Image from "next/image"
+import { logger } from "@/lib/logger"
 
 interface Review {
   id: string
@@ -59,7 +60,7 @@ export default function ReviewCard({
         await onVoteUnhelpful(review.id)
       }
     } catch (error) {
-      console.error("Vote failed:", error)
+      logger.error("Vote failed:", error)
     } finally {
       setIsVoting(false)
     }
@@ -164,10 +165,12 @@ export default function ReviewCard({
               onClick={() => setSelectedImage(url)}
               className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 hover:border-gray-400 transition-colors cursor-pointer"
             >
-              <img
+              <Image
                 src={url}
                 alt={`Review photo ${index + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="80px"
               />
             </button>
           ))}
@@ -338,10 +341,13 @@ export default function ReviewCard({
                 />
               </svg>
             </button>
-            <img
+            <Image
               src={selectedImage}
               alt="Review photo full size"
-              className="max-w-full max-h-[90vh] rounded-lg"
+              width={800}
+              height={600}
+              className="max-w-full max-h-[90vh] rounded-lg object-contain"
+              sizes="90vw"
             />
           </div>
         </div>

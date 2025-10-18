@@ -3,6 +3,7 @@ import Stripe from "stripe"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { sendOrderConfirmation, sendVendorNewOrderAlert, sendOrderPaymentFailed, sendOrderRefundConfirmation } from "@/lib/email"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
-      console.error("Webhook signature verification failed:", err)
+      logger.error("Webhook signature verification failed:", err)
       return NextResponse.json(
         { error: "Invalid signature" },
         { status: 400 }
@@ -42,12 +43,12 @@ export async function POST(request: Request) {
         break
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        logger.info(`Unhandled event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("Webhook error:", error)
+    logger.error("Webhook error:", error)
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
@@ -65,7 +66,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     })
 
     if (existingOrder) {
-      console.log(`Order already exists for PaymentIntent ${paymentIntent.id}`)
+      logger.info(`Order already exists for PaymentIntent ${paymentIntent.id}`)
       return
     }
 
@@ -75,7 +76,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     // Get cart items from Redis
     const cartData = await redis.get(`cart:${cartSessionId}`)
     if (!cartData) {
-      console.error(`Cart not found for session ${cartSessionId}`)
+      logger.error(`Cart not found for session ${cartSessionId}`)
       return
     }
 
@@ -161,7 +162,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       })
 
       if (!product) {
-        console.error(`Product ${item.productId} not found during inventory update`)
+        logger.error(`Product ${item.productId} not found during inventory update`)
         continue
       }
 
@@ -178,7 +179,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
               },
             })
           } else {
-            console.error(`Insufficient variant stock for ${product.name} (${item.variantId})`)
+            logger.error(`Insufficient variant stock for ${product.name} (${item.variantId})`)
           }
         } else {
           // Update product inventory
@@ -190,7 +191,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
               },
             })
           } else {
-            console.error(`Insufficient product stock for ${product.name}`)
+            logger.error(`Insufficient product stock for ${product.name}`)
           }
         }
       }
@@ -204,7 +205,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       })
     }
 
-    console.log(`Order ${order.orderNumber} created successfully via webhook`)
+    logger.info(`Order ${order.orderNumber} created successfully via webhook`)
 
     // Fetch order with full details for emails
     const fullOrder = await prisma.storeOrder.findUnique({
@@ -229,7 +230,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     })
 
     if (!fullOrder) {
-      console.error("Order not found after creation")
+      logger.error("Order not found after creation")
       return
     }
 
@@ -263,9 +264,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         },
         estimatedDelivery: "5-7 business days",
       })
-      console.log(`Order confirmation email sent to ${fullOrder.customerEmail}`)
+      logger.info(`Order confirmation email sent to ${fullOrder.customerEmail}`)
     } catch (emailError) {
-      console.error("Failed to send order confirmation email:", emailError)
+      logger.error("Failed to send order confirmation email:", emailError)
       // Don't fail the webhook if email fails
     }
 
@@ -305,21 +306,21 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
             },
             orderDetailsUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders/${fullOrder.id}`,
           })
-          console.log(`Vendor alert email sent to ${vendorUser.email}`)
+          logger.info(`Vendor alert email sent to ${vendorUser.email}`)
         }
       }
     } catch (emailError) {
-      console.error("Failed to send vendor alert email:", emailError)
+      logger.error("Failed to send vendor alert email:", emailError)
       // Don't fail the webhook if email fails
     }
   } catch (error) {
-    console.error("Error handling payment_intent.succeeded:", error)
+    logger.error("Error handling payment_intent.succeeded:", error)
     throw error
   }
 }
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
-  console.log(`Payment failed for PaymentIntent ${paymentIntent.id}`)
+  logger.info(`Payment failed for PaymentIntent ${paymentIntent.id}`)
 
   const metadata = paymentIntent.metadata
 
@@ -347,9 +348,9 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
         failureReason: paymentIntent.last_payment_error?.message,
         retryPaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/checkout?retry=${order.id}`,
       })
-      console.log(`Payment failed email sent to ${order.customerEmail}`)
+      logger.info(`Payment failed email sent to ${order.customerEmail}`)
     } catch (emailError) {
-      console.error("Failed to send payment failed email:", emailError)
+      logger.error("Failed to send payment failed email:", emailError)
       // Don't fail the webhook if email fails
     }
   } else if (metadata.customerEmail && metadata.orderNumber && metadata.total) {
@@ -363,9 +364,9 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
         failureReason: paymentIntent.last_payment_error?.message,
         retryPaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/checkout`,
       })
-      console.log(`Payment failed email sent to ${metadata.customerEmail}`)
+      logger.info(`Payment failed email sent to ${metadata.customerEmail}`)
     } catch (emailError) {
-      console.error("Failed to send payment failed email:", emailError)
+      logger.error("Failed to send payment failed email:", emailError)
     }
   }
 }
@@ -374,7 +375,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   const paymentIntentId = charge.payment_intent as string
 
   if (!paymentIntentId) {
-    console.log("No payment intent ID found for refunded charge")
+    logger.info("No payment intent ID found for refunded charge")
     return
   }
 
@@ -383,7 +384,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   })
 
   if (!order) {
-    console.log(`Order not found for PaymentIntent ${paymentIntentId}`)
+    logger.info(`Order not found for PaymentIntent ${paymentIntentId}`)
     return
   }
 
@@ -400,7 +401,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     },
   })
 
-  console.log(`Order ${order.orderNumber} refunded: $${refundAmount}`)
+  logger.info(`Order ${order.orderNumber} refunded: $${refundAmount}`)
 
   // Send refund confirmation email to customer
   try {
@@ -418,9 +419,9 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       isPartialRefund: !isFullRefund,
       refundReason: order.cancelReason || undefined,
     })
-    console.log(`Refund confirmation email sent to ${order.customerEmail}`)
+    logger.info(`Refund confirmation email sent to ${order.customerEmail}`)
   } catch (emailError) {
-    console.error("Failed to send refund confirmation email:", emailError)
+    logger.error("Failed to send refund confirmation email:", emailError)
     // Don't fail the webhook if email fails
   }
 

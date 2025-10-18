@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export async function GET(
   request: NextRequest,
@@ -89,7 +90,7 @@ export async function GET(
 
     return NextResponse.json({ product })
   } catch (error) {
-    console.error("Get product error:", error)
+    logger.error("Get product error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -169,7 +170,7 @@ export async function PUT(
       product: updatedProduct,
     })
   } catch (error) {
-    console.error("Update product error:", error)
+    logger.error("Update product error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -250,7 +251,7 @@ export async function DELETE(
       message: "Product deleted successfully",
     })
   } catch (error) {
-    console.error("Delete product error:", error)
+    logger.error("Delete product error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

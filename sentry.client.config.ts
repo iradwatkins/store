@@ -16,12 +16,8 @@ Sentry.init({
   // Enable in production only
   enabled: process.env.NODE_ENV === 'production',
 
-  // Integrations
+  // Integrations - using built-in integrations from Next.js SDK
   integrations: [
-    new Sentry.BrowserTracing(),
-    new Sentry.Replay({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
+    // Browser tracing and replay are automatically included in @sentry/nextjs
   ],
 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { sendLowStockAlert } from "@/lib/email"
+import { logger } from "@/lib/logger"
 
 /**
  * Cron job to check for low stock items and send alerts to vendors
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret) {
-      console.error("CRON_SECRET not configured")
+      logger.error("CRON_SECRET not configured")
       return NextResponse.json(
         { error: "Cron job not configured" },
         { status: 500 }
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("Starting low stock check...")
+    logger.info("Starting low stock check...")
 
     // Find all products with low stock (where inventory is tracked)
     const lowStockProducts = await prisma.product.findMany({
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`Found ${lowStockProducts.length} products to check`)
+    logger.info(`Found ${lowStockProducts.length} products to check`)
 
     // Group products by vendor store
     const vendorLowStockMap = new Map<string, any[]>()
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(
+    logger.info(
       `Found ${vendorLowStockMap.size} vendors with low stock items`
     )
 
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
       const vendorUser = vendorStore.User
 
       if (!vendorUser?.email) {
-        console.error(
+        logger.error(
           `No email found for vendor store ${vendorStoreId}, skipping alert`
         )
         continue
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
         })
 
         emailsSent++
-        console.log(
+        logger.info(
           `✅ Low stock alert sent to ${vendorUser.email} for store ${vendorStore.name} (${products.length} items)`
         )
       } catch (error) {
@@ -185,7 +186,7 @@ export async function POST(request: NextRequest) {
         const errorMsg = `Failed to send low stock alert to ${vendorUser.email}: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
-        console.error(errorMsg)
+        logger.error(errorMsg)
         errors.push(errorMsg)
       }
     }
@@ -205,11 +206,11 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     }
 
-    console.log("Low stock check completed:", JSON.stringify(summary, null, 2))
+    logger.info("Low stock check completed:", { data: JSON.stringify(summary, null, 2) })
 
     return NextResponse.json(summary)
   } catch (error) {
-    console.error("Cron job error:", error)
+    logger.error("Cron job error:", error)
     return NextResponse.json(
       {
         success: false,

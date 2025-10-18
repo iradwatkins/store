@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 
 export async function GET(
@@ -83,7 +84,7 @@ export async function GET(
 
     return NextResponse.json({ order: formattedOrder })
   } catch (error) {
-    console.error("Error fetching order:", error)
+    logger.error("Error fetching order:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to fetch order",

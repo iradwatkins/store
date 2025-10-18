@@ -3,6 +3,7 @@ import { z } from "zod"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { sendOrderConfirmation, sendVendorNewOrderAlert } from "@/lib/email"
+import { logger } from "@/lib/logger"
 
 const createCashOrderSchema = z.object({
   cartSessionId: z.string().min(1),
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
         estimatedDelivery: "Pickup (see cash instructions)",
       })
     } catch (emailError) {
-      console.error("Failed to send order confirmation email:", emailError)
+      logger.error("Failed to send order confirmation email:", emailError)
     }
 
     // Send new order alert email to vendor
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
         })
       }
     } catch (emailError) {
-      console.error("Failed to send vendor alert email:", emailError)
+      logger.error("Failed to send vendor alert email:", emailError)
     }
 
     return NextResponse.json({
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error creating cash order:", error)
+    logger.error("Error creating cash order:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

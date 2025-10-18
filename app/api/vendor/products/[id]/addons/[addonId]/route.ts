@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
+import { logger } from "@/lib/logger"
 
 // Validation schema for updating addons
 const updateAddonSchema = z.object({
@@ -100,7 +101,7 @@ export async function PUT(
       addon: updatedAddon,
     })
   } catch (error: any) {
-    console.error('Error updating addon:', error)
+    logger.error("Error updating addon:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -173,7 +174,7 @@ export async function DELETE(
       message: 'Addon deleted successfully',
     })
   } catch (error: any) {
-    console.error('Error deleting addon:', error)
+    logger.error("Error deleting addon:", error)
     return NextResponse.json(
       { error: 'Failed to delete addon' },
       { status: 500 }

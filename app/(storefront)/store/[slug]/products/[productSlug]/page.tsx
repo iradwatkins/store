@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import Image from "next/image"
 import prisma from "@/lib/db"
 import AddToCartButton from "./AddToCartButton"
 import { getOrSetCache, cacheKeys, cacheTTL } from "@/lib/cache"
@@ -213,28 +214,32 @@ export default async function ProductDetailPage({
   params,
   searchParams,
 }: {
-  params: { slug: string; productSlug: string }
-  searchParams: { page?: string; sort?: string }
+  params: Promise<{ slug: string; productSlug: string }>
+  searchParams: Promise<{ page?: string; sort?: string }>
 }) {
   // Check if current user is the store owner
   const session = await auth()
   let isOwner = false
 
+  // Await params and searchParams since they're now async in Next.js 15
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
+
   if (session?.user?.id) {
     const store = await prisma.vendorStore.findUnique({
-      where: { slug: params.slug },
+      where: { slug: resolvedParams.slug },
       select: { userId: true },
     })
     isOwner = session.user.id === store?.userId
   }
 
-  const product = await getProduct(params.slug, params.productSlug, isOwner)
+  const product = await getProduct(resolvedParams.slug, resolvedParams.productSlug, isOwner)
 
   if (!product) {
     notFound()
   }
 
-  const currentPage = parseInt(searchParams.page || "1")
+  const currentPage = parseInt(resolvedSearchParams.page || "1")
 
   const [relatedProducts, reviewsData] = await Promise.all([
     getRelatedProducts(product.vendorStoreId, product.id, product.category),
@@ -246,7 +251,7 @@ export default async function ProductDetailPage({
   return (
     <div className="min-h-screen bg-white">
       {/* Owner Toolbar */}
-      {isOwner && <OwnerToolbar productId={product.id} storeSlug={params.slug} />}
+      {isOwner && <OwnerToolbar productId={product.id} storeSlug={resolvedParams.slug} />}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
@@ -256,7 +261,7 @@ export default async function ProductDetailPage({
           </a>
           <span className="mx-2 text-gray-400">/</span>
           <a
-            href={`/store/${params.slug}`}
+            href={`/store/${resolvedParams.slug}`}
             className="text-gray-500 hover:text-gray-700"
           >
             {product.vendorStore.name}
@@ -270,11 +275,14 @@ export default async function ProductDetailPage({
           <div className="space-y-4">
             {product.images.length > 0 ? (
               <>
-                <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
-                  <img
+                <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden relative">
+                  <Image
                     src={product.images[0].url}
                     alt={product.images[0].altText || product.name}
-                    className="w-full h-96 object-cover object-center"
+                    fill
+                    className="object-cover object-center"
+                    priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
                 {product.images.length > 1 && (
@@ -282,12 +290,14 @@ export default async function ProductDetailPage({
                     {product.images.slice(1).map((image) => (
                       <div
                         key={image.id}
-                        className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-75"
+                        className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 relative"
                       >
-                        <img
+                        <Image
                           src={image.url}
                           alt={image.altText || product.name}
-                          className="w-full h-24 object-cover object-center"
+                          fill
+                          className="object-cover object-center"
+                          sizes="(max-width: 768px) 25vw, 15vw"
                         />
                       </div>
                     ))}
@@ -394,7 +404,7 @@ export default async function ProductDetailPage({
                   price: v.price ? Number(v.price) : null,
                   inventoryQuantity: v.quantity,
                 }))}
-                storeSlug={params.slug}
+                storeSlug={resolvedParams.slug}
               />
             </div>
 
@@ -426,7 +436,7 @@ export default async function ProductDetailPage({
               <h3 className="text-sm font-medium text-gray-900">Sold By</h3>
               <div className="mt-4">
                 <a
-                  href={`/store/${params.slug}`}
+                  href={`/store/${resolvedParams.slug}`}
                   className="text-blue-500 hover:text-blue-400 font-medium"
                 >
                   {product.vendorStore.name}
@@ -482,15 +492,17 @@ export default async function ProductDetailPage({
               {relatedProducts.map((relatedProduct) => (
                 <a
                   key={relatedProduct.id}
-                  href={`/store/${params.slug}/products/${relatedProduct.slug}`}
+                  href={`/store/${resolvedParams.slug}/products/${relatedProduct.slug}`}
                   className="group bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200"
                 >
-                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200">
+                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 relative">
                     {relatedProduct.images[0] ? (
-                      <img
+                      <Image
                         src={relatedProduct.images[0].url}
                         alt={relatedProduct.images[0].altText || relatedProduct.name}
-                        className="h-48 w-full object-cover object-center group-hover:opacity-75"
+                        fill
+                        className="object-cover object-center group-hover:opacity-75"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     ) : (
                       <div className="h-48 w-full flex items-center justify-center bg-gray-100">

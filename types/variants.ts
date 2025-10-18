@@ -470,22 +470,5 @@ export interface VariantPerformanceMetrics {
 // EXPORT ALL TYPES
 // ============================================
 
-export type {
-  VariantOption,
-  ProductVariantCombination,
-  ProductVariantConfig,
-  ProductAddon,
-  SelectedVariant,
-  SelectedAddon,
-  CartItemWithVariants,
-  ProductVariantWizardData,
-  CreateVariantCombinationsRequest,
-  CreateVariantCombinationsResponse,
-  BulkUpdateVariantsRequest,
-  BulkUpdateVariantsResponse,
-  VariantSelectorProps,
-  VariantOptionSelectorProps,
-  VariantWizardProps,
-  VariantValidationResult,
-  VariantPerformanceMetrics
-}
+// Note: All types are already exported inline above
+// No need for duplicate exports

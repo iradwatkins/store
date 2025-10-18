@@ -1,0 +1,307 @@
+{
+  "timestamp": "2025-10-18T16:10:09.127Z",
+  "networkAnalysis": {
+    "slow-3g": {
+      "name": "Slow 3G",
+      "downloadTime": 39648,
+      "latency": 400,
+      "totalTime": 40048,
+      "userExperience": {
+        "rating": "critical",
+        "emoji": "🔴"
+      },
+      "description": "Emerging markets mobile"
+    },
+    "regular-3g": {
+      "name": "Regular 3G",
+      "downloadTime": 9680,
+      "latency": 300,
+      "totalTime": 9980,
+      "userExperience": {
+        "rating": "critical",
+        "emoji": "🔴"
+      },
+      "description": "Average mobile connection"
+    },
+    "fast-3g": {
+      "name": "Fast 3G",
+      "downloadTime": 9680,
+      "latency": 150,
+      "totalTime": 9830,
+      "userExperience": {
+        "rating": "critical",
+        "emoji": "🔴"
+      },
+      "description": "Good mobile connection"
+    },
+    "4g": {
+      "name": "4G",
+      "downloadTime": 1549,
+      "latency": 70,
+      "totalTime": 1619,
+      "userExperience": {
+        "rating": "good",
+        "emoji": "🟡"
+      },
+      "description": "Modern mobile"
+    },
+    "wifi": {
+      "name": "WiFi",
+      "downloadTime": 619,
+      "latency": 20,
+      "totalTime": 639,
+      "userExperience": {
+        "rating": "excellent",
+        "emoji": "🟢"
+      },
+      "description": "Broadband connection"
+    }
+  },
+  "parseTimeAnalysis": {
+    "totalParseTime": 1921,
+    "impact": {
+      "rating": "critical",
+      "emoji": "🔴"
+    },
+    "largestChunks": [
+      {
+        "name": "chunks/6978-09fbf54fd808294d.js",
+        "size": 326503,
+        "estimatedParseTime": 319,
+        "impact": {
+          "rating": "good",
+          "emoji": "🟡"
+        }
+      },
+      {
+        "name": "chunks/framework-c85341a997bf2e4b.js",
+        "size": 189787,
+        "estimatedParseTime": 185,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/4bd1b696-182b6b13bdad92e3.js",
+        "size": 173025,
+        "estimatedParseTime": 169,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/1255-3fcee0eccbc1e64f.js",
+        "size": 171947,
+        "estimatedParseTime": 168,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/main-2036cf8294776296.js",
+        "size": 127964,
+        "estimatedParseTime": 125,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/polyfills-42372ed130431b0a.js",
+        "size": 112594,
+        "estimatedParseTime": 110,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/273-e552fa1f2037036c.js",
+        "size": 111308,
+        "estimatedParseTime": 109,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/7296-fdf7647204a14c26.js",
+        "size": 85364,
+        "estimatedParseTime": 83,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/4223-1fb936b410e313d3.js",
+        "size": 61304,
+        "estimatedParseTime": 60,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      },
+      {
+        "name": "chunks/app/layout-347e918492fdc39d.js",
+        "size": 32916,
+        "estimatedParseTime": 32,
+        "impact": {
+          "rating": "excellent",
+          "emoji": "🟢"
+        }
+      }
+    ],
+    "recommendations": [
+      "Consider code splitting for large chunks",
+      "Split 7 large JavaScript chunks",
+      "Implement progressive loading strategy"
+    ]
+  },
+  "criticalPathAnalysis": {
+    "criticalResources": {
+      "css": {
+        "size": 62980,
+        "files": 1
+      },
+      "javascript": {
+        "size": 130244,
+        "files": 6
+      }
+    },
+    "totalCriticalSize": 193224,
+    "estimatedCriticalLoadTime": 1221,
+    "impact": {
+      "rating": "excellent",
+      "emoji": "🟢"
+    },
+    "recommendations": [
+      "Inline critical CSS to reduce requests",
+      "Defer non-critical JavaScript"
+    ]
+  },
+  "budgetAnalysis": {
+    "totalSize": {
+      "budget": {
+        "max": 256000,
+        "warning": 204800,
+        "description": "Total JavaScript bundle size"
+      },
+      "actual": 2029976,
+      "status": "fail",
+      "overage": 1773976,
+      "percentOfBudget": "793.0"
+    },
+    "initialLoadTime": {
+      "budget": {
+        "max": 3000,
+        "warning": 2000,
+        "description": "Time to load initial bundle on 3G"
+      },
+      "actual": 9979.679870605469,
+      "status": "fail",
+      "overage": 6979.679870605469,
+      "percentOfBudget": "332.7"
+    },
+    "parseTime": {
+      "budget": {
+        "max": 1000,
+        "warning": 500,
+        "description": "Time to parse JavaScript"
+      },
+      "actual": 1920.89453125,
+      "status": "fail",
+      "overage": 920.89453125,
+      "percentOfBudget": "192.1"
+    },
+    "chunkSize": {
+      "budget": {
+        "max": 102400,
+        "warning": 76800,
+        "description": "Individual chunk size"
+      },
+      "violations": [
+        {
+          "name": "chunks/1255-3fcee0eccbc1e64f.js",
+          "size": 171947,
+          "overage": 69547
+        },
+        {
+          "name": "chunks/273-e552fa1f2037036c.js",
+          "size": 111308,
+          "overage": 8908
+        },
+        {
+          "name": "chunks/4bd1b696-182b6b13bdad92e3.js",
+          "size": 173025,
+          "overage": 70625
+        },
+        {
+          "name": "chunks/6978-09fbf54fd808294d.js",
+          "size": 326503,
+          "overage": 224103
+        },
+        {
+          "name": "chunks/framework-c85341a997bf2e4b.js",
+          "size": 189787,
+          "overage": 87387
+        },
+        {
+          "name": "chunks/main-2036cf8294776296.js",
+          "size": 127964,
+          "overage": 25564
+        },
+        {
+          "name": "chunks/polyfills-42372ed130431b0a.js",
+          "size": 112594,
+          "overage": 10194
+        }
+      ],
+      "status": "fail"
+    }
+  },
+  "recommendations": [
+    {
+      "type": "bundle-size",
+      "priority": "high",
+      "title": "Reduce total bundle size",
+      "description": "Bundle size (1.94 MB) exceeds 250KB limit",
+      "impact": "High impact on load time, especially on slower connections",
+      "actions": [
+        "Implement code splitting with dynamic imports",
+        "Use Next.js automatic code splitting features",
+        "Analyze and remove unused dependencies",
+        "Enable tree shaking for all imports"
+      ]
+    },
+    {
+      "type": "parse-time",
+      "priority": "medium",
+      "title": "Optimize JavaScript parse time",
+      "description": "Estimated parse time (1921ms) may cause delays on slower devices",
+      "impact": "Affects Time to Interactive (TTI) and user experience",
+      "actions": [
+        "Split large JavaScript bundles",
+        "Use service workers for caching",
+        "Consider preloading critical scripts",
+        "Optimize JavaScript with minification and compression"
+      ]
+    },
+    {
+      "type": "critical-css",
+      "priority": "medium",
+      "title": "Optimize CSS delivery",
+      "description": "CSS size (61.5 KB) may block rendering",
+      "impact": "Delays First Contentful Paint (FCP)",
+      "actions": [
+        "Inline critical CSS",
+        "Use CSS-in-JS for component-specific styles",
+        "Remove unused CSS with tools like PurgeCSS",
+        "Load non-critical CSS asynchronously"
+      ]
+    }
+  ]
+}

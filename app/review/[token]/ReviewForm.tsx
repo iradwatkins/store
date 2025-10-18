@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { logger } from "@/lib/logger"
 
 interface ReviewFormProps {
   orderItemId: string
@@ -132,7 +133,7 @@ export default function ReviewForm({
       // Redirect to thank you page
       router.push(`/review/thank-you?product=${productName}`)
     } catch (err) {
-      console.error("Error submitting review:", err)
+      logger.error("Error submitting review:", err)
       setError("An unexpected error occurred. Please try again.")
       setIsSubmitting(false)
     }

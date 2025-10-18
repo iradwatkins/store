@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
 import crypto from "crypto"
+import { logger } from "@/lib/logger"
 
 // Validation schema for domain
 const domainSchema = z.object({
@@ -272,7 +273,7 @@ export async function POST(
       ],
     })
   } catch (error) {
-    console.error("Error adding custom domain:", error)
+    logger.error("Error adding custom domain:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -362,7 +363,7 @@ export async function DELETE(
       note: "Your store will continue to be accessible at your original subdomain",
     })
   } catch (error) {
-    console.error("Error removing custom domain:", error)
+    logger.error("Error removing custom domain:", error)
     return NextResponse.json(
       { error: "Failed to remove custom domain" },
       { status: 500 }
@@ -431,7 +432,7 @@ export async function GET(
         tenant.subscriptionStatus === "ACTIVE",
     })
   } catch (error) {
-    console.error("Error fetching domain configuration:", error)
+    logger.error("Error fetching domain configuration:", error)
     return NextResponse.json(
       { error: "Failed to fetch domain configuration" },
       { status: 500 }

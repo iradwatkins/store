@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import Stripe from "stripe"
 import { sendWelcomeVendor } from "@/lib/email"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
 
       stripeOnboardingUrl = accountLink.url
     } catch (stripeError) {
-      console.error("Stripe account creation failed:", stripeError)
+      logger.error("Stripe account creation failed:", stripeError)
       // Continue without Stripe - can be set up later
     }
 
@@ -138,10 +139,10 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       data: { role: 'STORE_OWNER' }
     })
-    console.log(`✅ User ${session.user.id} upgraded to STORE_OWNER role`)
+    logger.info(`✅ User ${session.user.id} upgraded to STORE_OWNER role`)
 
     // Audit logging can be added later if needed
-    console.log(`Store created: ${store.slug} by user ${session.user.id}`)
+    logger.info(`Store created: ${store.slug} by user ${session.user.id}`)
 
     // Send welcome email to vendor
     try {
@@ -157,10 +158,10 @@ export async function POST(request: NextRequest) {
           storeName: store.name,
           dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
         })
-        console.log(`Welcome email sent to ${user.email}`)
+        logger.info(`Welcome email sent to ${user.email}`)
       }
     } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError)
+      logger.error("Failed to send welcome email:", emailError)
       // Don't fail the store creation if email fails
     }
 
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error("Store creation error:", error)
+    logger.error("Store creation error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -223,7 +224,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ store })
   } catch (error) {
-    console.error("Get store error:", error)
+    logger.error("Get store error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -267,11 +268,11 @@ export async function PATCH(request: NextRequest) {
       },
     })
 
-    console.log(`Store updated: ${store.slug} by user ${session.user.id}`)
+    logger.info(`Store updated: ${store.slug} by user ${session.user.id}`)
 
     return NextResponse.json({ store })
   } catch (error) {
-    console.error("Update store error:", error)
+    logger.error("Update store error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export interface CouponValidationResult {
   valid: boolean
@@ -197,7 +198,7 @@ export async function validateAndCalculateCoupon(
       },
     }
   } catch (error) {
-    console.error("Error validating coupon:", error)
+    logger.error("Error validating coupon:", error)
     return {
       valid: false,
       error: "Failed to validate coupon",
@@ -217,7 +218,7 @@ export async function incrementCouponUsage(couponId: string): Promise<void> {
       },
     })
   } catch (error) {
-    console.error("Error incrementing coupon usage:", error)
+    logger.error("Error incrementing coupon usage:", error)
     throw error
   }
 }
@@ -241,7 +242,7 @@ export async function getCouponByCode(
 
     return coupon
   } catch (error) {
-    console.error("Error fetching coupon:", error)
+    logger.error("Error fetching coupon:", error)
     return null
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { promisify } from "util"
 import dns from "dns"
+import { logger } from "@/lib/logger"
 
 // Promisify DNS lookup functions
 const resolveCname = promisify(dns.resolveCname)
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log("🔍 Starting domain status check cron job...")
+    logger.info("🔍 Starting domain status check cron job...")
 
     // Find all tenants with custom domains that need checking
     const tenantsToCheck = await prisma.tenant.findMany({
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log(`📋 Found ${tenantsToCheck.length} domains to check`)
+    logger.info(`📋 Found ${tenantsToCheck.length} domains to check`)
 
     const results: DomainCheckResult[] = []
 
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
             verified = true
             result.updated = true
 
-            console.log(
+            logger.info(
               `✅ Domain verified: ${tenant.customDomain} (${tenant.slug})`
             )
 
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
             tenant.customDomainStatus === "FAILED"
           ) {
             // Keep as PENDING/FAILED - no change
-            console.log(
+            logger.info(
               `⏳ Domain still pending: ${tenant.customDomain} (${tenant.slug})`
             )
           } else if (tenant.customDomainStatus === "VERIFYING") {
@@ -176,7 +177,7 @@ export async function GET(request: NextRequest) {
             newStatus = "FAILED"
             result.updated = true
 
-            console.log(
+            logger.info(
               `❌ Domain verification failed: ${tenant.customDomain} (${tenant.slug})`
             )
 
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
 
         result.newStatus = newStatus
       } catch (error: any) {
-        console.error(
+        logger.error(
           `Error checking domain ${tenant.customDomain}:`,
           error.message
         )
@@ -209,7 +210,7 @@ export async function GET(request: NextRequest) {
     ).length
     const updated = results.filter((r) => r.updated).length
 
-    console.log(
+    logger.info(
       `✅ Domain check complete: ${verified} verified, ${failed} failed, ${pending} pending (${updated} updated)`
     )
 
@@ -236,7 +237,7 @@ export async function GET(request: NextRequest) {
       })),
     })
   } catch (error: any) {
-    console.error("Domain status check cron job failed:", error)
+    logger.error("Domain status check cron job failed:", error)
     return NextResponse.json(
       {
         success: false,

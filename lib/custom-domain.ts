@@ -1,5 +1,6 @@
 import { headers } from "next/headers"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export interface TenantInfo {
   id: string
@@ -22,7 +23,7 @@ export async function getTenantFromRequest(): Promise<TenantInfo | null> {
 
     // Case 1: Custom domain request
     if (isCustomDomain && customDomain) {
-      console.log(`🔍 Looking up tenant for custom domain: ${customDomain}`)
+      logger.info(`🔍 Looking up tenant for custom domain: ${customDomain}`)
 
       const tenant = await prisma.tenant.findFirst({
         where: {
@@ -39,20 +40,20 @@ export async function getTenantFromRequest(): Promise<TenantInfo | null> {
       })
 
       if (tenant) {
-        console.log(`✅ Found tenant: ${tenant.slug} (${tenant.name})`)
+        logger.info(`✅ Found tenant: ${tenant.slug} (${tenant.name})`)
         return {
           ...tenant,
           isCustomDomain: true,
         }
       }
 
-      console.log(`❌ No active tenant found for custom domain: ${customDomain}`)
+      logger.info(`❌ No active tenant found for custom domain: ${customDomain}`)
       return null
     }
 
     // Case 2: Subdomain request
     if (tenantSlug) {
-      console.log(`🔍 Looking up tenant for subdomain: ${tenantSlug}`)
+      logger.info(`🔍 Looking up tenant for subdomain: ${tenantSlug}`)
 
       const tenant = await prisma.tenant.findUnique({
         where: {
@@ -68,22 +69,22 @@ export async function getTenantFromRequest(): Promise<TenantInfo | null> {
       })
 
       if (tenant) {
-        console.log(`✅ Found tenant: ${tenant.slug} (${tenant.name})`)
+        logger.info(`✅ Found tenant: ${tenant.slug} (${tenant.name})`)
         return {
           ...tenant,
           isCustomDomain: false,
         }
       }
 
-      console.log(`❌ No active tenant found for subdomain: ${tenantSlug}`)
+      logger.info(`❌ No active tenant found for subdomain: ${tenantSlug}`)
       return null
     }
 
     // Case 3: Main domain (stores.stepperslife.com)
-    console.log("📍 Main domain request - no tenant")
+    logger.info("📍 Main domain request - no tenant")
     return null
   } catch (error) {
-    console.error("Error getting tenant from request:", error)
+    logger.error("Error getting tenant from request:", error)
     return null
   }
 }
@@ -108,7 +109,7 @@ export async function getCustomDomainInfo(tenantId: string) {
 
     return tenant
   } catch (error) {
-    console.error("Error getting custom domain info:", error)
+    logger.error("Error getting custom domain info:", error)
     return null
   }
 }
@@ -130,7 +131,7 @@ export async function isCustomDomainAvailable(
 
     return !existingTenant
   } catch (error) {
-    console.error("Error checking custom domain availability:", error)
+    logger.error("Error checking custom domain availability:", error)
     return false
   }
 }
@@ -158,7 +159,7 @@ export async function getTenantByCustomDomain(domain: string) {
 
     return tenant
   } catch (error) {
-    console.error("Error getting tenant by custom domain:", error)
+    logger.error("Error getting tenant by custom domain:", error)
     return null
   }
 }

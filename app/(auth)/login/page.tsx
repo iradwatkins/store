@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -14,7 +14,6 @@ const emailSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -49,7 +48,7 @@ function LoginForm() {
 
       setEmailSent(true)
       setIsLoading(false)
-    } catch (err) {
+    } catch {
       setError("Something went wrong")
       setIsLoading(false)
     }

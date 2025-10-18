@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 
 export async function GET(request: Request) {
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ orders: formattedOrders })
   } catch (error) {
-    console.error("Error fetching orders:", error)
+    logger.error("Error fetching orders:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to fetch orders",

@@ -104,7 +104,7 @@ export default function OnboardPage() {
           setSlugAvailable(false)
           setSlugError(result.error || "This subdomain is not available")
         }
-      } catch (error) {
+      } catch {
         setSlugError("Failed to check availability")
         setSlugAvailable(false)
       } finally {
@@ -226,7 +226,7 @@ export default function OnboardPage() {
           {currentStep === 1 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">Let's set up your store</h2>
+                <h2 className="text-3xl font-bold text-gray-900">Let&apos;s set up your store</h2>
                 <p className="mt-2 text-gray-600">Tell us about your business</p>
               </div>
 
@@ -427,7 +427,7 @@ export default function OnboardPage() {
               <div className="text-6xl">💳</div>
               <h2 className="text-3xl font-bold text-gray-900">Payment Setup</h2>
               <p className="text-gray-600">Stripe integration coming soon...</p>
-              <p className="text-sm text-gray-500">For now, we'll create your tenant with the selected plan.</p>
+              <p className="text-sm text-gray-500">For now, we&apos;ll create your tenant with the selected plan.</p>
             </div>
           )}
 
@@ -435,7 +435,7 @@ export default function OnboardPage() {
           {currentStep === 5 && (
             <div className="space-y-6 text-center py-12">
               <div className="text-6xl">🎉</div>
-              <h2 className="text-3xl font-bold text-gray-900">You're all set!</h2>
+              <h2 className="text-3xl font-bold text-gray-900">You&apos;re all set!</h2>
               <p className="text-gray-600">
                 Your store <span className="font-semibold">{data.name}</span> is ready
               </p>

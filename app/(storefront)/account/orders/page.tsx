@@ -36,7 +36,7 @@ type Order = {
 }
 
 export default function CustomerOrdersPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -51,7 +51,7 @@ export default function CustomerOrdersPage() {
     if (status === "authenticated") {
       fetchOrders()
     }
-  }, [status])
+  }, [status, router])
 
   const fetchOrders = async () => {
     try {
@@ -185,7 +185,7 @@ export default function CustomerOrdersPage() {
               />
             </svg>
             <h3 className="mt-4 text-lg font-medium text-gray-900">No orders yet</h3>
-            <p className="mt-2 text-gray-500">When you place orders, they'll appear here</p>
+            <p className="mt-2 text-gray-500">When you place orders, they&apos;ll appear here</p>
             <div className="mt-6">
               <Link
                 href="/"

@@ -507,13 +507,24 @@ model StoreOrderItem {
   id           String         @id @default(cuid())
   storeOrderId String
   productId    String
+  
+  // OLD VARIANT SYSTEM (backward compatibility)
   variantId    String?
+  variantName  String?
+  
+  // NEW MULTI-VARIANT SYSTEM
+  variantCombinationId String? // Links to VariantCombination
+  variantDetails       Json?   // Store full variant details: {"SIZE": "Large", "COLOR": "Red"}
+  
   name         String
   sku          String?
   price        Decimal        @db.Decimal(10, 2)
   quantity     Int
-  variantName  String?
   imageUrl     String?
+  
+  // Store selected add-ons with this order item
+  addons       Json?          // [{"addonId": "...", "name": "Gift Wrap", "price": 5.00, "quantity": 1}]
+  
   createdAt    DateTime       @default(now())
   review       ProductReview?
   product      Product        @relation(fields: [productId], references: [id])

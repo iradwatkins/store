@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 export default async function AuthRedirectPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string }
+  searchParams: Promise<{ callbackUrl?: string }>
 }) {
   const session = await auth()
 
@@ -13,8 +13,11 @@ export default async function AuthRedirectPage({
     redirect("/login")
   }
 
+  // Await the searchParams since they're now async in Next.js 15
+  const resolvedSearchParams = await searchParams
+  
   // If there's a specific callback URL (not just "/"), use it
-  const callbackUrl = searchParams.callbackUrl
+  const callbackUrl = resolvedSearchParams.callbackUrl
   if (callbackUrl && callbackUrl !== "/" && callbackUrl !== "/auth-redirect") {
     redirect(callbackUrl)
   }

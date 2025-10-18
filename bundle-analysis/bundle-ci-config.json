@@ -1,0 +1,25 @@
+{
+  "sizeRegression": {
+    "maxIncrease": 10240,
+    "maxIncreasePercent": 5,
+    "failOnRegression": true
+  },
+  "performanceBudgets": {
+    "enforce": true,
+    "failOnViolation": true
+  },
+  "notifications": {
+    "slack": {
+      "enabled": false,
+      "threshold": 20480
+    },
+    "github": {
+      "enabled": false,
+      "prComments": true
+    }
+  },
+  "trends": {
+    "analyzePeriod": 30,
+    "alertThreshold": 51200
+  }
+}

@@ -3,17 +3,32 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PORT=3008 next dev -p 3008",
-    "build": "next build",
-    "start": "PORT=3008 next start -p 3008",
+    "dev": "npm run env:check && PORT=3008 next dev -p 3008",
+    "build": "npm run validate && npm run env:validate && next build",
+    "build:unsafe": "next build",
+    "start": "npm run env:check && PORT=3008 next start -p 3008",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/seed.ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --project tsconfig.validation.json --noEmit",
+    "validate": "npm run env:check && npm run type-check && npm run lint",
+    "validate:fix": "npm run env:check && npm run type-check && npm run lint:fix",
+    "pre-commit": "npm run validate",
+    "env:validate": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/validate-env.ts validate",
+    "env:list": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/validate-env.ts list",
+    "env:check": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/validate-env.ts check",
+    "analyze": "ANALYZE=true npm run build",
+    "analyze:server": "ANALYZE=true npm run build && npx serve out",
+    "bundle:size": "npm run build && node scripts/bundle-size-check.js",
+    "bundle:report": "npm run build && node scripts/bundle-report.js",
+    "bundle:performance": "npm run build && node scripts/bundle-performance.js",
+    "bundle:full": "npm run bundle:size && npm run bundle:performance && npm run bundle:report",
+    "bundle:ci": "node scripts/bundle-ci-check.js"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/seed.ts"
@@ -55,6 +70,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.5.6",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

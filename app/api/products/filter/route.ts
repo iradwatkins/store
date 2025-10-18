@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ products: formattedProducts })
   } catch (error) {
-    console.error("Filter error:", error)
+    logger.error("Filter error:", error)
     return NextResponse.json(
       { error: "Failed to filter products" },
       { status: 500 }

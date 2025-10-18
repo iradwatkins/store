@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // Validation schema
 const respondSchema = z.object({
@@ -87,7 +88,7 @@ export async function POST(
       )
     }
 
-    console.error("Error responding to review:", error)
+    logger.error("Error responding to review:", error)
     return NextResponse.json(
       { error: "Failed to respond to review" },
       { status: 500 }

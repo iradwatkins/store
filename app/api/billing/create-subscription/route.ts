@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import Stripe from "stripe"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -196,7 +197,7 @@ export async function POST(request: Request) {
       quotas: quotas,
     })
   } catch (error) {
-    console.error("Error creating subscription:", error)
+    logger.error("Error creating subscription:", error)
 
     if (error instanceof Stripe.errors.StripeError) {
       return NextResponse.json(

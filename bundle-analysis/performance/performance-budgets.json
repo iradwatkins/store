@@ -1,0 +1,22 @@
+{
+  "totalSize": {
+    "max": 256000,
+    "warning": 204800,
+    "description": "Total JavaScript bundle size"
+  },
+  "initialLoadTime": {
+    "max": 3000,
+    "warning": 2000,
+    "description": "Time to load initial bundle on 3G"
+  },
+  "parseTime": {
+    "max": 1000,
+    "warning": 500,
+    "description": "Time to parse JavaScript"
+  },
+  "chunkSize": {
+    "max": 102400,
+    "warning": 76800,
+    "description": "Individual chunk size"
+  }
+}

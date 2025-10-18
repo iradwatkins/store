@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { storageHelpers } from "@/lib/storage"
+import { logger } from "@/lib/logger"
 import {
   validateImage,
   generateImageSizes,
@@ -156,7 +157,7 @@ export async function POST(
       const originalSize = buffer.length
       const optimizedSize = optimizedSizes.large.size
       const savings = calculateCompressionRatio(originalSize, optimizedSize)
-      console.log(
+      logger.info(
         `Image optimized: ${file.name} | Saved ${savings.savedPercent}% (${savings.savedBytes} bytes)`
       )
 
@@ -192,7 +193,7 @@ export async function POST(
       })
     }
 
-    console.log(`${isAdmin ? 'Admin' : 'Vendor'} uploaded ${uploadedImages.length} images to product: ${product.name}`)
+    logger.info(`${isAdmin ? 'Admin' : 'Vendor'} uploaded ${uploadedImages.length} images to product: ${product.name}`)
 
     return NextResponse.json(
       {
@@ -202,7 +203,7 @@ export async function POST(
       { status: 201 }
     )
   } catch (error) {
-    console.error("Image upload error:", error)
+    logger.error("Image upload error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

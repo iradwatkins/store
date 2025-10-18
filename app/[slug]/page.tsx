@@ -4,17 +4,20 @@ import prisma from "@/lib/db"
 export default async function StoreSlugRedirect({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
+  // Await params since they're now async in Next.js 15
+  const resolvedParams = await params
+  
   // Check if this slug exists as a store
   const store = await prisma.vendorStore.findUnique({
-    where: { slug: params.slug },
+    where: { slug: resolvedParams.slug },
     select: { slug: true },
   })
 
   // If store exists, redirect to proper store route
   if (store) {
-    redirect(`/store/${params.slug}`)
+    redirect(`/store/${resolvedParams.slug}`)
   }
 
   // Otherwise, show 404

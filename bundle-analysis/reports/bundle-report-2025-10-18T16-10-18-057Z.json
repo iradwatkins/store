@@ -1,0 +1,877 @@
+{
+  "metadata": {
+    "generatedAt": "2025-10-18T16:10:18.057Z",
+    "gitBranch": "master",
+    "gitCommit": "e796817",
+    "nodeVersion": "v22.17.0",
+    "platform": "darwin"
+  },
+  "analysis": {
+    "timestamp": "2025-10-18T16:09:43.452Z",
+    "totalSize": 2029976,
+    "gzippedSize": 0,
+    "pages": {
+      "/_error": {
+        "path": "pages/_error.js",
+        "size": 0,
+        "chunks": []
+      },
+      "/_app": {
+        "path": "pages/_app.js",
+        "size": 0,
+        "chunks": []
+      },
+      "/_document": {
+        "path": "pages/_document.js",
+        "size": 0,
+        "chunks": []
+      }
+    },
+    "chunks": {
+      "JavaScript": {
+        "files": [
+          {
+            "name": "JK5i9E0RpO7iLqWEMnvf9/_buildManifest.js",
+            "size": 4196,
+            "sizeFormatted": "4.1 KB"
+          },
+          {
+            "name": "JK5i9E0RpO7iLqWEMnvf9/_ssgManifest.js",
+            "size": 77,
+            "sizeFormatted": "77 B"
+          },
+          {
+            "name": "chunks/1255-3fcee0eccbc1e64f.js",
+            "size": 171947,
+            "sizeFormatted": "167.92 KB"
+          },
+          {
+            "name": "chunks/1356-55692d5ef6a323df.js",
+            "size": 13552,
+            "sizeFormatted": "13.23 KB"
+          },
+          {
+            "name": "chunks/2619-04bc32f026a0d946.js",
+            "size": 8564,
+            "sizeFormatted": "8.36 KB"
+          },
+          {
+            "name": "chunks/273-e552fa1f2037036c.js",
+            "size": 111308,
+            "sizeFormatted": "108.7 KB"
+          },
+          {
+            "name": "chunks/2923-549afcd75c81022b.js",
+            "size": 12748,
+            "sizeFormatted": "12.45 KB"
+          },
+          {
+            "name": "chunks/4223-1fb936b410e313d3.js",
+            "size": 61304,
+            "sizeFormatted": "59.87 KB"
+          },
+          {
+            "name": "chunks/4bd1b696-182b6b13bdad92e3.js",
+            "size": 173025,
+            "sizeFormatted": "168.97 KB"
+          },
+          {
+            "name": "chunks/6978-09fbf54fd808294d.js",
+            "size": 326503,
+            "sizeFormatted": "318.85 KB"
+          },
+          {
+            "name": "chunks/7296-fdf7647204a14c26.js",
+            "size": 85364,
+            "sizeFormatted": "83.36 KB"
+          },
+          {
+            "name": "chunks/7730-7a4d577356d4f32c.js",
+            "size": 8186,
+            "sizeFormatted": "7.99 KB"
+          },
+          {
+            "name": "chunks/8347-e70c78ef28ff2ce0.js",
+            "size": 8438,
+            "sizeFormatted": "8.24 KB"
+          },
+          {
+            "name": "chunks/app/(admin)/admin/orders/page-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/(admin)/admin/page-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/(admin)/admin/stores/[storeId]/products/page-a1b62ebae8aecf24.js",
+            "size": 10705,
+            "sizeFormatted": "10.45 KB"
+          },
+          {
+            "name": "chunks/app/(admin)/admin/stores/page-f88566844d67b91a.js",
+            "size": 5352,
+            "sizeFormatted": "5.23 KB"
+          },
+          {
+            "name": "chunks/app/(admin)/admin/users/page-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/(admin)/layout-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/(auth)/auth-redirect/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/(auth)/login/page-efd2363f1416588e.js",
+            "size": 5934,
+            "sizeFormatted": "5.79 KB"
+          },
+          {
+            "name": "chunks/app/(auth)/register/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/(public)/for-sellers/page-811e87000ac712cc.js",
+            "size": 24878,
+            "sizeFormatted": "24.29 KB"
+          },
+          {
+            "name": "chunks/app/(public)/how-it-works/page-81aade78bb4191c9.js",
+            "size": 20875,
+            "sizeFormatted": "20.39 KB"
+          },
+          {
+            "name": "chunks/app/(public)/onboard/page-50d90166321f4f42.js",
+            "size": 12417,
+            "sizeFormatted": "12.13 KB"
+          },
+          {
+            "name": "chunks/app/(public)/onboarding/page-5a3b085a159b58bc.js",
+            "size": 7183,
+            "sizeFormatted": "7.01 KB"
+          },
+          {
+            "name": "chunks/app/(public)/pricing/page-9bf68614c560b08f.js",
+            "size": 12964,
+            "sizeFormatted": "12.66 KB"
+          },
+          {
+            "name": "chunks/app/(public)/tenant-demo/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/(storefront)/account/orders/[id]/page-f9aed237005323e1.js",
+            "size": 10958,
+            "sizeFormatted": "10.7 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/account/orders/page-e7da96e9941a519a.js",
+            "size": 9127,
+            "sizeFormatted": "8.91 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/account/page-079aa221bf388f8a.js",
+            "size": 18784,
+            "sizeFormatted": "18.34 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/cart/page-09f7c8deec418033.js",
+            "size": 9309,
+            "sizeFormatted": "9.09 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/category/[slug]/page-811279280305ad46.js",
+            "size": 241,
+            "sizeFormatted": "241 B"
+          },
+          {
+            "name": "chunks/app/(storefront)/checkout/page-0833e03ca2599293.js",
+            "size": 25834,
+            "sizeFormatted": "25.23 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/checkout/success/page-927c879911aefe31.js",
+            "size": 8038,
+            "sizeFormatted": "7.85 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/products/[productId]/review/page-f46791355217f8ee.js",
+            "size": 11942,
+            "sizeFormatted": "11.66 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/products/page-c4bb84ae83f97bb5.js",
+            "size": 9369,
+            "sizeFormatted": "9.15 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/search/page-3bc7b9b7c30d2603.js",
+            "size": 9052,
+            "sizeFormatted": "8.84 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/store/[slug]/page-761509738110739c.js",
+            "size": 3322,
+            "sizeFormatted": "3.24 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/store/[slug]/products/[productSlug]/page-830152b2709e1ad5.js",
+            "size": 27038,
+            "sizeFormatted": "26.4 KB"
+          },
+          {
+            "name": "chunks/app/(storefront)/stores/page-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/(tenant)/tenant-dashboard/billing/page-4117ea7ab7f24953.js",
+            "size": 8637,
+            "sizeFormatted": "8.43 KB"
+          },
+          {
+            "name": "chunks/app/(tenant)/tenant-dashboard/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/(vendor)/create-store/page-2088f573e238f673.js",
+            "size": 12700,
+            "sizeFormatted": "12.4 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/analytics/page-df84ea0140c0d02d.js",
+            "size": 14366,
+            "sizeFormatted": "14.03 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/layout-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/orders/[id]/page-268497d44c44c88e.js",
+            "size": 7728,
+            "sizeFormatted": "7.55 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/orders/page-ee15979f43d48a7a.js",
+            "size": 6291,
+            "sizeFormatted": "6.14 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/products/[id]/edit/page-4a94e10a0da1c01f.js",
+            "size": 27181,
+            "sizeFormatted": "26.54 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/products/new/page-fb74a5b1701d5379.js",
+            "size": 27503,
+            "sizeFormatted": "26.86 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/products/page-0796e5f2e2b5a819.js",
+            "size": 25498,
+            "sizeFormatted": "24.9 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/reviews/page-54681399cc6f47d0.js",
+            "size": 7642,
+            "sizeFormatted": "7.46 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/settings/page-0cfd0aaaa94e93d5.js",
+            "size": 8233,
+            "sizeFormatted": "8.04 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/settings/payment/page-274d06f865a1eb6a.js",
+            "size": 12124,
+            "sizeFormatted": "11.84 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/dashboard/settings/shipping/page-027fa331c48b4902.js",
+            "size": 7745,
+            "sizeFormatted": "7.56 KB"
+          },
+          {
+            "name": "chunks/app/(vendor)/store-created/page-472c15b75e3df224.js",
+            "size": 12947,
+            "sizeFormatted": "12.64 KB"
+          },
+          {
+            "name": "chunks/app/[slug]/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/_not-found/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/account/orders/[id]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/account/orders/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/admin/products/[productId]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/admin/stores/[storeId]/products/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/admin/stores/[storeId]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/admin/stores/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/auth/[...nextauth]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/billing/cancel-subscription/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/billing/change-plan/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/billing/create-subscription/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/billing/customer-portal/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cart/add/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cart/apply-coupon/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cart/remove/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cart/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cart/update/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/checkout/create-payment-intent/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/checkout/create-square-payment/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cron/check-domain-status/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cron/check-low-stock/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cron/renew-ssl-certificates/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cron/reset-monthly-usage/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/cron/send-review-requests/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/analytics/daily-sales/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/analytics/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/orders/[id]/fulfill/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/orders/[id]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/orders/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/reviews/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/settings/payment/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/dashboard/settings/shipping/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/health/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/orders/confirm/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/orders/create-cash-order/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/products/filter/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/create/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/eligibility/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/product/[productId]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/review/[reviewId]/flag/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/review/[reviewId]/respond/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/review/[reviewId]/vote/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/reviews/upload-photos/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/search/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/store-settings/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/[id]/domain/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/[id]/domain/verify/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/[id]/nginx/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/[id]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/[id]/ssl/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/check-slug/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/tenants/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/coupons/[id]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/coupons/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/addons/[addonId]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/addons/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/duplicate/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/images/[imageId]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/images/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/variants/[variantId]/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/variants/bulk/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/variants/combinations/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/[id]/variants/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/products/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/vendor/stores/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/webhooks/stripe/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/api/webhooks/stripe/subscriptions/route-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/app/error-d325abf0c105d0b8.js",
+            "size": 7225,
+            "sizeFormatted": "7.06 KB"
+          },
+          {
+            "name": "chunks/app/global-error-610f8b5bc0e8e1cd.js",
+            "size": 6930,
+            "sizeFormatted": "6.77 KB"
+          },
+          {
+            "name": "chunks/app/layout-347e918492fdc39d.js",
+            "size": 32916,
+            "sizeFormatted": "32.14 KB"
+          },
+          {
+            "name": "chunks/app/not-found-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/page-e27888681a931002.js",
+            "size": 11262,
+            "sizeFormatted": "11 KB"
+          },
+          {
+            "name": "chunks/app/review/[token]/page-135568761d4ba980.js",
+            "size": 7444,
+            "sizeFormatted": "7.27 KB"
+          },
+          {
+            "name": "chunks/app/review/thank-you/page-fa70afdac8074a9b.js",
+            "size": 221,
+            "sizeFormatted": "221 B"
+          },
+          {
+            "name": "chunks/app/sign-in/page-51d45da13ffa9d24.js",
+            "size": 3751,
+            "sizeFormatted": "3.66 KB"
+          },
+          {
+            "name": "chunks/app/theme-demo/page-fe5ebec65b392a96.js",
+            "size": 15875,
+            "sizeFormatted": "15.5 KB"
+          },
+          {
+            "name": "chunks/app/vendor/register/page-b3ec24cfec1498cd.js",
+            "size": 504,
+            "sizeFormatted": "504 B"
+          },
+          {
+            "name": "chunks/framework-c85341a997bf2e4b.js",
+            "size": 189787,
+            "sizeFormatted": "185.34 KB"
+          },
+          {
+            "name": "chunks/main-2036cf8294776296.js",
+            "size": 127964,
+            "sizeFormatted": "124.96 KB"
+          },
+          {
+            "name": "chunks/main-app-0e9eab2632d56c33.js",
+            "size": 527,
+            "sizeFormatted": "527 B"
+          },
+          {
+            "name": "chunks/pages/_app-4b3fb5e477a0267f.js",
+            "size": 241,
+            "sizeFormatted": "241 B"
+          },
+          {
+            "name": "chunks/pages/_error-c970d8b55ace1b48.js",
+            "size": 224,
+            "sizeFormatted": "224 B"
+          },
+          {
+            "name": "chunks/polyfills-42372ed130431b0a.js",
+            "size": 112594,
+            "sizeFormatted": "109.96 KB"
+          },
+          {
+            "name": "chunks/webpack-0d9915db177c339a.js",
+            "size": 3276,
+            "sizeFormatted": "3.2 KB"
+          }
+        ],
+        "totalSize": 1966996,
+        "count": 143
+      },
+      "CSS": {
+        "files": [
+          {
+            "name": "css/35c15485a2c54365.css",
+            "size": 62980,
+            "sizeFormatted": "61.5 KB"
+          }
+        ],
+        "totalSize": 62980,
+        "count": 1
+      }
+    },
+    "warnings": [
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/1255-3fcee0eccbc1e64f.js (167.92 KB)",
+        "file": "chunks/1255-3fcee0eccbc1e64f.js",
+        "size": 171947
+      },
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/273-e552fa1f2037036c.js (108.7 KB)",
+        "file": "chunks/273-e552fa1f2037036c.js",
+        "size": 111308
+      },
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/4bd1b696-182b6b13bdad92e3.js (168.97 KB)",
+        "file": "chunks/4bd1b696-182b6b13bdad92e3.js",
+        "size": 173025
+      },
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/6978-09fbf54fd808294d.js (318.85 KB)",
+        "file": "chunks/6978-09fbf54fd808294d.js",
+        "size": 326503
+      },
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/framework-c85341a997bf2e4b.js (185.34 KB)",
+        "file": "chunks/framework-c85341a997bf2e4b.js",
+        "size": 189787
+      },
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/main-2036cf8294776296.js (124.96 KB)",
+        "file": "chunks/main-2036cf8294776296.js",
+        "size": 127964
+      },
+      {
+        "type": "large-file",
+        "message": "Large file detected: chunks/polyfills-42372ed130431b0a.js (109.96 KB)",
+        "file": "chunks/polyfills-42372ed130431b0a.js",
+        "size": 112594
+      }
+    ],
+    "recommendations": [
+      {
+        "type": "bundle-size",
+        "priority": "high",
+        "message": "Total bundle size is very large. Consider code splitting and lazy loading.",
+        "suggestion": "Implement dynamic imports for large components and use Next.js automatic code splitting."
+      },
+      {
+        "type": "large-js-chunks",
+        "priority": "medium",
+        "message": "Found 7 large JavaScript chunks.",
+        "suggestion": "Consider splitting large components and using dynamic imports.",
+        "files": [
+          "chunks/1255-3fcee0eccbc1e64f.js",
+          "chunks/273-e552fa1f2037036c.js",
+          "chunks/4bd1b696-182b6b13bdad92e3.js",
+          "chunks/6978-09fbf54fd808294d.js",
+          "chunks/framework-c85341a997bf2e4b.js",
+          "chunks/main-2036cf8294776296.js",
+          "chunks/polyfills-42372ed130431b0a.js"
+        ]
+      },
+      {
+        "type": "compression",
+        "priority": "medium",
+        "message": "No gzip compression detected in build output.",
+        "suggestion": "Enable gzip compression in your deployment configuration or Next.js config."
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "type": "bundle-size",
+      "priority": "high",
+      "message": "Total bundle size is very large. Consider code splitting and lazy loading.",
+      "suggestion": "Implement dynamic imports for large components and use Next.js automatic code splitting."
+    },
+    {
+      "type": "large-js-chunks",
+      "priority": "medium",
+      "message": "Found 7 large JavaScript chunks.",
+      "suggestion": "Consider splitting large components and using dynamic imports.",
+      "files": [
+        "chunks/1255-3fcee0eccbc1e64f.js",
+        "chunks/273-e552fa1f2037036c.js",
+        "chunks/4bd1b696-182b6b13bdad92e3.js",
+        "chunks/6978-09fbf54fd808294d.js",
+        "chunks/framework-c85341a997bf2e4b.js",
+        "chunks/main-2036cf8294776296.js",
+        "chunks/polyfills-42372ed130431b0a.js"
+      ]
+    },
+    {
+      "type": "compression",
+      "priority": "medium",
+      "message": "No gzip compression detected in build output.",
+      "suggestion": "Enable gzip compression in your deployment configuration or Next.js config."
+    }
+  ],
+  "performance": {
+    "estimatedLoadTimes": {
+      "3G": "9.68s",
+      "4G": "1.55s",
+      "Cable": "0.62s"
+    },
+    "bundleSizeRating": "Critical",
+    "performanceScore": 0
+  },
+  "comparison": null
+}

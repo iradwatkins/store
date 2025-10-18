@@ -2,6 +2,7 @@ import { exec } from "child_process"
 import { promisify } from "util"
 import fs from "fs/promises"
 import path from "path"
+import { logger } from "@/lib/logger"
 
 const execAsync = promisify(exec)
 
@@ -185,7 +186,7 @@ export async function writeNginxConfig(
     const tempPath = `/tmp/nginx-${domain}-${Date.now()}.conf`
     await fs.writeFile(tempPath, configContent, "utf-8")
 
-    console.log(`📝 Writing Nginx config for ${domain}...`)
+    logger.info(`📝 Writing Nginx config for ${domain}...`)
 
     // Move to sites-available with sudo
     await execAsync(`sudo mv ${tempPath} ${sitesAvailablePath}`, {
@@ -198,19 +199,19 @@ export async function writeNginxConfig(
     // Create symlink in sites-enabled if it doesn't exist
     try {
       await fs.access(sitesEnabledPath)
-      console.log(`Symlink already exists: ${sitesEnabledPath}`)
+      logger.info(`Symlink already exists: ${sitesEnabledPath}`)
     } catch {
       await execAsync(
         `sudo ln -s ${sitesAvailablePath} ${sitesEnabledPath}`,
         { timeout: 5000 }
       )
-      console.log(`Created symlink: ${sitesEnabledPath}`)
+      logger.info(`Created symlink: ${sitesEnabledPath}`)
     }
 
     // Test Nginx configuration
     try {
       const { stdout } = await execAsync("sudo nginx -t", { timeout: 10000 })
-      console.log("Nginx test passed:", stdout)
+      logger.info("Nginx test passed:", { data: stdout })
     } catch (error: any) {
       // Rollback on test failure
       await execAsync(`sudo rm -f ${sitesAvailablePath} ${sitesEnabledPath}`, {
@@ -231,7 +232,7 @@ export async function writeNginxConfig(
       configPath: sitesAvailablePath,
     }
   } catch (error: any) {
-    console.error(`Failed to write Nginx config for ${domain}:`, error)
+    logger.error(`Failed to write Nginx config for ${domain}:`, error ? error : undefined)
 
     return {
       success: false,
@@ -250,34 +251,34 @@ export async function removeNginxConfig(domain: string): Promise<NginxResult> {
     const sitesAvailablePath = `/etc/nginx/sites-available/${configFileName}`
     const sitesEnabledPath = `/etc/nginx/sites-enabled/${configFileName}`
 
-    console.log(`🗑️ Removing Nginx config for ${domain}...`)
+    logger.info(`🗑️ Removing Nginx config for ${domain}...`)
 
     // Remove symlink from sites-enabled
     try {
       await execAsync(`sudo rm -f ${sitesEnabledPath}`, { timeout: 5000 })
-      console.log(`Removed symlink: ${sitesEnabledPath}`)
+      logger.info(`Removed symlink: ${sitesEnabledPath}`)
     } catch (error) {
-      console.log("Symlink doesn't exist or already removed")
+      logger.info("Symlink doesn't exist or already removed")
     }
 
     // Remove config from sites-available
     try {
       await execAsync(`sudo rm -f ${sitesAvailablePath}`, { timeout: 5000 })
-      console.log(`Removed config: ${sitesAvailablePath}`)
+      logger.info(`Removed config: ${sitesAvailablePath}`)
     } catch (error) {
-      console.log("Config doesn't exist or already removed")
+      logger.info("Config doesn't exist or already removed")
     }
 
     // Test Nginx configuration
     const { stdout } = await execAsync("sudo nginx -t", { timeout: 10000 })
-    console.log("Nginx test passed:", stdout)
+    logger.info("Nginx test passed:", { data: stdout })
 
     return {
       success: true,
       message: `Nginx configuration removed for ${domain}`,
     }
   } catch (error: any) {
-    console.error(`Failed to remove Nginx config for ${domain}:`, error)
+    logger.error(`Failed to remove Nginx config for ${domain}:`, error ? error : undefined)
 
     return {
       success: false,
@@ -292,17 +293,17 @@ export async function removeNginxConfig(domain: string): Promise<NginxResult> {
  */
 export async function reloadNginx(): Promise<NginxResult> {
   try {
-    console.log("🔄 Reloading Nginx...")
+    logger.info("🔄 Reloading Nginx...")
 
     // Test configuration first
     const testResult = await execAsync("sudo nginx -t", { timeout: 10000 })
-    console.log("Nginx test:", testResult.stdout)
+    logger.info("Nginx test:", { data: testResult.stdout })
 
     // Reload Nginx
     const reloadResult = await execAsync("sudo systemctl reload nginx", {
       timeout: 10000,
     })
-    console.log("Nginx reload:", reloadResult.stdout)
+    logger.info("Nginx reload:", { data: reloadResult.stdout })
 
     return {
       success: true,
@@ -310,7 +311,7 @@ export async function reloadNginx(): Promise<NginxResult> {
       stdout: reloadResult.stdout,
     }
   } catch (error: any) {
-    console.error("Failed to reload Nginx:", error)
+    logger.error("Failed to reload Nginx:", error)
 
     return {
       success: false,
@@ -374,7 +375,7 @@ export async function updateNginxConfigWithSSL(
   upstreamPort: number = 3008
 ): Promise<NginxResult> {
   try {
-    console.log(`🔐 Updating Nginx config with SSL for ${domain}...`)
+    logger.info(`🔐 Updating Nginx config with SSL for ${domain}...`)
 
     // Generate new config with SSL
     const newConfig = generateNginxConfig({

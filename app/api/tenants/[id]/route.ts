@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 // Validation schema for tenant updates
 const updateTenantSchema = z.object({
@@ -64,7 +65,7 @@ export async function GET(
 
     return NextResponse.json({ tenant })
   } catch (error) {
-    console.error("Error fetching tenant:", error)
+    logger.error("Error fetching tenant:", error)
     return NextResponse.json({ error: "Failed to fetch tenant" }, { status: 500 })
   }
 }
@@ -130,7 +131,7 @@ export async function PATCH(
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
     }
 
-    console.error("Error updating tenant:", error)
+    logger.error("Error updating tenant:", error)
     return NextResponse.json({ error: "Failed to update tenant" }, { status: 500 })
   }
 }
@@ -178,7 +179,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: "Tenant deleted successfully" })
   } catch (error) {
-    console.error("Error deleting tenant:", error)
+    logger.error("Error deleting tenant:", error)
     return NextResponse.json({ error: "Failed to delete tenant" }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // GET /api/admin/stores - Fetch all stores with related data
 export async function GET(request: NextRequest) {
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
       total: stores.length,
     })
   } catch (error) {
-    console.error("Admin get stores error:", error)
+    logger.error("Admin get stores error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
+import { logger } from "@/lib/logger"
 
 // Validation schema for creating variant combinations
 const createCombinationsSchema = z.object({
@@ -147,7 +148,7 @@ export async function POST(
       }
 
       // Step 2: Generate combinations if requested
-      let createdCombinations: any[] = []
+      const createdCombinations: any[] = []
 
       if (generateCombinations) {
         const allCombinations = generateAllCombinations(options)
@@ -225,7 +226,7 @@ export async function POST(
       { status: 201 }
     )
   } catch (error: any) {
-    console.error('Error creating variant combinations:', error)
+    logger.error("Error creating variant combinations:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -298,7 +299,7 @@ export async function GET(
       totalCombinations: product.variantCombinations.length,
     })
   } catch (error: any) {
-    console.error('Error fetching variant combinations:', error)
+    logger.error("Error fetching variant combinations:", error)
     return NextResponse.json(
       { error: 'Failed to fetch variant combinations' },
       { status: 500 }

@@ -440,8 +440,8 @@ export default function ForSellersPage() {
                 </div>
               </div>
               <p className="text-gray-700 italic mb-4">
-                "I went from $500/month to $5,000/month in just 6 months. The analytics tools
-                helped me understand what my customers wanted."
+                &ldquo;I went from $500/month to $5,000/month in just 6 months. The analytics tools
+                helped me understand what my customers wanted.&rdquo;
               </p>
               <div className="flex text-yellow-400">★★★★★</div>
             </div>
@@ -457,8 +457,8 @@ export default function ForSellersPage() {
                 </div>
               </div>
               <p className="text-gray-700 italic mb-4">
-                "Setup was incredibly easy. I had my store live in 15 minutes and made my first
-                sale the same day!"
+                &ldquo;Setup was incredibly easy. I had my store live in 15 minutes and made my first
+                sale the same day!&rdquo;
               </p>
               <div className="flex text-yellow-400">★★★★★</div>
             </div>
@@ -474,8 +474,8 @@ export default function ForSellersPage() {
                 </div>
               </div>
               <p className="text-gray-700 italic mb-4">
-                "The low fees mean I keep more of my profits. Plus, the customer support team is
-                amazing and always there to help."
+                &ldquo;The low fees mean I keep more of my profits. Plus, the customer support team is
+                amazing and always there to help.&rdquo;
               </p>
               <div className="flex text-yellow-400">★★★★★</div>
             </div>

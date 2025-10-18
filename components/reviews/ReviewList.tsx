@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import ReviewCard from "./ReviewCard"
 import { useRouter, useSearchParams } from "next/navigation"
+import { logger } from "@/lib/logger"
 
 interface Review {
   id: string
@@ -60,7 +61,7 @@ export default function ReviewList({
         const data = await response.json()
         setReviews(data.reviews)
       } catch (error) {
-        console.error("Failed to fetch reviews:", error)
+        logger.error("Failed to fetch reviews:", error)
       } finally {
         setIsLoading(false)
       }
@@ -125,7 +126,7 @@ export default function ReviewList({
         alert(data.error || "You have already voted on this review")
       }
     } catch (error) {
-      console.error("Failed to vote:", error)
+      logger.error("Failed to vote:", error)
     }
   }
 
@@ -157,7 +158,7 @@ export default function ReviewList({
         alert(data.error || "You have already voted on this review")
       }
     } catch (error) {
-      console.error("Failed to vote:", error)
+      logger.error("Failed to vote:", error)
     }
   }
 

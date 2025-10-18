@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const updateCouponSchema = z.object({
   description: z.string().optional(),
@@ -55,7 +56,7 @@ export async function GET(
 
     return NextResponse.json({ coupon })
   } catch (error) {
-    console.error("Error fetching coupon:", error)
+    logger.error("Error fetching coupon:", error)
     return NextResponse.json(
       { error: "Failed to fetch coupon" },
       { status: 500 }
@@ -173,7 +174,7 @@ export async function PUT(
       )
     }
 
-    console.error("Error updating coupon:", error)
+    logger.error("Error updating coupon:", error)
     return NextResponse.json(
       { error: "Failed to update coupon" },
       { status: 500 }
@@ -222,7 +223,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: "Coupon deleted successfully" })
   } catch (error) {
-    console.error("Error deleting coupon:", error)
+    logger.error("Error deleting coupon:", error)
     return NextResponse.json(
       { error: "Failed to delete coupon" },
       { status: 500 }

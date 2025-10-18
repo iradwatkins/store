@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // Validation schema
 const flagSchema = z.object({
@@ -89,7 +90,7 @@ export async function POST(
       )
     }
 
-    console.error("Error flagging review:", error)
+    logger.error("Error flagging review:", error)
     return NextResponse.json(
       { error: "Failed to flag review" },
       { status: 500 }

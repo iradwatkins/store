@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
       hasStripe: !!store.stripeAccountId,
     })
   } catch (error) {
-    console.error("Error fetching store settings:", error)
+    logger.error("Error fetching store settings:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

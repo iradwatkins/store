@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-10-18T16:10:25.568Z",
+  "metrics": {
+    "bundleSize": 2029976,
+    "bundleSizeFormatted": "1.94 MB",
+    "checksTotal": 3,
+    "checksPassed": 1,
+    "checksFailed": 1,
+    "checksWarnings": 0,
+    "success": false
+  },
+  "checks": [
+    {
+      "name": "Size Regression",
+      "status": "pass",
+      "message": "Bundle size changed by 0 B (0.0%)",
+      "details": {
+        "currentSize": 2029976,
+        "previousSize": 2029976,
+        "sizeDiff": 0,
+        "percentDiff": 0,
+        "threshold": {
+          "absolute": 10240,
+          "percent": 5
+        }
+      }
+    },
+    {
+      "name": "Performance Budgets",
+      "status": "fail",
+      "message": "4 budget violations detected",
+      "details": {
+        "violations": [
+          {
+            "metric": "totalSize",
+            "actual": 2029976,
+            "budget": 256000,
+            "overage": 1773976
+          },
+          {
+            "metric": "initialLoadTime",
+            "actual": 9979.679870605469,
+            "budget": 3000,
+            "overage": 6979.679870605469
+          },
+          {
+            "metric": "parseTime",
+            "actual": 1920.89453125,
+            "budget": 1000,
+            "overage": 920.89453125
+          },
+          {
+            "metric": "chunkSize",
+            "budget": 102400
+          }
+        ]
+      }
+    },
+    {
+      "name": "Trend Analysis",
+      "status": "skip",
+      "message": "Insufficient historical data for trend analysis"
+    }
+  ],
+  "environment": {
+    "isCI": false,
+    "platform": "darwin",
+    "nodeVersion": "v22.17.0",
+    "ci": {
+      "github": false,
+      "gitlab": false,
+      "travis": false,
+      "circle": false
+    },
+    "git": {
+      "branch": "master",
+      "commit": "e796817"
+    }
+  }
+}

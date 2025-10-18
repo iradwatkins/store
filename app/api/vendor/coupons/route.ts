@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const createCouponSchema = z.object({
   code: z
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error fetching coupons:", error)
+    logger.error("Error fetching coupons:", error)
     return NextResponse.json(
       { error: "Failed to fetch coupons" },
       { status: 500 }
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error("Error creating coupon:", error)
+    logger.error("Error creating coupon:", error)
     return NextResponse.json(
       { error: "Failed to create coupon" },
       { status: 500 }

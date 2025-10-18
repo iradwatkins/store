@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 const createVariantSchema = z.object({
   name: z.string().min(1, "Variant name is required"),
@@ -84,7 +85,7 @@ export async function POST(
       })
     }
 
-    console.log(`${isAdmin ? 'Admin' : 'Vendor'} added variant to product: ${product.name}`)
+    logger.info(`${isAdmin ? 'Admin' : 'Vendor'} added variant to product: ${product.name}`)
 
     return NextResponse.json(
       {
@@ -94,7 +95,7 @@ export async function POST(
       { status: 201 }
     )
   } catch (error) {
-    console.error("Create variant error:", error)
+    logger.error("Create variant error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -1,12 +1,13 @@
 import { headers } from "next/headers"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 /**
  * Get the current tenant based on subdomain from middleware
  * Returns null if no tenant found or on main domain
  */
 export async function getCurrentTenant() {
-  const headersList = headers()
+  const headersList = await headers()
   const tenantSlug = headersList.get("x-tenant-slug")
 
   if (!tenantSlug) {
@@ -44,7 +45,7 @@ export async function getCurrentTenant() {
 
     return tenant
   } catch (error) {
-    console.error("Error fetching tenant:", error)
+    logger.error("Error fetching tenant:", error)
     return null
   }
 }
@@ -117,7 +118,7 @@ export async function getTenantBySlug(slug: string) {
 
     return tenant
   } catch (error) {
-    console.error("Error fetching tenant by slug:", error)
+    logger.error("Error fetching tenant by slug:", error)
     return null
   }
 }

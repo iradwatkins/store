@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto"
+import { randomBytes } from "crypto"
 
 /**
  * Generate a secure, single-use token for review submission
@@ -36,7 +36,7 @@ export function decodeReviewToken(token: string): {
     }
 
     return { orderItemId, isValid: true }
-  } catch (error) {
+  } catch {
     return { orderItemId: null, isValid: false, reason: "Invalid token" }
   }
 }

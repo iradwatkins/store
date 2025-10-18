@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // DELETE /api/admin/stores/[storeId] - Delete a store and all related data
 export async function DELETE(
@@ -56,14 +57,14 @@ export async function DELETE(
     // 7. Shop ratings
     // 8. Store itself
 
-    console.log(`Starting deletion of store: ${store.name} (${store.id})`)
-    console.log(`Store has ${store._count.Product} products and ${store._count.StoreOrder} orders`)
+    logger.info(`Starting deletion of store: ${store.name} (${store.id})`)
+    logger.info(`Store has ${store._count.Product} products and ${store._count.StoreOrder} orders`)
 
     // Delete all reviews for products in this store
     await prisma.productReview.deleteMany({
       where: { vendorStoreId: storeId },
     })
-    console.log("Deleted product reviews")
+    logger.info("Deleted product reviews")
 
     // Delete all order items for orders in this store
     const orderIds = await prisma.storeOrder.findMany({
@@ -77,14 +78,14 @@ export async function DELETE(
           storeOrderId: { in: orderIds.map((o) => o.id) },
         },
       })
-      console.log("Deleted order items")
+      logger.info("Deleted order items")
     }
 
     // Delete all orders
     await prisma.storeOrder.deleteMany({
       where: { vendorStoreId: storeId },
     })
-    console.log("Deleted orders")
+    logger.info("Deleted orders")
 
     // Get all products to delete their related data
     const productIds = await prisma.product.findMany({
@@ -99,7 +100,7 @@ export async function DELETE(
           productId: { in: productIds.map((p) => p.id) },
         },
       })
-      console.log("Deleted product variants")
+      logger.info("Deleted product variants")
 
       // Delete product images
       await prisma.productImage.deleteMany({
@@ -107,26 +108,26 @@ export async function DELETE(
           productId: { in: productIds.map((p) => p.id) },
         },
       })
-      console.log("Deleted product images")
+      logger.info("Deleted product images")
 
       // Delete products
       await prisma.product.deleteMany({
         where: { vendorStoreId: storeId },
       })
-      console.log("Deleted products")
+      logger.info("Deleted products")
     }
 
     // Delete shop rating
     await prisma.shopRating.deleteMany({
       where: { vendorStoreId: storeId },
     })
-    console.log("Deleted shop rating")
+    logger.info("Deleted shop rating")
 
     // Delete the store
     await prisma.vendorStore.delete({
       where: { id: storeId },
     })
-    console.log("Deleted store")
+    logger.info("Deleted store")
 
     // Check if user has any other stores
     const userStoreCount = await prisma.vendorStore.count({
@@ -145,7 +146,7 @@ export async function DELETE(
           where: { id: store.User.id },
           data: { role: "USER" },
         })
-        console.log(`Downgraded user ${store.User.email} from STORE_OWNER to USER`)
+        logger.info(`Downgraded user ${store.User.email} from STORE_OWNER to USER`)
       }
     }
 
@@ -159,7 +160,7 @@ export async function DELETE(
       },
     })
   } catch (error) {
-    console.error("Admin delete store error:", error)
+    logger.error("Admin delete store error:", error)
     return NextResponse.json(
       { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { storageHelpers } from "@/lib/storage"
 import { optimizeImage, validateImage } from "@/lib/image-optimizer"
 import { randomBytes } from "crypto"
+import { logger } from "@/lib/logger"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_PHOTOS = 3
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       message: `Successfully uploaded ${uploadedUrls.length} photo(s)`,
     })
   } catch (error) {
-    console.error("Photo upload error:", error)
+    logger.error("Photo upload error:", error)
     return NextResponse.json(
       {
         error: "Failed to upload photos",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { logger } from "@/lib/logger"
 
 type PaymentProcessor = "STRIPE" | "PAYPAL" | "SQUARE" | "CASH"
 
@@ -44,7 +45,7 @@ export default function PaymentSettingsPage() {
         setSettings(data)
       }
     } catch (error) {
-      console.error("Failed to fetch payment settings:", error)
+      logger.error("Failed to fetch payment settings:", error)
     } finally {
       setLoading(false)
     }

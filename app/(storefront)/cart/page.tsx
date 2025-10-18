@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 type CartItem = {
   cartItemId: string
@@ -39,7 +41,7 @@ export default function CartPage() {
       setCart(data.cart || { items: [], storeSlug: null })
       setTotal(data.total || 0)
     } catch (error) {
-      console.error("Failed to fetch cart:", error)
+      logger.error("Failed to fetch cart:", error)
     } finally {
       setIsLoading(false)
     }
@@ -65,7 +67,7 @@ export default function CartPage() {
       }
 
       await fetchCart()
-    } catch (error) {
+    } catch {
       alert("Failed to update cart")
     } finally {
       setIsUpdating(false)
@@ -95,7 +97,7 @@ export default function CartPage() {
       }
 
       await fetchCart()
-    } catch (error) {
+    } catch {
       alert("Failed to remove item")
     } finally {
       setIsUpdating(false)
@@ -119,7 +121,7 @@ export default function CartPage() {
       }
 
       await fetchCart()
-    } catch (error) {
+    } catch {
       alert("Failed to clear cart")
     } finally {
       setIsUpdating(false)
@@ -157,12 +159,12 @@ export default function CartPage() {
             <h3 className="mt-4 text-lg font-medium text-gray-900">Your cart is empty</h3>
             <p className="mt-2 text-gray-500">Start shopping to add items to your cart</p>
             <div className="mt-6">
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-500 hover:bg-blue-600"
               >
                 Continue Shopping
-              </a>
+              </Link>
             </div>
           </div>
         ) : (

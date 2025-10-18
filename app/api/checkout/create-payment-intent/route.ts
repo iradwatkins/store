@@ -6,6 +6,7 @@ import redis from "@/lib/redis"
 import prisma from "@/lib/db"
 import { applyRateLimit, rateLimitConfigs } from "@/lib/rate-limit-api"
 import { auth } from "@/lib/auth"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -263,7 +264,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // P0 FIX: Remove sensitive data logging in production
     if (process.env.NODE_ENV !== "production") {
-      console.error("Error creating payment intent:", error)
+      logger.error("Error creating payment intent:", error)
     }
 
     return NextResponse.json(

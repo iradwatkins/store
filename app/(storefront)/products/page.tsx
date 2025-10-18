@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 type Product = {
   id: string
@@ -68,7 +69,7 @@ function ProductsContent() {
       const data = await response.json()
       setProducts(data.products || [])
     } catch (error) {
-      console.error("Failed to fetch products:", error)
+      logger.error("Failed to fetch products:", error)
     } finally {
       setIsLoading(false)
     }

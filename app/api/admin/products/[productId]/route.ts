@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const updateProductSchema = z.object({
   name: z.string().min(3).optional(),
@@ -68,7 +69,7 @@ export async function GET(
 
     return NextResponse.json({ product })
   } catch (error) {
-    console.error("Admin get product error:", error)
+    logger.error("Admin get product error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -123,14 +124,14 @@ export async function PUT(
       data: validatedData,
     })
 
-    console.log(`Admin updated product: ${updatedProduct.name} (${updatedProduct.id})`)
+    logger.info(`Admin updated product: ${updatedProduct.name} (${updatedProduct.id})`)
 
     return NextResponse.json({
       message: "Product updated successfully",
       product: updatedProduct,
     })
   } catch (error) {
-    console.error("Admin update product error:", error)
+    logger.error("Admin update product error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -192,14 +193,14 @@ export async function PATCH(
       data: { status },
     })
 
-    console.log(`Admin changed product status: ${updatedProduct.name} → ${status}`)
+    logger.info(`Admin changed product status: ${updatedProduct.name} → ${status}`)
 
     return NextResponse.json({
       message: `Product status changed to ${status}`,
       product: updatedProduct,
     })
   } catch (error) {
-    console.error("Admin update product status error:", error)
+    logger.error("Admin update product status error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -253,8 +254,8 @@ export async function DELETE(
       )
     }
 
-    console.log(`Starting deletion of product: ${product.name} (${product.id})`)
-    console.log(`Product has ${product._count.variants} variants, ${product._count.images} images, ${product._count.reviews} reviews`)
+    logger.info(`Starting deletion of product: ${product.name} (${product.id})`)
+    logger.info(`Product has ${product._count.variants} variants, ${product._count.images} images, ${product._count.reviews} reviews`)
 
     // CASCADE DELETION ORDER:
     // 1. Reviews (dependent on product and order items)
@@ -267,31 +268,31 @@ export async function DELETE(
     await prisma.productReview.deleteMany({
       where: { productId: productId },
     })
-    console.log("Deleted product reviews")
+    logger.info("Deleted product reviews")
 
     // Delete order items (but not the orders themselves)
     await prisma.storeOrderItem.deleteMany({
       where: { productId: productId },
     })
-    console.log("Deleted order items")
+    logger.info("Deleted order items")
 
     // Delete product variants
     await prisma.productVariant.deleteMany({
       where: { productId: productId },
     })
-    console.log("Deleted product variants")
+    logger.info("Deleted product variants")
 
     // Delete product images
     await prisma.productImage.deleteMany({
       where: { productId: productId },
     })
-    console.log("Deleted product images")
+    logger.info("Deleted product images")
 
     // Delete the product
     await prisma.product.delete({
       where: { id: productId },
     })
-    console.log("Deleted product")
+    logger.info("Deleted product")
 
     // Decrement product count for tenant (if applicable)
     if (product.vendorStore.tenantId) {
@@ -299,7 +300,7 @@ export async function DELETE(
         where: { id: product.vendorStore.tenantId },
         data: { currentProducts: { decrement: 1 } },
       })
-      console.log("Decremented tenant product count")
+      logger.info("Decremented tenant product count")
     }
 
     return NextResponse.json({
@@ -314,7 +315,7 @@ export async function DELETE(
       },
     })
   } catch (error) {
-    console.error("Admin delete product error:", error)
+    logger.error("Admin delete product error:", error)
     return NextResponse.json(
       { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

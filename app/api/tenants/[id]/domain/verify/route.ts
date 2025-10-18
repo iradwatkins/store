@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { promisify } from "util"
 import dns from "dns"
+import { logger } from "@/lib/logger"
 
 // Promisify DNS lookup functions
 const resolveCname = promisify(dns.resolveCname)
@@ -278,7 +279,7 @@ export async function POST(
       )
     }
   } catch (error: any) {
-    console.error("Error verifying DNS:", error)
+    logger.error("Error verifying DNS:", error)
 
     // Revert status back to PENDING on error
     try {
@@ -289,7 +290,7 @@ export async function POST(
         },
       })
     } catch (updateError) {
-      console.error("Failed to revert status:", updateError)
+      logger.error("Failed to revert status:", updateError)
     }
 
     return NextResponse.json(
@@ -370,7 +371,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error("Error fetching verification status:", error)
+    logger.error("Error fetching verification status:", error)
     return NextResponse.json(
       { error: "Failed to fetch verification status" },
       { status: 500 }

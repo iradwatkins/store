@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // GET /api/tenants/check-slug?slug=example
 // Check if a tenant slug is available
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ available: true, slug })
   } catch (error) {
-    console.error("Error checking slug availability:", error)
+    logger.error("Error checking slug availability:", error)
     return NextResponse.json(
       { error: "Failed to check slug availability" },
       { status: 500 }

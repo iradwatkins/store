@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 const shippingSettingsSchema = z.object({
   flatRate: z.number().min(0).nullable(),
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ settings })
   } catch (error) {
-    console.error("Error fetching shipping settings:", error)
+    logger.error("Error fetching shipping settings:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to fetch shipping settings",
@@ -90,14 +91,14 @@ export async function POST(request: Request) {
     })
 
     // Log for debugging
-    console.log(`Shipping settings updated for store ${vendorStore.id} by user ${session.user.id}`)
+    logger.info(`Shipping settings updated for store ${vendorStore.id} by user ${session.user.id}`)
 
     return NextResponse.json({
       message: "Shipping settings updated successfully",
       settings: validatedData,
     })
   } catch (error) {
-    console.error("Error updating shipping settings:", error)
+    logger.error("Error updating shipping settings:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

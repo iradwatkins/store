@@ -1,5 +1,4 @@
 import { getCurrentTenant } from "@/lib/tenant"
-import { redirect } from "next/navigation"
 
 export default async function TenantDemoPage() {
   const tenant = await getCurrentTenant()
@@ -14,7 +13,7 @@ export default async function TenantDemoPage() {
             <code className="bg-gray-200 px-2 py-1 rounded">nike.stepperslife.com</code>
           </p>
           <p className="text-sm text-gray-500">
-            You're currently on the main domain. Try accessing:
+            You&apos;re currently on the main domain. Try accessing:
           </p>
           <ul className="mt-4 space-y-2 text-sm">
             <li className="text-green-600">• nike.stepperslife.com/tenant-demo</li>

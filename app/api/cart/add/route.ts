@@ -5,6 +5,7 @@ import { redisHelpers } from "@/lib/redis"
 import prisma from "@/lib/db"
 import { randomUUID } from "crypto"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { logger } from "@/lib/logger"
 
 const addToCartSchema = z.object({
   productId: z.string(),
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch and validate addons if provided
-    let selectedAddons: any[] = []
+    const selectedAddons: any[] = []
     let addonsTotal = 0
     if (validatedData.addons && validatedData.addons.length > 0) {
       const addonIds = validatedData.addons.map((a) => a.addonId)
@@ -283,7 +284,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("Add to cart error:", error)
+    logger.error("Add to cart error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

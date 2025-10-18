@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
       orders: orderSummaries,
     })
   } catch (error) {
-    console.error("Error fetching customer orders:", error)
+    logger.error("Error fetching customer orders:", error)
     return NextResponse.json(
       { error: "Failed to fetch orders" },
       { status: 500 }

@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react"
 import { useState } from "react"
+import { logger } from "@/lib/logger"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
@@ -11,7 +12,7 @@ export default function SignIn() {
     try {
       await signIn("google", { callbackUrl: "/dashboard" })
     } catch (error) {
-      console.error("Sign in error:", error)
+      logger.error("Sign in error:", error)
       setIsLoading(false)
     }
   }

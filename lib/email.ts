@@ -13,6 +13,7 @@ import QuotaWarningEmail from '@/emails/QuotaWarning';
 import OrderPaymentFailedEmail from '@/emails/OrderPaymentFailed';
 import OrderRefundConfirmationEmail from '@/emails/OrderRefundConfirmation';
 import LowStockAlertEmail from '@/emails/LowStockAlert';
+import { logger } from "@/lib/logger"
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -151,7 +152,7 @@ export interface LowStockAlertData {
  */
 export async function sendOrderConfirmation(data: OrderConfirmationData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       OrderConfirmationEmail({
         customerName: data.customerName,
         orderNumber: data.orderNumber,
@@ -173,10 +174,10 @@ export async function sendOrderConfirmation(data: OrderConfirmationData) {
       html: emailHtml,
     });
 
-    console.log(`Order confirmation email sent: ${result.data?.id}`);
+    logger.info(`Order confirmation email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send order confirmation email:', error);
+    logger.error("Failed to send order confirmation email:", error);
     throw error;
   }
 }
@@ -186,7 +187,7 @@ export async function sendOrderConfirmation(data: OrderConfirmationData) {
  */
 export async function sendShippingNotification(data: ShippingNotificationData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       ShippingNotificationEmail({
         customerName: data.customerName,
         orderNumber: data.orderNumber,
@@ -207,10 +208,10 @@ export async function sendShippingNotification(data: ShippingNotificationData) {
       html: emailHtml,
     });
 
-    console.log(`Shipping notification email sent: ${result.data?.id}`);
+    logger.info(`Shipping notification email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send shipping notification email:', error);
+    logger.error("Failed to send shipping notification email:", error);
     throw error;
   }
 }
@@ -220,7 +221,7 @@ export async function sendShippingNotification(data: ShippingNotificationData) {
  */
 export async function sendVendorNewOrderAlert(data: VendorNewOrderData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       VendorNewOrderAlertEmail({
         vendorName: data.vendorName,
         storeName: data.storeName,
@@ -241,10 +242,10 @@ export async function sendVendorNewOrderAlert(data: VendorNewOrderData) {
       html: emailHtml,
     });
 
-    console.log(`Vendor new order alert sent: ${result.data?.id}`);
+    logger.info(`Vendor new order alert sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send vendor new order alert:', error);
+    logger.error("Failed to send vendor new order alert:", error);
     throw error;
   }
 }
@@ -254,7 +255,7 @@ export async function sendVendorNewOrderAlert(data: VendorNewOrderData) {
  */
 export async function sendWelcomeVendor(data: WelcomeVendorData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       WelcomeVendorEmail({
         vendorName: data.vendorName,
         storeName: data.storeName,
@@ -269,10 +270,10 @@ export async function sendWelcomeVendor(data: WelcomeVendorData) {
       html: emailHtml,
     });
 
-    console.log(`Welcome vendor email sent: ${result.data?.id}`);
+    logger.info(`Welcome vendor email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send welcome vendor email:', error);
+    logger.error("Failed to send welcome vendor email:", error);
     throw error;
   }
 }
@@ -282,7 +283,7 @@ export async function sendWelcomeVendor(data: WelcomeVendorData) {
  */
 export async function sendReviewRequest(data: ReviewRequestData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       ReviewRequestEmail({
         customerName: data.customerName,
         productName: data.productName,
@@ -300,10 +301,10 @@ export async function sendReviewRequest(data: ReviewRequestData) {
       html: emailHtml,
     });
 
-    console.log(`Review request email sent: ${result.data?.id}`);
+    logger.info(`Review request email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send review request email:', error);
+    logger.error("Failed to send review request email:", error);
     throw error;
   }
 }
@@ -313,7 +314,7 @@ export async function sendReviewRequest(data: ReviewRequestData) {
  */
 export async function sendOrderPaymentFailed(data: OrderPaymentFailedData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       OrderPaymentFailedEmail({
         customerName: data.customerName,
         customerEmail: data.customerEmail,
@@ -331,10 +332,10 @@ export async function sendOrderPaymentFailed(data: OrderPaymentFailedData) {
       html: emailHtml,
     });
 
-    console.log(`Order payment failed email sent: ${result.data?.id}`);
+    logger.info(`Order payment failed email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send order payment failed email:', error);
+    logger.error("Failed to send order payment failed email:", error);
     throw error;
   }
 }
@@ -344,7 +345,7 @@ export async function sendOrderPaymentFailed(data: OrderPaymentFailedData) {
  */
 export async function sendOrderRefundConfirmation(data: OrderRefundConfirmationData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       OrderRefundConfirmationEmail({
         customerName: data.customerName,
         orderNumber: data.orderNumber,
@@ -363,10 +364,10 @@ export async function sendOrderRefundConfirmation(data: OrderRefundConfirmationD
       html: emailHtml,
     });
 
-    console.log(`Order refund confirmation email sent: ${result.data?.id}`);
+    logger.info(`Order refund confirmation email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send order refund confirmation email:', error);
+    logger.error("Failed to send order refund confirmation email:", error);
     throw error;
   }
 }
@@ -434,7 +435,7 @@ export interface QuotaWarningData {
  */
 export async function sendSubscriptionActivated(data: SubscriptionActivatedData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       SubscriptionActivatedEmail({
         tenantName: data.tenantName,
         ownerName: data.ownerName,
@@ -455,10 +456,10 @@ export async function sendSubscriptionActivated(data: SubscriptionActivatedData)
       html: emailHtml,
     });
 
-    console.log(`Subscription activated email sent: ${result.data?.id}`);
+    logger.info(`Subscription activated email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send subscription activated email:', error);
+    logger.error("Failed to send subscription activated email:", error);
     throw error;
   }
 }
@@ -468,7 +469,7 @@ export async function sendSubscriptionActivated(data: SubscriptionActivatedData)
  */
 export async function sendPaymentFailed(data: PaymentFailedData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       PaymentFailedEmail({
         tenantName: data.tenantName,
         ownerName: data.ownerName,
@@ -487,10 +488,10 @@ export async function sendPaymentFailed(data: PaymentFailedData) {
       html: emailHtml,
     });
 
-    console.log(`Payment failed email sent: ${result.data?.id}`);
+    logger.info(`Payment failed email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send payment failed email:', error);
+    logger.error("Failed to send payment failed email:", error);
     throw error;
   }
 }
@@ -500,7 +501,7 @@ export async function sendPaymentFailed(data: PaymentFailedData) {
  */
 export async function sendTrialEnding(data: TrialEndingData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       TrialEndingEmail({
         tenantName: data.tenantName,
         ownerName: data.ownerName,
@@ -517,10 +518,10 @@ export async function sendTrialEnding(data: TrialEndingData) {
       html: emailHtml,
     });
 
-    console.log(`Trial ending email sent: ${result.data?.id}`);
+    logger.info(`Trial ending email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send trial ending email:', error);
+    logger.error("Failed to send trial ending email:", error);
     throw error;
   }
 }
@@ -530,7 +531,7 @@ export async function sendTrialEnding(data: TrialEndingData) {
  */
 export async function sendSubscriptionCancelled(data: SubscriptionCancelledData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       SubscriptionCancelledEmail({
         tenantName: data.tenantName,
         ownerName: data.ownerName,
@@ -551,10 +552,10 @@ export async function sendSubscriptionCancelled(data: SubscriptionCancelledData)
       html: emailHtml,
     });
 
-    console.log(`Subscription cancelled email sent: ${result.data?.id}`);
+    logger.info(`Subscription cancelled email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send subscription cancelled email:', error);
+    logger.error("Failed to send subscription cancelled email:", error);
     throw error;
   }
 }
@@ -564,7 +565,7 @@ export async function sendSubscriptionCancelled(data: SubscriptionCancelledData)
  */
 export async function sendQuotaWarning(data: QuotaWarningData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       QuotaWarningEmail({
         tenantName: data.tenantName,
         ownerName: data.ownerName,
@@ -590,10 +591,10 @@ export async function sendQuotaWarning(data: QuotaWarningData) {
       html: emailHtml,
     });
 
-    console.log(`Quota warning email sent: ${result.data?.id}`);
+    logger.info(`Quota warning email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send quota warning email:', error);
+    logger.error("Failed to send quota warning email:", error);
     throw error;
   }
 }
@@ -603,7 +604,7 @@ export async function sendQuotaWarning(data: QuotaWarningData) {
  */
 export async function sendLowStockAlert(data: LowStockAlertData) {
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       LowStockAlertEmail({
         vendorName: data.vendorName,
         storeName: data.storeName,
@@ -626,10 +627,10 @@ export async function sendLowStockAlert(data: LowStockAlertData) {
       html: emailHtml,
     });
 
-    console.log(`Low stock alert email sent: ${result.data?.id}`);
+    logger.info(`Low stock alert email sent: ${result.data?.id}`);
     return result;
   } catch (error) {
-    console.error('Failed to send low stock alert email:', error);
+    logger.error("Failed to send low stock alert email:", error);
     throw error;
   }
 }

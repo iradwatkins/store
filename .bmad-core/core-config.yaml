@@ -20,3 +20,144 @@ devLoadAlwaysFiles:
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
 slashPrefix: BMad
+
+# DRY + SoC Configuration
+codeQuality:
+  dryThreshold: 3 # lines before requiring extraction
+  duplicatePatternLimit: 2 # max files with same pattern
+  socLayers:
+    presentation: 
+      - "app/"
+      - "components/"
+      - "emails/"
+    application: 
+      - "hooks/"
+      - "lib/services/"
+      - "lib/middleware/"
+    domain: 
+      - "lib/domain/"
+    infrastructure: 
+      - "lib/repositories/"
+      - "lib/db.ts"
+      - "lib/storage/"
+  
+# Architecture Patterns
+archPatterns:
+  authMiddleware: "lib/middleware/auth.ts"
+  apiResponses: "lib/utils/api.ts"
+  baseRepository: "lib/repositories/BaseRepository.ts"
+  emailBase: "emails/base/BaseEmailTemplate.tsx"
+  asyncHooks: "hooks/useAsyncOperation.ts"
+  formValidation: "hooks/useFormValidation.ts"
+  
+# Import Restrictions
+importRestrictions:
+  # UI layer restrictions
+  "components/**/*":
+    forbidden:
+      - "lib/db.ts"
+      - "prisma"
+      - "@prisma/client"
+    allowed:
+      - "hooks/*"
+      - "lib/services/*"
+      - "lib/domain/types"
+      - "components/*"
+      
+  # API route restrictions  
+  "app/api/**/*":
+    forbidden:
+      - "components/*"
+      - "hooks/*"
+    allowed:
+      - "lib/middleware/*"
+      - "lib/utils/api"
+      - "lib/services/*"
+      - "lib/repositories/*"
+      
+  # Service layer restrictions
+  "lib/services/**/*":
+    forbidden:
+      - "components/*"
+      - "hooks/*"
+      - "app/*"
+    allowed:
+      - "lib/repositories/*"
+      - "lib/domain/*"
+      - "lib/utils/*"
+
+# Validation Rules
+validationRules:
+  DRY-001:
+    name: "No Duplicate Authentication"
+    description: "API routes must use auth middleware"
+    pattern: "auth\\(\\)|session\\s*=.*auth"
+    maxOccurrences: 0
+    files: "app/api/**/*.ts"
+    exemptions: 
+      - "lib/middleware/auth.ts"
+      
+  DRY-002:
+    name: "Standardized API Responses"
+    description: "Use standard response utilities"
+    pattern: "NextResponse\\.json\\("
+    maxOccurrences: 0
+    files: "app/api/**/*.ts"
+    exemptions:
+      - "lib/utils/api.ts"
+      
+  DRY-003:
+    name: "Form Validation Patterns"
+    description: "Use validation hooks for forms"
+    pattern: "useState.*error|useState.*loading"
+    maxOccurrences: 2
+    files: "components/**/*.tsx"
+    exemptions:
+      - "hooks/useAsyncOperation.ts"
+      - "hooks/useFormValidation.ts"
+      
+  SOC-001:
+    name: "No Business Logic in UI"
+    description: "Components should not contain business logic"
+    pattern: "prisma\\.|await.*fetch\\(.*api"
+    maxOccurrences: 0
+    files: "components/**/*.tsx"
+    
+  SOC-002:
+    name: "No UI in API Routes"
+    description: "API routes should not import UI components"
+    pattern: "from.*components/"
+    maxOccurrences: 0
+    files: "app/api/**/*.ts"
+    
+  SOC-003:
+    name: "Email Template Consistency"
+    description: "Email templates must use base structure"
+    pattern: "<Html>.*<Head>.*<Body>"
+    maxOccurrences: 1
+    files: "emails/**/*.tsx"
+    exemptions:
+      - "emails/base/BaseEmailTemplate.tsx"
+
+# Quality Gates
+qualityGates:
+  duplicationThreshold: 100 # max lines of duplicate code
+  complexityThreshold: 10 # max cyclomatic complexity
+  testCoverageThreshold: 80 # min test coverage percentage
+  
+# Code Metrics
+metrics:
+  trackDuplication: true
+  trackComplexity: true
+  trackImportViolations: true
+  trackPatternUsage: true
+  
+# Automated Fixes
+autoFixes:
+  replaceAuthPattern:
+    pattern: "const session = await auth\\(\\)[\\s\\S]*?return NextResponse\\.json.*Unauthorized"
+    replacement: "export const {method} = withAuth(async (req, context) => {"
+    
+  replaceResponsePattern:
+    pattern: "NextResponse\\.json\\(\\{ error: \"([^\"]+)\" \\}, \\{ status: (\\d+) \\}\\)"
+    replacement: "standardResponses.$1($2)"

@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ThemeToggleSimple } from "./theme-toggle"
+import { logger } from "@/lib/logger"
 
 export default function Navigation() {
   const router = useRouter()
@@ -33,7 +34,7 @@ export default function Navigation() {
       const count = data.cart?.items?.length || 0
       setCartItemCount(count)
     } catch (error) {
-      console.error("Failed to fetch cart count:", error)
+      logger.error("Failed to fetch cart count:", error)
     }
   }
 

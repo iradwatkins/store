@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import Stripe from "stripe"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
       url: portalSession.url,
     })
   } catch (error) {
-    console.error("Error creating customer portal session:", error)
+    logger.error("Error creating customer portal session:", error)
 
     if (error instanceof Stripe.errors.StripeError) {
       return NextResponse.json(

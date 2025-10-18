@@ -14,6 +14,6 @@ Sentry.init({
 
   // Server-specific options
   integrations: [
-    new Sentry.Integrations.Http({ tracing: true }),
+    // HTTP tracing is automatically included in @sentry/nextjs
   ],
 });

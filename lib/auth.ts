@@ -4,9 +4,10 @@ import Google from "next-auth/providers/google"
 import Resend from "next-auth/providers/resend"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export const authConfig = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as any,
 
   session: {
     strategy: "database",
@@ -144,7 +145,7 @@ export const authConfig = {
       return `${baseUrl}/auth-redirect`
     },
 
-    async signIn({ user, account, profile }) {
+    async signIn({ user }) {
       // Auto-assign ADMIN role for platform administrators
       const adminEmails = ['iradwatkins@gmail.com', 'bobbygwatkins@gmail.com']
       if (user.email && adminEmails.includes(user.email.toLowerCase())) {
@@ -155,9 +156,9 @@ export const authConfig = {
             data: { role: 'ADMIN' }
           })
           user.role = 'ADMIN'
-        } catch (error) {
+        } catch {
           // User doesn't exist yet - will be handled in events.signIn for new users
-          console.log("⏳ User not yet in DB, will set role after creation:", user.email)
+          logger.info("User not yet in DB, will set role after creation", { email: user.email })
         }
       }
       return true
@@ -165,7 +166,7 @@ export const authConfig = {
   },
 
   events: {
-    async signIn({ user, account, profile, isNewUser }) {
+    async signIn({ user, account, isNewUser }) {
       // Assign ADMIN role for new admin users after they're created in DB
       if (isNewUser && user.email) {
         const adminEmails = ['iradwatkins@gmail.com', 'bobbygwatkins@gmail.com']
@@ -175,18 +176,18 @@ export const authConfig = {
               where: { id: user.id },
               data: { role: 'ADMIN' }
             })
-            console.log("✅ New admin user registered:", user.email)
+            logger.info("New admin user registered", { email: user.email })
           } catch (error) {
-            console.error("Failed to set admin role for new user:", user.email, error)
+            logger.error("Failed to set admin role for new user", error, { email: user.email })
           }
         }
       }
 
-      console.log("✅ User signed in:", user.email, "| Role:", user.role)
+      logger.info("User signed in", { email: user.email, role: user.role })
 
       // Log audit trail for new users
       if (isNewUser) {
-        console.log("New user registered:", {
+        logger.info("New user registered", {
           userId: user.id,
           email: user.email,
           provider: account?.provider,
@@ -195,27 +196,20 @@ export const authConfig = {
       }
     },
 
-    async signOut({ session, token }) {
-      console.log("👋 User signed out")
+    async signOut(params) {
+      logger.info("User signed out")
 
-      // Explicitly delete database session if it exists
-      if (session) {
-        try {
-          // Delete the session from database
-          await prisma.session.deleteMany({
-            where: {
-              userId: session.user?.id
-            }
-          })
-          console.log("✅ Database session cleared for user:", session.user?.email)
-        } catch (error) {
-          console.error("Error clearing database session:", error)
-        }
+      // For database sessions, we rely on the adapter to handle cleanup
+      // The session data in signOut event doesn't contain user info
+      try {
+        logger.info("Database session will be cleaned up by adapter")
+      } catch (error) {
+        logger.error("Error in signOut event", error)
       }
     },
   },
 
   debug: process.env.NODE_ENV === "development",
-} satisfies NextAuthConfig
+} as NextAuthConfig
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { cookies } from "next/headers"
 import { redisHelpers } from "@/lib/redis"
+import { logger } from "@/lib/logger"
 
 const updateCartSchema = z.object({
   cartItemId: z.string(),
@@ -55,7 +56,7 @@ export async function PUT(request: NextRequest) {
       cart,
     })
   } catch (error) {
-    console.error("Update cart error:", error)
+    logger.error("Update cart error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

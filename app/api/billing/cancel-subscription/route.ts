@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import Stripe from "stripe"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
         : `Subscription will cancel at the end of your billing period (${accessEndsAt.toLocaleDateString()}). You'll continue to have access until then.`,
     })
   } catch (error) {
-    console.error("Error canceling subscription:", error)
+    logger.error("Error canceling subscription:", error)
 
     if (error instanceof Stripe.errors.StripeError) {
       return NextResponse.json(
@@ -197,7 +198,7 @@ export async function GET(request: Request) {
       ).toISOString(),
     })
   } catch (error) {
-    console.error("Error getting cancellation status:", error)
+    logger.error("Error getting cancellation status:", error)
     return NextResponse.json(
       { error: "Failed to get cancellation status" },
       { status: 500 }

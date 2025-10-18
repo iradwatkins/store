@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { validateAndCalculateCoupon } from "@/lib/coupon"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 const applyCouponSchema = z.object({
   couponCode: z.string().min(1, "Coupon code is required"),
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error("Error applying coupon:", error)
+    logger.error("Error applying coupon:", error)
     return NextResponse.json(
       { error: "Failed to apply coupon" },
       { status: 500 }

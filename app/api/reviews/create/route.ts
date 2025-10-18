@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 // Validation schema
 const createReviewSchema = z.object({
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error("Error creating review:", error)
+    logger.error("Error creating review:", error)
     return NextResponse.json(
       { error: "Failed to create review" },
       { status: 500 }

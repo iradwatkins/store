@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { sendReviewRequest } from "@/lib/email"
 import { generateReviewToken, getReviewUrl } from "@/lib/review-token"
+import { logger } from "@/lib/logger"
 
 /**
  * Cron job to send review request emails
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret) {
-      console.error("CRON_SECRET not configured")
+      logger.error("CRON_SECRET not configured")
       return NextResponse.json(
         { error: "Cron job not configured" },
         { status: 500 }
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     const threeDaysAgoEnd = new Date(threeDaysAgo)
     threeDaysAgoEnd.setHours(23, 59, 59, 999) // End of day
 
-    console.log(
+    logger.info(
       `Checking for orders shipped between ${threeDaysAgo.toISOString()} and ${threeDaysAgoEnd.toISOString()}`
     )
 
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`Found ${eligibleOrders.length} eligible orders`)
+    logger.info(`Found ${eligibleOrders.length} eligible orders`)
 
     let emailsSent = 0
     let emailsFailed = 0
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
       for (const item of order.items) {
         // Skip if already reviewed
         if (item.review) {
-          console.log(
+          logger.info(
             `Skipping order item ${item.id} - already has review ${item.review.id}`
           )
           continue
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
           })
 
           emailsSent++
-          console.log(
+          logger.info(
             `✅ Review request sent for order item ${item.id} (${item.name})`
           )
         } catch (error) {
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
           const errorMsg = `Failed to send review request for order item ${item.id}: ${
             error instanceof Error ? error.message : "Unknown error"
           }`
-          console.error(errorMsg)
+          logger.error(errorMsg)
           errors.push(errorMsg)
         }
       }
@@ -145,11 +146,11 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     }
 
-    console.log("Cron job completed:", JSON.stringify(summary, null, 2))
+    logger.info("Cron job completed:", { data: JSON.stringify(summary, null, 2) })
 
     return NextResponse.json(summary)
   } catch (error) {
-    console.error("Cron job error:", error)
+    logger.error("Cron job error:", error)
     return NextResponse.json(
       {
         success: false,

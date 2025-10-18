@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { logger } from "@/lib/logger"
 
 // Validation schema for tenant creation
 const createTenantSchema = z.object({
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ tenants })
   } catch (error) {
-    console.error("Error fetching tenants:", error)
+    logger.error("Error fetching tenants:", error)
     return NextResponse.json({ error: "Failed to fetch tenants" }, { status: 500 })
   }
 }
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
     }
 
-    console.error("Error creating tenant:", error)
+    logger.error("Error creating tenant:", error)
     return NextResponse.json({ error: "Failed to create tenant" }, { status: 500 })
   }
 }

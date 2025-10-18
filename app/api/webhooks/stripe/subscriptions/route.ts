@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
-      console.error("Subscription webhook signature verification failed:", err)
+      logger.error("Subscription webhook signature verification failed:", err)
       return NextResponse.json(
         { error: "Invalid signature" },
         { status: 400 }
@@ -79,12 +80,12 @@ export async function POST(request: Request) {
         break
 
       default:
-        console.log(`Unhandled subscription event type: ${event.type}`)
+        logger.info(`Unhandled subscription event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("Subscription webhook error:", error)
+    logger.error("Subscription webhook error:", error)
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
@@ -97,7 +98,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   const plan = subscription.metadata.plan
 
   if (!tenantId || !plan) {
-    console.error("Missing metadata in subscription.created event")
+    logger.error("Missing metadata in subscription.created event")
     return
   }
 
@@ -118,11 +119,11 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       },
     })
 
-    console.log(`Subscription created for tenant ${tenantId}: ${subscription.id}`)
+    logger.info(`Subscription created for tenant ${tenantId}: ${subscription.id}`)
 
     // TODO: Send subscription activated email
   } catch (error) {
-    console.error("Error handling subscription.created:", error)
+    logger.error("Error handling subscription.created:", error)
     throw error
   }
 }
@@ -134,7 +135,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     })
 
     if (!tenant) {
-      console.error(`Tenant not found for subscription ${subscription.id}`)
+      logger.error(`Tenant not found for subscription ${subscription.id}`)
       return
     }
 
@@ -153,9 +154,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       },
     })
 
-    console.log(`Subscription updated for tenant ${tenant.id}: ${subscription.status}`)
+    logger.info(`Subscription updated for tenant ${tenant.id}: ${subscription.status}`)
   } catch (error) {
-    console.error("Error handling subscription.updated:", error)
+    logger.error("Error handling subscription.updated:", error)
     throw error
   }
 }
@@ -167,7 +168,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     })
 
     if (!tenant) {
-      console.error(`Tenant not found for subscription ${subscription.id}`)
+      logger.error(`Tenant not found for subscription ${subscription.id}`)
       return
     }
 
@@ -180,11 +181,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       },
     })
 
-    console.log(`Subscription deleted for tenant ${tenant.id}`)
+    logger.info(`Subscription deleted for tenant ${tenant.id}`)
 
     // TODO: Send subscription cancelled email
   } catch (error) {
-    console.error("Error handling subscription.deleted:", error)
+    logger.error("Error handling subscription.deleted:", error)
     throw error
   }
 }
@@ -201,7 +202,7 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
     })
 
     if (!tenant) {
-      console.error(`Tenant not found for subscription ${subscription.id}`)
+      logger.error(`Tenant not found for subscription ${subscription.id}`)
       return
     }
 
@@ -210,7 +211,7 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
       (trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     )
 
-    console.log(
+    logger.info(
       `Trial will end for tenant ${tenant.id} in ${daysRemaining} days`
     )
 
@@ -222,7 +223,7 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
     //   upgradeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tenant-dashboard/billing`,
     // })
   } catch (error) {
-    console.error("Error handling trial_will_end:", error)
+    logger.error("Error handling trial_will_end:", error)
     // Don't throw - email failure shouldn't break webhook
   }
 }
@@ -236,7 +237,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     })
 
     if (!tenant) {
-      console.error(
+      logger.error(
         `Tenant not found for subscription ${invoice.subscription}`
       )
       return
@@ -270,11 +271,11 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       })
     }
 
-    console.log(`Payment succeeded for tenant ${tenant.id}: $${invoice.amount_paid / 100}`)
+    logger.info(`Payment succeeded for tenant ${tenant.id}: $${invoice.amount_paid / 100}`)
 
     // TODO: Send payment success email (receipt)
   } catch (error) {
-    console.error("Error handling invoice.payment_succeeded:", error)
+    logger.error("Error handling invoice.payment_succeeded:", error)
     throw error
   }
 }
@@ -293,7 +294,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     })
 
     if (!tenant) {
-      console.error(
+      logger.error(
         `Tenant not found for subscription ${invoice.subscription}`
       )
       return
@@ -305,7 +306,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       data: { subscriptionStatus: "PAST_DUE" },
     })
 
-    console.log(`Payment failed for tenant ${tenant.id}`)
+    logger.info(`Payment failed for tenant ${tenant.id}`)
 
     // TODO: Send payment failed email
     // await sendPaymentFailedEmail({
@@ -315,7 +316,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     //   updatePaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tenant-dashboard/billing`,
     // })
   } catch (error) {
-    console.error("Error handling invoice.payment_failed:", error)
+    logger.error("Error handling invoice.payment_failed:", error)
     // Don't throw - email failure shouldn't break webhook
   }
 }
@@ -334,7 +335,7 @@ async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
     })
 
     if (!tenant) {
-      console.error(
+      logger.error(
         `Tenant not found for subscription ${invoice.subscription}`
       )
       return
@@ -342,14 +343,14 @@ async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
 
     const dueDate = new Date(invoice.period_end * 1000)
 
-    console.log(
+    logger.info(
       `Upcoming invoice for tenant ${tenant.id}: $${invoice.amount_due / 100} due ${dueDate.toLocaleDateString()}`
     )
 
     // TODO: Send upcoming invoice reminder email (7 days before)
     // Only send if payment method might fail or needs updating
   } catch (error) {
-    console.error("Error handling invoice.upcoming:", error)
+    logger.error("Error handling invoice.upcoming:", error)
     // Don't throw - email failure shouldn't break webhook
   }
 }

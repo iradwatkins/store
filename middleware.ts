@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { logger } from '@/lib/logger'
 
 /**
  * Add security headers to all responses
@@ -75,7 +76,7 @@ async function lookupCustomDomain(domain: string): Promise<string | null> {
 
     return null
   } catch (error) {
-    console.error('Error looking up custom domain:', error)
+    logger.error('Error looking up custom domain', error)
     return null
   }
 }
@@ -89,7 +90,7 @@ export async function middleware(request: NextRequest) {
 
   // Check if this is a custom domain
   if (isCustomDomain(domain)) {
-    console.log(`🔍 Custom domain detected: ${domain}`)
+    logger.info('Custom domain detected', { domain })
 
     const response = NextResponse.next()
 
@@ -118,7 +119,7 @@ export async function middleware(request: NextRequest) {
 
   // If subdomain detected and not main domain, check if tenant exists
   if (!isMainDomain && subdomain && domain.includes('stepperslife.com')) {
-    console.log(`🔍 Subdomain detected: ${subdomain}`)
+    logger.info('Subdomain detected', { subdomain })
 
     const response = NextResponse.next()
 

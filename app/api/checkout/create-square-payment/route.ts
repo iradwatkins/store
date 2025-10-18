@@ -7,6 +7,7 @@ import prisma from "@/lib/db"
 import squareClient from "@/lib/square"
 import { applyRateLimit, rateLimitConfigs } from "@/lib/rate-limit-api"
 import { auth } from "@/lib/auth"
+import { logger } from "@/lib/logger"
 
 // Zod validation schemas
 const shippingInfoSchema = z.object({
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Error processing Square payment:", error)
+    logger.error("Error processing Square payment:", error)
 
     return NextResponse.json(
       {

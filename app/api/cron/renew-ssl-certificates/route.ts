@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { getCertificateInfo, renewCertificate, reloadNginx } from "@/lib/certbot"
+import { logger } from "@/lib/logger"
 
 interface RenewalResult {
   tenantId: string
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log("🔐 Starting SSL certificate renewal cron job...")
+    logger.info("🔐 Starting SSL certificate renewal cron job...")
 
     // Find all tenants with ACTIVE SSL certificates
     const tenantsWithSSL = await prisma.tenant.findMany({
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log(`📋 Found ${tenantsWithSSL.length} tenants with SSL certificates`)
+    logger.info(`📋 Found ${tenantsWithSSL.length} tenants with SSL certificates`)
 
     const results: RenewalResult[] = []
     let needsNginxReload = false
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
 
         if (!shouldRenew) {
           result.message = `Certificate valid for ${certInfo.daysUntilExpiry} days - no renewal needed`
-          console.log(`✅ ${tenant.customDomain}: ${result.message}`)
+          logger.info(`✅ ${tenant.customDomain}: ${result.message}`)
 
           // Update last checked time
           await prisma.tenant.update({
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Certificate needs renewal
-        console.log(
+        logger.info(
           `🔄 ${tenant.customDomain}: Certificate expires in ${certInfo.daysUntilExpiry} days - renewing...`
         )
 
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
           result.status = "ACTIVE"
           result.message = "Certificate renewed successfully"
 
-          console.log(
+          logger.info(
             `✅ ${tenant.customDomain}: Renewed! New expiry: ${updatedCertInfo.expiryDate?.toISOString()}`
           )
 
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
           result.message = renewResult.message
           result.error = renewResult.error
 
-          console.error(
+          logger.error(
             `❌ ${tenant.customDomain}: Renewal failed - ${renewResult.message}`
           )
 
@@ -162,7 +163,7 @@ export async function GET(request: NextRequest) {
           })
         }
       } catch (error: any) {
-        console.error(
+        logger.error(
           `Error processing certificate for ${tenant.customDomain}:`,
           error.message
         )
@@ -177,14 +178,14 @@ export async function GET(request: NextRequest) {
     // Reload Nginx if any certificates were renewed
     let nginxReloaded = false
     if (needsNginxReload) {
-      console.log("🔄 Reloading Nginx to apply renewed certificates...")
+      logger.info("🔄 Reloading Nginx to apply renewed certificates...")
       const reloadResult = await reloadNginx()
 
       if (reloadResult.success) {
         nginxReloaded = true
-        console.log("✅ Nginx reloaded successfully")
+        logger.info("✅ Nginx reloaded successfully")
       } else {
-        console.error("❌ Failed to reload Nginx:", reloadResult.message)
+        logger.error("❌ Failed to reload Nginx:", reloadResult.message)
       }
     }
 
@@ -195,7 +196,7 @@ export async function GET(request: NextRequest) {
       (r) => r.status === "ACTIVE" && !r.renewed
     ).length
 
-    console.log(
+    logger.info(
       `✅ SSL renewal complete: ${renewed} renewed, ${valid} valid, ${failed} failed`
     )
 
@@ -222,7 +223,7 @@ export async function GET(request: NextRequest) {
       })),
     })
   } catch (error: any) {
-    console.error("SSL renewal cron job failed:", error)
+    logger.error("SSL renewal cron job failed:", error)
     return NextResponse.json(
       {
         success: false,

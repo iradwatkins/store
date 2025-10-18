@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 const updateVariantSchema = z.object({
   name: z.string().min(1, "Variant name is required").optional(),
@@ -72,14 +73,14 @@ export async function PUT(
       },
     })
 
-    console.log(`${isAdmin ? 'Admin' : 'Vendor'} updated variant: ${updatedVariant.name}`)
+    logger.info(`${isAdmin ? 'Admin' : 'Vendor'} updated variant: ${updatedVariant.name}`)
 
     return NextResponse.json({
       message: "Variant updated successfully",
       variant: updatedVariant,
     })
   } catch (error) {
-    console.error("Update variant error:", error)
+    logger.error("Update variant error:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -153,13 +154,13 @@ export async function DELETE(
       })
     }
 
-    console.log(`${isAdmin ? 'Admin' : 'Vendor'} deleted variant: ${variant.name}`)
+    logger.info(`${isAdmin ? 'Admin' : 'Vendor'} deleted variant: ${variant.name}`)
 
     return NextResponse.json({
       message: "Variant deleted successfully",
     })
   } catch (error) {
-    console.error("Delete variant error:", error)
+    logger.error("Delete variant error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import redis from "@/lib/redis"
+import { logger } from "@/lib/logger"
 
 /**
  * Simple Redis-based rate limiter
@@ -44,7 +45,7 @@ export async function rateLimit(
       reset: Date.now() + (windowSeconds * 1000),
     }
   } catch (error) {
-    console.error("Rate limit error:", error)
+    logger.error("Rate limit error:", error)
     // On Redis error, allow the request (fail open)
     return {
       success: true,
