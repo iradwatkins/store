@@ -119,18 +119,24 @@ export default function NewProductPage() {
         formData.append("inventoryQuantity", data.inventoryQuantity)
       }
 
-      // Add variant wizard data if present
+      // Add variant data (backward compatible with old system)
       if (wizardData && wizardData.hasVariants) {
+        // NEW MULTI-VARIANT SYSTEM
         formData.append("useMultiVariants", "true")
         formData.append("variantTypes", JSON.stringify(wizardData.selectedVariantTypes || []))
         formData.append("variantOptions", JSON.stringify(wizardData.variantOptions || {}))
         formData.append("generateCombinations", "true")
+
+        // OLD SYSTEM (for backward compatibility)
+        formData.append("variantType", "NONE")
 
         // Include bulk settings for the API to use when generating combinations
         if (wizardData.bulkSettings) {
           formData.append("bulkSettings", JSON.stringify(wizardData.bulkSettings))
         }
       } else {
+        // NO VARIANTS - Send old system fields for backward compatibility
+        formData.append("variantType", "NONE")
         formData.append("useMultiVariants", "false")
       }
 
