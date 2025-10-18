@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { PRODUCT_CATEGORIES, getSubcategories } from "@/lib/categories"
+import { ProductVariantWizard, type VariantWizardData } from "../components/wizard/ProductVariantWizard"
 
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
@@ -26,36 +27,9 @@ const productSchema = z.object({
   sku: z.string().optional(),
   trackInventory: z.boolean().default(true),
   inventoryQuantity: z.string().optional(),
-  variantType: z.string().default("NONE"), // This will store comma-separated types or "NONE"
-  variants: z.array(z.object({
-    name: z.string(),
-    sku: z.string().optional(),
-    price: z.string().optional(),
-    inventoryQuantity: z.string().optional(),
-    inStock: z.boolean().default(true),
-  })).optional(),
 })
 
 type ProductFormData = z.infer<typeof productSchema>
-
-const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"]
-const COLOR_OPTIONS = [
-  { value: "black", label: "Black", hex: "#000000" },
-  { value: "white", label: "White", hex: "#FFFFFF" },
-  { value: "red", label: "Red", hex: "#DC2626" },
-  { value: "blue", label: "Blue", hex: "#2563EB" },
-  { value: "green", label: "Green", hex: "#16A34A" },
-  { value: "navy", label: "Navy", hex: "#1E3A8A" },
-  { value: "gray", label: "Gray", hex: "#6B7280" },
-  { value: "pink", label: "Pink", hex: "#EC4899" },
-  { value: "purple", label: "Purple", hex: "#9333EA" },
-  { value: "yellow", label: "Yellow", hex: "#EAB308" },
-  { value: "orange", label: "Orange", hex: "#EA580C" },
-  { value: "brown", label: "Brown", hex: "#92400E" },
-  { value: "beige", label: "Beige", hex: "#D4A574" },
-  { value: "gold", label: "Gold", hex: "#D97706" },
-  { value: "silver", label: "Silver", hex: "#9CA3AF" },
-]
 
 export default function NewProductPage() {
   const router = useRouter()
@@ -64,39 +38,24 @@ export default function NewProductPage() {
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
-  // Variant state
-  const [variantType, setVariantType] = useState<"NONE" | "SIZE" | "COLOR">("NONE")
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([])
-  const [customInput, setCustomInput] = useState<string>("")
-
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
-  const [variantPricingEnabled, setVariantPricingEnabled] = useState(false)
-  const [trackInventorySeparately, setTrackInventorySeparately] = useState(true)
-  const [showSkuFields, setShowSkuFields] = useState(false)
+  // Variant wizard state
+  const [showVariantWizard, setShowVariantWizard] = useState(false)
+  const [wizardData, setWizardData] = useState<Partial<VariantWizardData> | null>(null)
 
   const {
     register,
     handleSubmit,
     watch,
-    control,
-    setValue,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      variantType: "NONE",
       trackInventory: true,
-      variants: [],
     },
   })
 
   const selectedCategory = watch("category")
   const trackInventory = watch("trackInventory")
-
-  const { fields, append, remove, replace } = useFieldArray({
-    control,
-    name: "variants",
-  })
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -121,79 +80,16 @@ export default function NewProductPage() {
     setImagePreviews(imagePreviews.filter((_, i) => i !== index))
   }
 
-  // Generate variants - use replace to avoid triggering infinite loop
-  const generateVariants = useCallback(() => {
-    if (variantType === "NONE" || selectedOptions.length === 0) {
-      replace([])
-      return
-    }
-
-    // Create variant for each selected option
-    const newVariants = selectedOptions.map((option) => ({
-      name: option,
-      sku: "",
-      price: "",
-      inventoryQuantity: "",
-      inStock: true,
-    }))
-
-    replace(newVariants)
-  }, [selectedOptions, variantType, replace])
-
-  // Generate variants when selections change
-  useEffect(() => {
-    generateVariants()
-  }, [generateVariants])
-
-  // Handle variant type change
-  const handleVariantTypeChange = (newType: "NONE" | "SIZE" | "COLOR") => {
-    setSelectedOptions([])
-    setCustomInput("")
-    setVariantType(newType)
-    setValue("variantType", newType)
+  // Handle variant wizard completion
+  const handleWizardComplete = async (data: VariantWizardData) => {
+    setWizardData(data)
+    setShowVariantWizard(false)
+    return Promise.resolve()
   }
 
-  // Handle option toggle
-  const handleOptionToggle = (option: string) => {
-    const newSelection = selectedOptions.includes(option)
-      ? selectedOptions.filter(o => o !== option)
-      : [...selectedOptions, option]
-    setSelectedOptions(newSelection)
-  }
-
-  // Select/Clear all options
-  const handleSelectAll = () => {
-    if (variantType === "SIZE") {
-      setSelectedOptions([...SIZE_OPTIONS])
-    } else if (variantType === "COLOR") {
-      setSelectedOptions(COLOR_OPTIONS.map(c => c.label))
-    }
-  }
-
-  const handleClearAll = () => {
-    setSelectedOptions([])
-  }
-
-  // Handle adding custom option
-  const handleAddCustomOption = () => {
-    const trimmedInput = customInput.trim()
-    if (trimmedInput && !selectedOptions.includes(trimmedInput)) {
-      setSelectedOptions([...selectedOptions, trimmedInput])
-      setCustomInput("")
-    }
-  }
-
-  // Handle removing an option
-  const handleRemoveOption = (option: string) => {
-    setSelectedOptions(selectedOptions.filter(o => o !== option))
-  }
-
-  // Handle Enter key in custom input
-  const handleCustomInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault()
-      handleAddCustomOption()
-    }
+  // Handle wizard cancel
+  const handleWizardCancel = () => {
+    setShowVariantWizard(false)
   }
 
   const onSubmit = async (data: ProductFormData) => {
@@ -223,11 +119,19 @@ export default function NewProductPage() {
         formData.append("inventoryQuantity", data.inventoryQuantity)
       }
 
-      formData.append("variantType", data.variantType)
+      // Add variant wizard data if present
+      if (wizardData && wizardData.hasVariants) {
+        formData.append("useMultiVariants", "true")
+        formData.append("variantTypes", JSON.stringify(wizardData.selectedVariantTypes || []))
+        formData.append("variantOptions", JSON.stringify(wizardData.variantOptions || {}))
+        formData.append("generateCombinations", "true")
 
-      // Add variants if present
-      if (data.variants && data.variants.length > 0) {
-        formData.append("variants", JSON.stringify(data.variants))
+        // Include bulk settings for the API to use when generating combinations
+        if (wizardData.bulkSettings) {
+          formData.append("bulkSettings", JSON.stringify(wizardData.bulkSettings))
+        }
+      } else {
+        formData.append("useMultiVariants", "false")
       }
 
       // Add images
@@ -410,484 +314,101 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* Only show product-level inventory if NO variants selected */}
-            {variantType === "NONE" && (
-              <>
-                <div className="flex items-center">
-                  <input
-                    {...register("trackInventory")}
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="trackInventory" className="ml-2 block text-sm text-gray-900">
-                    Track inventory quantity
-                  </label>
-                </div>
-
-                {trackInventory && (
-                  <div>
-                    <label htmlFor="inventoryQuantity" className="block text-sm font-medium text-gray-700">
-                      Quantity
-                    </label>
-                    <input
-                      {...register("inventoryQuantity")}
-                      type="number"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      placeholder="0"
-                    />
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Show info message when variants are selected */}
-            {variantType !== "NONE" && (
-              <div className="rounded-md bg-blue-50 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-blue-700">
-                      Inventory tracking is managed at the variant level. Set quantities for each variant in the table below.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Product Options */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Product Options</h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Does this product have variants?
+            <div className="flex items-center">
+              <input
+                {...register("trackInventory")}
+                type="checkbox"
+                className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="trackInventory" className="ml-2 block text-sm text-gray-900">
+                Track inventory quantity
               </label>
-              <div className="space-y-2">
-                <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                  variantType === "NONE" ? "border-blue-600 bg-blue-50" : "border-gray-300"
-                }`}>
-                  <input
-                    type="radio"
-                    checked={variantType === "NONE"}
-                    onChange={() => handleVariantTypeChange("NONE")}
-                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300"
-                  />
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    No variants (single product)
-                  </span>
-                </label>
-
-                <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                  variantType === "SIZE" ? "border-blue-600 bg-blue-50" : "border-gray-300"
-                }`}>
-                  <input
-                    type="radio"
-                    checked={variantType === "SIZE"}
-                    onChange={() => handleVariantTypeChange("SIZE")}
-                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300"
-                  />
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    Sizes (clothing, shoes, etc.)
-                  </span>
-                </label>
-
-                <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                  variantType === "COLOR" ? "border-blue-600 bg-blue-50" : "border-gray-300"
-                }`}>
-                  <input
-                    type="radio"
-                    checked={variantType === "COLOR"}
-                    onChange={() => handleVariantTypeChange("COLOR")}
-                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300"
-                  />
-                  <span className="ml-3 text-sm font-medium text-gray-900">
-                    Colors
-                  </span>
-                </label>
-              </div>
             </div>
 
-            {/* Size Selection */}
-            {variantType === "SIZE" && (
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-medium text-gray-900">
-                    Select or enter sizes:
-                  </label>
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={handleSelectAll}
-                      className="text-xs font-medium text-blue-500 hover:text-blue-800"
-                    >
-                      Select All
-                    </button>
-                    <span className="text-gray-400">|</span>
-                    <button
-                      type="button"
-                      onClick={handleClearAll}
-                      className="text-xs font-medium text-blue-500 hover:text-blue-800"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                </div>
-
-                {/* Custom Size Input */}
-                <div className="mb-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
-                      onKeyDown={handleCustomInputKeyDown}
-                      placeholder="Enter custom size (e.g., 8.5, 9, 10)"
-                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomOption}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-600">
-                    Enter custom sizes like shoe sizes (8, 8.5, 9, 10.5) or any custom size
-                  </p>
-                </div>
-
-                {/* Preset Size Options */}
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-gray-700 mb-2">Quick Select (Clothing Sizes):</p>
-                  <div className="grid grid-cols-4 gap-3">
-                    {SIZE_OPTIONS.map((size) => (
-                      <label
-                        key={size}
-                        className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedOptions.includes(size)
-                            ? "border-blue-600 bg-blue-100 text-blue-900"
-                            : "border-gray-300 bg-white text-gray-700 hover:border-blue-300"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedOptions.includes(size)}
-                          onChange={() => handleOptionToggle(size)}
-                          className="sr-only"
-                        />
-                        <span className="text-sm font-semibold">{size}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Selected Options Display */}
-                {selectedOptions.length > 0 && (
-                  <div className="mt-3 p-3 bg-white rounded-md border border-blue-200">
-                    <p className="text-xs font-medium text-gray-700 mb-2">
-                      {selectedOptions.length} size{selectedOptions.length !== 1 ? 's' : ''} selected:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedOptions.map((option) => (
-                        <span
-                          key={option}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                        >
-                          {option}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveOption(option)}
-                            className="ml-2 inline-flex items-center justify-center w-4 h-4 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Color Selection */}
-            {variantType === "COLOR" && (
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-medium text-gray-900">
-                    Select or enter colors:
-                  </label>
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={handleSelectAll}
-                      className="text-xs font-medium text-blue-500 hover:text-blue-800"
-                    >
-                      Select All
-                    </button>
-                    <span className="text-gray-400">|</span>
-                    <button
-                      type="button"
-                      onClick={handleClearAll}
-                      className="text-xs font-medium text-blue-500 hover:text-blue-800"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                </div>
-
-                {/* Custom Color Input */}
-                <div className="mb-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
-                      onKeyDown={handleCustomInputKeyDown}
-                      placeholder="Enter custom color (e.g., Rose Gold, Teal)"
-                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomOption}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-600">
-                    Enter custom colors not in the preset list
-                  </p>
-                </div>
-
-                {/* Preset Color Options */}
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-gray-700 mb-2">Quick Select (Common Colors):</p>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                    {COLOR_OPTIONS.map((color) => (
-                      <label
-                        key={color.value}
-                        className={`flex flex-col items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedOptions.includes(color.label)
-                            ? "border-blue-600 bg-blue-100"
-                            : "border-gray-300 bg-white hover:border-blue-300"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedOptions.includes(color.label)}
-                          onChange={() => handleOptionToggle(color.label)}
-                          className="sr-only"
-                        />
-                        <div
-                          className="w-10 h-10 rounded-full mb-2 border-2 border-gray-300 shadow-sm"
-                          style={{
-                            backgroundColor: color.hex,
-                            border: color.value === "white" ? "2px solid #D1D5DB" : "2px solid transparent"
-                          }}
-                        />
-                        <span className="text-xs font-medium text-gray-900 text-center">
-                          {color.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Selected Options Display */}
-                {selectedOptions.length > 0 && (
-                  <div className="mt-3 p-3 bg-white rounded-md border border-blue-200">
-                    <p className="text-xs font-medium text-gray-700 mb-2">
-                      {selectedOptions.length} color{selectedOptions.length !== 1 ? 's' : ''} selected:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedOptions.map((option) => (
-                        <span
-                          key={option}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                        >
-                          {option}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveOption(option)}
-                            className="ml-2 inline-flex items-center justify-center w-4 h-4 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Generated Variants Table */}
-            {fields.length > 0 && (
-              <div className="mt-6">
-                <div className="mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    Product Variants ({fields.length} total)
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Configure details for each variant option
-                  </p>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Variant
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          In Stock
-                        </th>
-                        {trackInventorySeparately && (
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                            Inventory
-                          </th>
-                        )}
-                        {variantPricingEnabled && (
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                            Price
-                          </th>
-                        )}
-                        {showSkuFields && (
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                            SKU
-                          </th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {fields.map((field, index) => (
-                        <tr key={field.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">{field.name}</span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <input
-                              {...register(`variants.${index}.inStock`)}
-                              type="checkbox"
-                              defaultChecked={field.inStock}
-                              className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                          </td>
-                          {trackInventorySeparately && (
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <input
-                                {...register(`variants.${index}.inventoryQuantity`)}
-                                type="number"
-                                placeholder="0"
-                                className="w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                              />
-                            </td>
-                          )}
-                          {variantPricingEnabled && (
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="relative w-24">
-                                <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                                  <span className="text-gray-500 text-sm">$</span>
-                                </div>
-                                <input
-                                  {...register(`variants.${index}.price`)}
-                                  type="text"
-                                  placeholder="0.00"
-                                  className="w-full pl-6 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                />
-                              </div>
-                            </td>
-                          )}
-                          {showSkuFields && (
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <input
-                                {...register(`variants.${index}.sku`)}
-                                type="text"
-                                placeholder="SKU"
-                                className="w-28 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                              />
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Advanced Options */}
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                    className="flex items-center text-sm font-medium text-blue-500 hover:text-blue-800"
-                  >
-                    <svg
-                      className={`h-4 w-4 mr-1 transition-transform ${showAdvancedOptions ? 'rotate-90' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                    Advanced Options
-                  </button>
-
-                  {showAdvancedOptions && (
-                    <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-                      <label className="flex items-start">
-                        <input
-                          type="checkbox"
-                          checked={variantPricingEnabled}
-                          onChange={(e) => setVariantPricingEnabled(e.target.checked)}
-                          className="h-4 w-4 mt-0.5 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <div className="ml-3">
-                          <span className="text-sm font-medium text-gray-900">Different prices for variants</span>
-                          <p className="text-xs text-gray-500">Set a custom price for each variant</p>
-                        </div>
-                      </label>
-
-                      <label className="flex items-start">
-                        <input
-                          type="checkbox"
-                          checked={trackInventorySeparately}
-                          onChange={(e) => setTrackInventorySeparately(e.target.checked)}
-                          className="h-4 w-4 mt-0.5 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <div className="ml-3">
-                          <span className="text-sm font-medium text-gray-900">Track inventory separately</span>
-                          <p className="text-xs text-gray-500">Set different inventory for each variant</p>
-                        </div>
-                      </label>
-
-                      <label className="flex items-start">
-                        <input
-                          type="checkbox"
-                          checked={showSkuFields}
-                          onChange={(e) => setShowSkuFields(e.target.checked)}
-                          className="h-4 w-4 mt-0.5 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <div className="ml-3">
-                          <span className="text-sm font-medium text-gray-900">Add SKUs for variants</span>
-                          <p className="text-xs text-gray-500">Specify unique SKUs for each variant</p>
-                        </div>
-                      </label>
-                    </div>
-                  )}
-                </div>
+            {trackInventory && (
+              <div>
+                <label htmlFor="inventoryQuantity" className="block text-sm font-medium text-gray-700">
+                  Quantity
+                </label>
+                <input
+                  {...register("inventoryQuantity")}
+                  type="number"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  placeholder="0"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  For products with variants, inventory is managed per variant in the variant configuration.
+                </p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Product Variants */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">Product Variants</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Add size, color, and other variant options
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowVariantWizard(true)}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600"
+            >
+              {wizardData ? 'Edit Variants' : 'Configure Variants'}
+            </button>
+          </div>
+
+          {wizardData && wizardData.hasVariants ? (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-blue-900">Variants Configured</h3>
+                  <div className="mt-2 text-sm text-blue-700">
+                    <p><strong>Variant Types:</strong> {wizardData.selectedVariantTypes?.join(', ')}</p>
+                    <p className="mt-1">
+                      <strong>Combinations:</strong>{' '}
+                      {wizardData.selectedVariantTypes?.reduce((total, type) => {
+                        const options = wizardData.variantOptions?.[type]?.selectedPresetOptions || []
+                        const custom = wizardData.variantOptions?.[type]?.customOptions || []
+                        return total * Math.max((options.length + custom.length), 1)
+                      }, 1) || 0} total variant combinations
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+              <p className="text-sm text-gray-600">
+                No variants configured. Click "Configure Variants" to add size, color, and other options.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Variant Wizard Modal */}
+        {showVariantWizard && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <ProductVariantWizard
+                  initialData={wizardData || undefined}
+                  onComplete={handleWizardComplete}
+                  onCancel={handleWizardCancel}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Images */}
         <div className="bg-white shadow rounded-lg p-6">

@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/use-toast'
 import { Step1ProductType } from './Step1ProductType'
 import { Step2VariantTypes } from './Step2VariantTypes'
 import { Step3ConfigureOptions } from './Step3ConfigureOptions'
+import { Step4BulkSettings } from './Step4BulkSettings'
+import { Step5Review } from './Step5Review'
 
 // Wizard step configuration
 const WIZARD_STEPS = [
@@ -132,6 +134,26 @@ export function ProductVariantWizard({
 
   const updateWizardData = (updates: Partial<VariantWizardData>) => {
     setWizardData((prev) => ({ ...prev, ...updates }))
+  }
+
+  // Calculate total variant combinations
+  const getTotalCombinations = (): number => {
+    if (!wizardData.hasVariants || !wizardData.selectedVariantTypes || wizardData.selectedVariantTypes.length === 0) {
+      return 0
+    }
+
+    let total = 1
+    wizardData.selectedVariantTypes.forEach(type => {
+      const options = wizardData.variantOptions?.[type]
+      if (options) {
+        const optionCount = (options.selectedPresetOptions?.length || 0) + (options.customOptions?.length || 0)
+        if (optionCount > 0) {
+          total *= optionCount
+        }
+      }
+    })
+
+    return total
   }
 
   const handleNext = () => {
@@ -306,54 +328,42 @@ export function ProductVariantWizard({
             />
           )}
           
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Bulk Settings</h3>
-              <p className="text-muted-foreground">
-                Set default pricing and inventory for all variant combinations
-              </p>
-              {/* Bulk settings implementation will be added */}
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm">Bulk settings configuration coming soon...</p>
-              </div>
-            </div>
+          {currentStep === 3 && wizardData.hasVariants && (
+            <Step4BulkSettings
+              bulkSettings={wizardData.bulkSettings || {
+                applyDefaultPrice: true,
+                applyDefaultInventory: true,
+                generateSkus: true,
+              }}
+              onChange={(bulkSettings) => updateWizardData({ bulkSettings })}
+              totalCombinations={getTotalCombinations()}
+            />
           )}
           
           {currentStep === 4 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Review & Generate</h3>
-              <p className="text-muted-foreground">
-                Review your variant configuration and generate combinations
-              </p>
-              
+            <>
               {wizardData.hasVariants ? (
+                <Step5Review
+                  selectedVariantTypes={wizardData.selectedVariantTypes || []}
+                  variantOptions={wizardData.variantOptions || {}}
+                  bulkSettings={wizardData.bulkSettings || {
+                    applyDefaultPrice: true,
+                    applyDefaultInventory: true,
+                    generateSkus: true,
+                  }}
+                  isGenerating={isSaving}
+                />
+              ) : (
                 <div className="space-y-4">
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                    <h4 className="font-medium">Variant Configuration Summary</h4>
-                    <div className="mt-2 space-y-2">
-                      <p className="text-sm">
-                        <strong>Variant Types:</strong> {wizardData.selectedVariantTypes?.join(', ') || 'None'}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Total Combinations:</strong> {
-                          wizardData.selectedVariantTypes?.reduce((total, type) => {
-                            const options = wizardData.variantOptions?.[type]?.selectedPresetOptions || []
-                            return total * Math.max(options.length, 1)
-                          }, 1) || 0
-                        }
-                      </p>
-                    </div>
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">Simple Product</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      This product will be created without variants.
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm font-medium text-green-800">Simple Product</p>
-                  <p className="text-sm text-green-700 mt-1">
-                    This product will be created without variants.
-                  </p>
-                </div>
               )}
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

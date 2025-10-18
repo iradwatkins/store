@@ -16,9 +16,10 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { MoreHorizontal, Edit2, Save, X, Package, DollarSign, Hash, Image } from 'lucide-react'
+import { MoreHorizontal, Edit2, Save, X, Package, DollarSign, Hash, Image, Upload, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { formatCurrency } from '@/lib/utils'
+import { useRef } from 'react'
 
 interface VariantCombination {
   id: string
@@ -55,6 +56,8 @@ export function VariantCombinationTable({
   const [isLoading, setIsLoading] = useState(false)
   const [bulkAction, setBulkAction] = useState<string>('')
   const [bulkValue, setBulkValue] = useState<string>('')
+  const [uploadingImageFor, setUploadingImageFor] = useState<string | null>(null)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // Format combination display name
   const formatCombinationName = (optionValues: Record<string, string>) => {
@@ -189,6 +192,77 @@ export function VariantCombinationTable({
     }
   }
 
+  // Handle image upload
+  const handleImageUpload = async (combinationId: string, file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file',
+        description: 'Please upload an image file',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setUploadingImageFor(combinationId)
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch(`/api/vendor/products/${productId}/variants/combinations/${combinationId}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Failed to upload image')
+
+      const { imageUrl } = await response.json()
+
+      toast({
+        title: 'Image uploaded',
+        description: 'Variant image updated successfully',
+      })
+
+      onUpdate()
+    } catch (error) {
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload variant image',
+        variant: 'destructive',
+      })
+    } finally {
+      setUploadingImageFor(null)
+    }
+  }
+
+  // Handle image deletion
+  const handleImageDelete = async (combinationId: string) => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/vendor/products/${productId}/variants/combinations/${combinationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: null })
+      })
+
+      if (!response.ok) throw new Error('Failed to delete image')
+
+      toast({
+        title: 'Image removed',
+        description: 'Variant image deleted successfully',
+      })
+
+      onUpdate()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete variant image',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Toggle combination selection
   const toggleCombination = (combinationId: string) => {
     setSelectedCombinations(prev =>
@@ -296,7 +370,7 @@ export function VariantCombinationTable({
                     />
                   </TableHead>
                   <TableHead>Variant</TableHead>
-                  <TableHead className="w-24">Image</TableHead>
+                  <TableHead className="w-44">Image</TableHead>
                   <TableHead className="w-32">SKU</TableHead>
                   <TableHead className="w-32">Price</TableHead>
                   <TableHead className="w-24">Quantity</TableHead>
@@ -329,17 +403,56 @@ export function VariantCombinationTable({
 
                     {/* Image */}
                     <TableCell>
-                      {combination.imageUrl ? (
-                        <img 
-                          src={combination.imageUrl} 
-                          alt="Variant" 
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                          <Image className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex items-center gap-2">
+                        <div className="relative group">
+                          {combination.imageUrl ? (
+                            <div className="relative">
+                              <img
+                                src={combination.imageUrl}
+                                alt="Variant"
+                                className="w-12 h-12 object-cover rounded border-2 border-gray-200"
+                              />
+                              <button
+                                onClick={() => handleImageDelete(combination.id)}
+                                disabled={isLoading}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                title="Remove image"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                              <Image className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <div>
+                          <input
+                            ref={(el) => fileInputRefs.current[combination.id] = el}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(combination.id, file)
+                            }}
+                            className="hidden"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => fileInputRefs.current[combination.id]?.click()}
+                            disabled={uploadingImageFor === combination.id}
+                            className="h-7 text-xs"
+                          >
+                            {uploadingImageFor === combination.id ? (
+                              <><Upload className="h-3 w-3 mr-1 animate-pulse" /> Uploading...</>
+                            ) : (
+                              <><Upload className="h-3 w-3 mr-1" /> {combination.imageUrl ? 'Change' : 'Upload'}</>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </TableCell>
 
                     {/* SKU */}
