@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 // Unsplash women's fashion images (curated collection)
 const fashionImages = [
@@ -23,6 +25,7 @@ const fashionImages = [
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +45,9 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
+      {/* Language Toggle */}
+      <LanguageToggle />
+
       {/* Animated Masonry Background */}
       <motion.div
         className="absolute inset-0 opacity-20"
@@ -70,7 +76,7 @@ export default function Home() {
             >
               <motion.img
                 src={image}
-                alt={`Moda ${index + 1}`}
+                alt={`${t.fashionAlt} ${index + 1}`}
                 className="w-full h-auto object-cover"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
@@ -91,7 +97,7 @@ export default function Home() {
             className="mb-8"
           >
             <span className="inline-block bg-primary/20 backdrop-blur-sm px-6 py-3 rounded-full text-primary font-medium text-lg border-2 border-primary">
-              Próximamente
+              {t.comingSoon}
             </span>
           </motion.div>
 
@@ -109,7 +115,7 @@ export default function Home() {
           >
             <Image
               src="/logo.png"
-              alt="El Armario"
+              alt={t.logoAlt}
               width={800}
               height={400}
               className="w-full max-w-3xl h-auto"
@@ -124,7 +130,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-2xl md:text-3xl text-foreground/80 mb-12 font-light"
           >
-            Moda Femenina | República Dominicana
+            {t.mainTagline}
           </motion.p>
 
           {/* Animated Decorative Elements */}
@@ -159,12 +165,12 @@ export default function Home() {
             className="mt-16"
           >
             <p className="text-lg text-foreground/70 mb-6">
-              Estamos preparando algo especial para ti
+              {t.preparingSpecial}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <input
                 type="email"
-                placeholder="Tu correo electrónico"
+                placeholder={t.emailPlaceholder}
                 className="px-6 py-4 rounded-full bg-card border-2 border-primary/30 text-foreground focus:outline-none focus:border-primary transition-colors w-full sm:w-80"
               />
               <motion.button
@@ -172,7 +178,7 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-4 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-shadow"
               >
-                Notifícame
+                {t.notifyButton}
               </motion.button>
             </div>
           </motion.div>

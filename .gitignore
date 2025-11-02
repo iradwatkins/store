@@ -42,3 +42,6 @@ next-env.d.ts
 
 # backup
 *.backup
+
+# Ira folder - Documentation and notes
+Ira folder/

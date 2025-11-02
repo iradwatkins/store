@@ -1,0 +1,38 @@
+{
+  "projectName": "elarmario",
+  "projectRoot": "/root/websites/elarmario",
+  "allowedPaths": [
+    "/root/websites/elarmario"
+  ],
+  "prohibitedPaths": [
+    "/root/websites/agistaffers","/root/websites/gangrunprinting","/root/websites/taxgeniuspro","/root/websites/stepperslife","/root/websites/events-stepperslife","/root/websites/stores-stepperslife","/root/websites/uvcoatedclubflyers","/root/websites/cheapflyerprinting","/root/websites/signprintingusa"
+  ],
+  "sharedInfrastructure": {
+    "n8n": {
+      "url": "http://localhost:5678",
+      "access": "read-only"
+    },
+    "chatwoot": {
+      "url": "http://localhost:3006",
+      "access": "read-only"
+    }
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "elarmario",
+    "warning": "ONLY access elarmario - NEVER touch other databases"
+  },
+  "gitRepo": {
+    "remote": "https://github.com/iradwatkins/elarmario.com.do.git",
+    "expectedBranch": "main"
+  },
+  "port": 3012,
+  "isolationRules": [
+    "NEVER read files from other projects in /root/websites/*",
+    "NEVER write to files outside /root/websites/elarmario",
+    "NEVER git commit to repositories other than elarmario",
+    "NEVER access databases other than elarmario",
+    "Study other projects for learning but implement in elarmario only"
+  ]
+}

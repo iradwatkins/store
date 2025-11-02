@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for elarmario
+  elarmario-postgres:
+    image: postgres:16-alpine
+    container_name: elarmario-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5440:5432"
+    environment:
+      POSTGRES_DB: elarmario
+      POSTGRES_USER: stepperslife
+      POSTGRES_PASSWORD: securepass123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    volumes:
+      - elarmario_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stepperslife -d elarmario"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - elarmario_network
+
+  # Redis Cache for elarmario
+  elarmario-redis:
+    image: redis:7-alpine
+    container_name: elarmario-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6310:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - elarmario_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - elarmario_network
+
+  # MinIO Object Storage for elarmario
+  elarmario-minio:
+    image: minio/minio:latest
+    container_name: elarmario-minio
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9012:9000"  # MinIO API
+      - "127.0.0.1:9112:9001"  # MinIO Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - elarmario_minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - elarmario_network
+
+networks:
+  elarmario_network:
+    driver: bridge
+
+volumes:
+  elarmario_postgres_data:
+    driver: local
+  elarmario_redis_data:
+    driver: local
+  elarmario_minio_data:
+    driver: local
