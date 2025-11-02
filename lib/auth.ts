@@ -9,10 +9,14 @@ import { logger } from "@/lib/logger"
 import bcrypt from "bcryptjs"
 
 export const authConfig = {
+  // Prisma adapter for database sessions (required for magic links)
   adapter: PrismaAdapter(prisma) as any,
 
+  secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true, // Required for production behind proxy
+
   session: {
-    strategy: "database",
+    strategy: "database", // Database sessions for magic links and better security
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
@@ -40,45 +44,55 @@ export const authConfig = {
   providers: [
     // Email/Password login for testing
     Credentials({
+      id: "credentials",
       name: "Email & Password",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            role: true,
-            password: true
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            console.error('Missing email or password')
+            return null
           }
-        })
 
-        if (!user || !user.password) {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email as string },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              password: true
+            }
+          })
+
+          if (!user || !user.password) {
+            console.error('User not found or no password:', credentials.email)
+            return null
+          }
+
+          const isValidPassword = await bcrypt.compare(
+            credentials.password as string,
+            user.password
+          )
+
+          if (!isValidPassword) {
+            console.error('Invalid password for:', credentials.email)
+            return null
+          }
+
+          console.log('Login successful for:', user.email)
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error('Error in authorize:', error)
           return null
-        }
-
-        const isValidPassword = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
-
-        if (!isValidPassword) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
         }
       }
     }),
@@ -106,33 +120,19 @@ export const authConfig = {
   ],
 
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (user) {
-        token.id = user.id
-        token.role = user.role
+    async session({ session, user }) {
+      // With database strategy, we get user data from the database
+      if (user && session.user) {
+        session.user.id = user.id
+        session.user.email = user.email
+        session.user.name = user.name
+        session.user.role = user.role || 'USER'
 
-        // Check if user has a vendor store
-        const vendorStore = await prisma.vendorStore.findFirst({
-          where: {
-            userId: user.id,
-          },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-          },
-        })
-
-        token.vendorStore = vendorStore
-      }
-
-      // Handle session updates - refresh vendorStore data
-      if (trigger === "update") {
-        if (token.id) {
-          // Re-fetch vendor store data on session update
+        // Fetch vendor store for the user
+        try {
           const vendorStore = await prisma.vendorStore.findFirst({
             where: {
-              userId: token.id as string,
+              userId: user.id,
             },
             select: {
               id: true,
@@ -140,48 +140,10 @@ export const authConfig = {
               name: true,
             },
           })
-          token.vendorStore = vendorStore
-        }
-
-        if (session) {
-          token = { ...token, ...session }
-        }
-      }
-
-      return token
-    },
-
-    async session({ session, token, user }) {
-      // With database strategy, we get 'user' from the database
-      // We need to fetch fresh data every time to ensure role and vendorStore are current
-      if (user?.id || token?.id) {
-        const userId = (user?.id || token?.id) as string
-
-        // Fetch fresh user data from database
-        const dbUser = await prisma.user.findUnique({
-          where: { id: userId },
-          select: {
-            id: true,
-            role: true,
-            email: true,
-            name: true,
-          },
-        })
-
-        // Fetch vendor store if exists
-        const vendorStore = await prisma.vendorStore.findFirst({
-          where: { userId },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-          },
-        })
-
-        if (dbUser && session.user) {
-          session.user.id = dbUser.id
-          session.user.role = dbUser.role
           session.user.vendorStore = vendorStore
+        } catch (error) {
+          console.error('Error fetching vendor store:', error)
+          session.user.vendorStore = null
         }
       }
 

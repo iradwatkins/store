@@ -42,8 +42,8 @@ const envSchema = z.object({
   
   // Authentication
   NEXTAUTH_SECRET: nonEmptyString.describe('NextAuth.js secret for JWT signing'),
-  GOOGLE_CLIENT_ID: nonEmptyString.describe('Google OAuth client ID'),
-  GOOGLE_CLIENT_SECRET: nonEmptyString.describe('Google OAuth client secret'),
+  GOOGLE_CLIENT_ID: z.string().optional().describe('Google OAuth client ID (optional)'),
+  GOOGLE_CLIENT_SECRET: z.string().optional().describe('Google OAuth client secret (optional)'),
   
   // Email Services
   RESEND_API_KEY: nonEmptyString.describe('Resend email service API key'),

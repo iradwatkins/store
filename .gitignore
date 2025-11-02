@@ -50,3 +50,6 @@ prisma/dev.db-journal
 # OS
 .DS_Store
 Thumbs.db
+
+# Ira folder - Documentation and notes
+Ira folder/

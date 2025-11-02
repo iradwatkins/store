@@ -1,10 +1,14 @@
 #!/usr/bin/env ts-node
 
+import * as dotenv from 'dotenv'
 import { validateEnvironment, listEnvironmentVariables } from '../lib/env-validation'
+
+// Load environment variables from .env file
+dotenv.config()
 
 /**
  * Environment Variable Validation Script
- * 
+ *
  * This script validates environment variables and provides helpful output
  * for development, CI/CD, and deployment processes.
  */

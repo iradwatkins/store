@@ -19,11 +19,14 @@ const credentialsSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>
 type CredentialsFormData = z.infer<typeof credentialsSchema>
 
+type AuthMode = "credentials" | "magic-link"
+
 function LoginForm() {
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [authMode, setAuthMode] = useState<AuthMode>("credentials")
 
   const callbackUrl = searchParams?.get("callbackUrl") || "/auth-redirect"
 
@@ -65,6 +68,31 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     await signIn("google", { callbackUrl })
+  }
+
+  const handleMagicLinkSignIn = async (email: string) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await signIn("resend", {
+        email,
+        redirect: false,
+        callbackUrl,
+      })
+
+      if (result?.error) {
+        setError("Failed to send magic link. Please try again.")
+        setIsLoading(false)
+        return
+      }
+
+      setEmailSent(true)
+      setIsLoading(false)
+    } catch {
+      setError("Something went wrong")
+      setIsLoading(false)
+    }
   }
 
   if (emailSent) {
@@ -128,52 +156,126 @@ function LoginForm() {
           </div>
         )}
 
-        {/* Email/Password Sign In */}
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <input
-              {...register("email")}
-              id="email"
-              type="email"
-              autoComplete="email"
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Enter your email address"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
+        {/* Auth Mode Toggle */}
+        <div className="flex rounded-lg border border-gray-300 p-1 bg-gray-50">
+          <button
+            type="button"
+            onClick={() => setAuthMode("credentials")}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+              authMode === "credentials"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Email & Password
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode("magic-link")}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+              authMode === "magic-link"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Magic Link
+          </button>
+        </div>
 
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <input
-              {...register("password")}
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Enter your password"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-            )}
-          </div>
+        {/* Credentials Form */}
+        {authMode === "credentials" && (
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                {...register("email")}
+                id="email"
+                type="email"
+                autoComplete="email"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Enter your email address"
+              />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              )}
+            </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-          </div>
-        </form>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                {...register("password")}
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Enter your password"
+              />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Magic Link Form */}
+        {authMode === "magic-link" && (
+          <form
+            className="space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              const email = formData.get("magic-email") as string
+              if (email && emailSchema.safeParse({ email }).success) {
+                handleMagicLinkSignIn(email)
+              } else {
+                setError("Please enter a valid email address")
+              }
+            }}
+          >
+            <div>
+              <label htmlFor="magic-email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="magic-email"
+                name="magic-email"
+                type="email"
+                required
+                autoComplete="email"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Enter your email address"
+              />
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Sending..." : "Send Magic Link"}
+              </button>
+            </div>
+
+            <p className="text-xs text-center text-gray-500">
+              We&apos;ll email you a magic link for a password-free sign in
+            </p>
+          </form>
+        )}
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">

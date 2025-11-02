@@ -1,9 +1,11 @@
+"use client"
+
 import { Search, Home, ArrowLeft, MapPin } from 'lucide-react'
 import Link from 'next/link'
 
 /**
  * 404 Not Found Page for Next.js App Router
- * 
+ *
  * This component handles cases where users navigate to non-existent routes,
  * providing helpful navigation options and maintaining good UX.
  */
