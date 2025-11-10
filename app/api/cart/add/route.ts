@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
           take: 1,
         },
         product_variants: true, // Old variant system
-        variantCombinations: true, // New multi-variant system
+        variant_combinations: true, // New multi-variant system
         vendor_stores: true,
       },
     })
