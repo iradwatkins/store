@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 
 async function getVendorStore(userId: string) {
-  return await prisma.vendorStore.findFirst({
+  return await prisma.vendor_stores.findFirst({
     where: {
       userId,
     },
@@ -48,12 +49,12 @@ export default async function VendorDashboardLayout({
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <a
+                <Link
                   href="/admin"
                   className="text-sm text-white hover:text-yellow-300 font-medium transition-colors"
                 >
                   ← Back to Admin Panel
-                </a>
+                </Link>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-purple-100">{session.user.email}</span>
                   <form action="/api/auth/signout" method="POST">
@@ -80,7 +81,7 @@ export default async function VendorDashboardLayout({
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  <strong className="font-medium">Admin Mode:</strong> You're accessing vendor functionality without a vendor store. Some features may be limited.
+                  <strong className="font-medium">Admin Mode:</strong> You&apos;re accessing vendor functionality without a vendor store. Some features may be limited.
                 </p>
               </div>
             </div>
@@ -105,14 +106,14 @@ export default async function VendorDashboardLayout({
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <a
+              <Link
                 href={`/store/${store.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 View Store
-              </a>
+              </Link>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">{session.user.email}</span>
                 <form action="/api/auth/signout" method="POST">
@@ -133,7 +134,7 @@ export default async function VendorDashboardLayout({
         {/* Sidebar Navigation */}
         <aside className="w-64 bg-white shadow-sm min-h-screen">
           <nav className="mt-5 px-2 space-y-1">
-            <a
+            <Link
               href="/dashboard"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:bg-gray-50"
             >
@@ -151,9 +152,9 @@ export default async function VendorDashboardLayout({
                 />
               </svg>
               Dashboard
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/dashboard/products"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -171,9 +172,9 @@ export default async function VendorDashboardLayout({
                 />
               </svg>
               Products
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/dashboard/orders"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -191,9 +192,69 @@ export default async function VendorDashboardLayout({
                 />
               </svg>
               Orders
-            </a>
+            </Link>
 
-            <a
+            <Link
+              href="/dashboard/abandoned-carts"
+              className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <svg
+                className="mr-4 h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              Abandoned Carts
+            </Link>
+
+            <Link
+              href="/dashboard/withdraws"
+              className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <svg
+                className="mr-4 h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Withdraws
+            </Link>
+
+            <Link
+              href="/dashboard/announcements"
+              className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <svg
+                className="mr-4 h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                />
+              </svg>
+              Announcements
+            </Link>
+
+            <Link
               href="/dashboard/analytics"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -211,9 +272,49 @@ export default async function VendorDashboardLayout({
                 />
               </svg>
               Analytics
-            </a>
+            </Link>
 
-            <a
+            <Link
+              href="/dashboard/shipping"
+              className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <svg
+                className="mr-4 h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+              Shipping
+            </Link>
+
+            <Link
+              href="/dashboard/store-hours"
+              className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <svg
+                className="mr-4 h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Store Hours
+            </Link>
+
+            <Link
               href="/dashboard/settings"
               className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             >
@@ -237,7 +338,7 @@ export default async function VendorDashboardLayout({
                 />
               </svg>
               Settings
-            </a>
+            </Link>
           </nav>
         </aside>
 

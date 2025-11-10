@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Find all orders shipped exactly 3 days ago that are paid and delivered/shipped
-    const eligibleOrders = await prisma.storeOrder.findMany({
+    const eligibleOrders = await prisma.store_orders.findMany({
       where: {
         shippedAt: {
           gte: threeDaysAgo,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
                   orderBy: { sortOrder: "asc" },
                   take: 1,
                 },
-                vendorStore: true,
+                vendor_stores: true,
               },
             },
             review: true, // Check if already reviewed
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
           // Get product image URL
           const productImageUrl =
-            item.product.images[0]?.url || item.imageUrl || undefined
+            item.product.product_images[0]?.url || item.imageUrl || undefined
 
           // Send review request email
           await sendReviewRequest({
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
             productName: item.name,
             productImageUrl,
             orderNumber: order.orderNumber,
-            storeName: item.product.vendorStore.name,
+            storeName: item.product.vendor_stores.name,
             reviewUrl,
           })
 

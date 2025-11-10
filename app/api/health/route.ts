@@ -22,7 +22,7 @@ export async function GET() {
     // Database check
     await prisma.$queryRaw`SELECT 1`
     checks.checks.database = 'healthy'
-  } catch (error) {
+  } catch {
     checks.checks.database = 'unhealthy'
     checks.status = 'degraded'
   }
@@ -31,7 +31,7 @@ export async function GET() {
     // Redis check
     const pong = await redis.ping()
     checks.checks.redis = pong === 'PONG' ? 'healthy' : 'unhealthy'
-  } catch (error) {
+  } catch {
     checks.checks.redis = 'unhealthy'
     checks.status = 'degraded'
   }

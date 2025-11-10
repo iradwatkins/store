@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
-import { invalidateProductCache, invalidateVendorCache } from "@/lib/cache"
+import { invalidateVendorCache } from "@/lib/cache"
 import { logger } from "@/lib/logger"
 
 export async function POST(
@@ -17,7 +17,7 @@ export async function POST(
     }
 
     // Get user's store
-    const store = await prisma.vendorStore.findFirst({
+    const store = await prisma.vendor_stores.findFirst({
       where: {
         userId: session.user.id,
       },
@@ -31,7 +31,7 @@ export async function POST(
     }
 
     // Get the original product with all related data
-    const originalProduct = await prisma.product.findFirst({
+    const originalProduct = await prisma.products.findFirst({
       where: {
         id: params.id,
         vendorStoreId: store.id,
@@ -81,13 +81,13 @@ export async function POST(
     // Ensure slug is unique
     let slugSuffix = 1
     let uniqueSlug = slug
-    while (await prisma.product.findFirst({ where: { vendorStoreId: store.id, slug: uniqueSlug } })) {
+    while (await prisma.products.findFirst({ where: { vendorStoreId: store.id, slug: uniqueSlug } })) {
       uniqueSlug = `${slug}-${slugSuffix}`
       slugSuffix++
     }
 
     // Create the duplicate product
-    const duplicatedProduct = await prisma.product.create({
+    const duplicatedProduct = await prisma.products.create({
       data: {
         vendorStoreId: store.id,
         name: newName,
@@ -107,7 +107,7 @@ export async function POST(
     // Duplicate variants
     if (originalProduct.variants.length > 0) {
       for (const variant of originalProduct.variants) {
-        await prisma.productVariant.create({
+        await prisma.product_variants.create({
           data: {
             productId: duplicatedProduct.id,
             name: variant.name,
@@ -125,7 +125,7 @@ export async function POST(
     // Duplicate images
     if (originalProduct.images.length > 0) {
       for (const image of originalProduct.images) {
-        await prisma.productImage.create({
+        await prisma.product_images.create({
           data: {
             productId: duplicatedProduct.id,
             url: image.url, // Keep same URLs since images are immutable
@@ -141,7 +141,7 @@ export async function POST(
 
     // Increment product count for tenant (if applicable)
     if (store.tenantId) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: { currentProducts: { increment: 1 } },
       })

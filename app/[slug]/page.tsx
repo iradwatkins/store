@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import prisma from "@/lib/db"
 
 export default async function StoreSlugRedirect({
@@ -10,7 +11,7 @@ export default async function StoreSlugRedirect({
   const resolvedParams = await params
   
   // Check if this slug exists as a store
-  const store = await prisma.vendorStore.findUnique({
+  const store = await prisma.vendor_stores.findUnique({
     where: { slug: resolvedParams.slug },
     select: { slug: true },
   })
@@ -26,12 +27,12 @@ export default async function StoreSlugRedirect({
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
         <p className="text-gray-600 mb-8">Store not found</p>
-        <a
+        <Link
           href="/"
           className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
           Go Home
-        </a>
+        </Link>
       </div>
     </div>
   )

@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const month = now.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
     // 3. Reset monthly order counts for all tenants
-    const result = await prisma.tenant.updateMany({
+    const result = await prisma.tenants.updateMany({
       data: {
         currentOrders: 0,
       },
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     logger.info(`Monthly usage reset complete: ${result.count} tenants updated for ${month}`)
 
     // 4. Optionally: Create usage records for historical tracking
-    const tenants = await prisma.tenant.findMany({
+    const _tenants = await prisma.tenants.findMany({
       select: {
         id: true,
         name: true,

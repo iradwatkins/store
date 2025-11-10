@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import Stripe from "stripe"
-import prisma from "@/lib/db"
 import { z } from "zod"
+import { auth } from "@/lib/auth"
+import prisma from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-09-30.clover",
 })
 
 // Validation schema
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Invalid request", details: validation.error.errors },
+        { error: "Invalid request", details: validation.error.issues },
         { status: 400 }
       )
     }
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const { tenantId, priceId, paymentMethodId } = validation.data
 
     // 3. Verify tenant ownership
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: tenantId },
       include: {
         owner: {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       stripeCustomerId = customer.id
 
       // Update tenant with Stripe Customer ID
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: tenant.id },
         data: { stripeCustomerId: customer.id },
       })
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
     // 9. Update tenant with subscription details
     const quotas = PLAN_QUOTAS[plan as keyof typeof PLAN_QUOTAS]
 
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: tenant.id },
       data: {
         stripeSubscriptionId: subscription.id,
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
     })
 
     // 10. Create subscription history record
-    await prisma.subscriptionHistory.create({
+    await prisma.subscription_history.create({
       data: {
         tenantId: tenant.id,
         plan: plan as any,

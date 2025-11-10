@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { NextRequest } from "next/server"
 import prisma from "@/lib/db"
-import { logger } from "@/lib/logger"
+import {
+  requireAdmin,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { NotFoundError } from "@/lib/errors"
 
 // GET /api/admin/stores/[storeId]/products - Fetch all products for a specific store
 export async function GET(
@@ -9,20 +13,12 @@ export async function GET(
   { params }: { params: { storeId: string } }
 ) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     const { storeId } = params
 
     // Verify store exists
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: { id: storeId },
       select: {
         id: true,
@@ -32,14 +28,11 @@ export async function GET(
     })
 
     if (!store) {
-      return NextResponse.json(
-        { error: "Store not found" },
-        { status: 404 }
-      )
+      throw new NotFoundError('Store not found')
     }
 
     // Fetch all products for this store
-    const products = await prisma.product.findMany({
+    const products = await prisma.products.findMany({
       where: { vendorStoreId: storeId },
       orderBy: { createdAt: "desc" },
       include: {
@@ -67,16 +60,12 @@ export async function GET(
       },
     })
 
-    return NextResponse.json({
+    return successResponse({
       store,
       products,
       total: products.length,
     })
   } catch (error) {
-    logger.error("Admin get store products error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch store products (admin)')
   }
 }

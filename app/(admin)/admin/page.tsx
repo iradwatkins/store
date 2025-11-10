@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import prisma from "@/lib/db"
 import Link from "next/link"
+import { auth } from "@/lib/auth"
+import prisma from "@/lib/db"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -25,16 +25,16 @@ export default async function AdminPage() {
     recentOrders,
   ] = await Promise.all([
     prisma.user.count(),
-    prisma.vendorStore.count(),
-    prisma.vendorStore.count({ where: { isActive: true } }),
-    prisma.product.count(),
-    prisma.storeOrder.count(),
-    prisma.storeOrder.count({ where: { status: "PENDING" } }),
-    prisma.storeOrder.aggregate({
+    prisma.vendor_stores.count(),
+    prisma.vendor_stores.count({ where: { isActive: true } }),
+    prisma.products.count(),
+    prisma.store_orders.count(),
+    prisma.store_orders.count({ where: { status: "PENDING" } }),
+    prisma.store_orders.aggregate({
       _sum: { total: true },
       where: { status: { in: ["PAID"] } },
     }),
-    prisma.vendorStore.findMany({
+    prisma.vendor_stores.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
       include: {
@@ -42,7 +42,7 @@ export default async function AdminPage() {
           select: { name: true, email: true },
         },
         _count: {
-          select: { Product: true, StoreOrder: true },
+          select: { products: true, store_orders: true },
         },
       },
     }),
@@ -57,14 +57,14 @@ export default async function AdminPage() {
         createdAt: true,
       },
     }),
-    prisma.storeOrder.findMany({
+    prisma.store_orders.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
       include: {
-        vendorStore: {
+        vendor_stores: {
           select: { name: true, slug: true },
         },
-        customer: {
+        User: {
           select: { name: true, email: true },
         },
       },
@@ -206,7 +206,7 @@ export default async function AdminPage() {
                       Owner: {store.User.name || store.User.email}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {store._count.Product} products • {store._count.StoreOrder} orders
+                      {store._count.products} products • {store._count.store_orders} orders
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -272,12 +272,12 @@ export default async function AdminPage() {
                   <div>
                     <p className="font-semibold">Order #{order.orderNumber}</p>
                     <p className="text-sm text-gray-600">
-                      Store: <Link href={`/${order.vendorStore.slug}`} className="text-blue-600 hover:underline">
-                        {order.vendorStore.name}
+                      Store: <Link href={`/${order.vendor_stores.slug}`} className="text-blue-600 hover:underline">
+                        {order.vendor_stores.name}
                       </Link>
                     </p>
                     <p className="text-sm text-gray-500">
-                      Customer: {order.customer?.name || order.customer?.email || order.customerName}
+                      Customer: {order.User?.name || order.User?.email || order.customerName}
                     </p>
                     <p className="text-sm text-gray-500">
                       {new Date(order.createdAt).toLocaleDateString()}

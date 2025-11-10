@@ -16,7 +16,7 @@ const emailString = z.string().email('Must be a valid email address')
 
 // Environment-specific schemas
 const developmentOnlyString = z.string().optional()
-const productionRequiredString = z.string().min(1).optional()
+const _productionRequiredString = z.string().min(1).optional()
 
 // Define the complete environment schema
 const envSchema = z.object({
@@ -233,6 +233,7 @@ if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
   } catch (error) {
     // Only log in development to avoid noise in production logs
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.warn('⚠️  Environment validation failed on import:', error instanceof Error ? error.message : error)
     }
   }

@@ -18,8 +18,8 @@ export default function ReviewForm({
   customerName,
   customerEmail,
   productName,
-  productSlug,
-  storeSlug,
+  productSlug: _productSlug,
+  storeSlug: _storeSlug,
 }: ReviewFormProps) {
   const router = useRouter()
   const [rating, setRating] = useState(0)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams, useParams } from "next/navigation"
 import Link from "next/link"
@@ -57,19 +57,7 @@ export default function WriteReviewPage() {
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([])
   const [uploadingPhotos, setUploadingPhotos] = useState(false)
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      const storeSlugParam = storeSlug ? `&storeSlug=${storeSlug}` : ''
-      router.push(`/login?callbackUrl=/products/${productId}/review?orderItemId=${orderItemId}${storeSlugParam}`)
-      return
-    }
-
-    if (status === "authenticated" && orderItemId) {
-      checkEligibility()
-    }
-  }, [status, orderItemId, storeSlug])
-
-  async function checkEligibility() {
+  const checkEligibility = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/reviews/eligibility?orderItemId=${orderItemId}`)
@@ -86,12 +74,24 @@ export default function WriteReviewPage() {
       if (!data.eligible) {
         setError(data.reason)
       }
-    } catch (err) {
+    } catch {
       setError("Failed to check review eligibility")
     } finally {
       setLoading(false)
     }
-  }
+  }, [orderItemId])
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      const storeSlugParam = storeSlug ? `&storeSlug=${storeSlug}` : ''
+      router.push(`/login?callbackUrl=/products/${productId}/review?orderItemId=${orderItemId}${storeSlugParam}`)
+      return
+    }
+
+    if (status === "authenticated" && orderItemId) {
+      checkEligibility()
+    }
+  }, [status, orderItemId, storeSlug, productId, router, checkEligibility])
 
   function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
@@ -128,7 +128,7 @@ export default function WriteReviewPage() {
   }
 
   async function uploadPhotos(): Promise<string[]> {
-    if (photos.length === 0) return []
+    if (photos.length === 0) {return []}
 
     setUploadingPhotos(true)
     try {
@@ -202,7 +202,7 @@ export default function WriteReviewPage() {
 
       // Success! Redirect to product page
       alert("Thank you for your review!")
-      router.push(`/store/${eligibility?.vendorStore?.slug}/products/${eligibility?.product?.slug}`)
+      router.push(`/store/${eligibility?.vendor_stores?.slug}/products/${eligibility?.product?.slug}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit review")
     } finally {
@@ -330,10 +330,10 @@ export default function WriteReviewPage() {
               <p className="text-sm text-gray-500">
                 Sold by{" "}
                 <Link
-                  href={`/store/${eligibility.vendorStore?.slug}`}
+                  href={`/store/${eligibility.vendor_stores?.slug}`}
                   className="text-blue-500 hover:text-blue-800"
                 >
-                  {eligibility.vendorStore?.name}
+                  {eligibility.vendor_stores?.name}
                 </Link>
               </p>
             </div>

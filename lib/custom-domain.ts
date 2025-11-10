@@ -25,7 +25,7 @@ export async function getTenantFromRequest(): Promise<TenantInfo | null> {
     if (isCustomDomain && customDomain) {
       logger.info(`🔍 Looking up tenant for custom domain: ${customDomain}`)
 
-      const tenant = await prisma.tenant.findFirst({
+      const tenant = await prisma.tenants.findFirst({
         where: {
           customDomain: customDomain,
           customDomainVerified: true,
@@ -55,7 +55,7 @@ export async function getTenantFromRequest(): Promise<TenantInfo | null> {
     if (tenantSlug) {
       logger.info(`🔍 Looking up tenant for subdomain: ${tenantSlug}`)
 
-      const tenant = await prisma.tenant.findUnique({
+      const tenant = await prisma.tenants.findUnique({
         where: {
           slug: tenantSlug,
           isActive: true,
@@ -94,7 +94,7 @@ export async function getTenantFromRequest(): Promise<TenantInfo | null> {
  */
 export async function getCustomDomainInfo(tenantId: string) {
   try {
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: tenantId },
       select: {
         id: true,
@@ -122,7 +122,7 @@ export async function isCustomDomainAvailable(
   excludeTenantId?: string
 ): Promise<boolean> {
   try {
-    const existingTenant = await prisma.tenant.findFirst({
+    const existingTenant = await prisma.tenants.findFirst({
       where: {
         customDomain: domain,
         ...(excludeTenantId && { id: { not: excludeTenantId } }),
@@ -141,7 +141,7 @@ export async function isCustomDomainAvailable(
  */
 export async function getTenantByCustomDomain(domain: string) {
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: {
         customDomain: domain,
       },

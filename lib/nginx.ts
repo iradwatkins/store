@@ -1,7 +1,6 @@
 import { exec } from "child_process"
 import { promisify } from "util"
 import fs from "fs/promises"
-import path from "path"
 import { logger } from "@/lib/logger"
 
 const execAsync = promisify(exec)
@@ -257,7 +256,7 @@ export async function removeNginxConfig(domain: string): Promise<NginxResult> {
     try {
       await execAsync(`sudo rm -f ${sitesEnabledPath}`, { timeout: 5000 })
       logger.info(`Removed symlink: ${sitesEnabledPath}`)
-    } catch (error) {
+    } catch {
       logger.info("Symlink doesn't exist or already removed")
     }
 
@@ -265,7 +264,7 @@ export async function removeNginxConfig(domain: string): Promise<NginxResult> {
     try {
       await execAsync(`sudo rm -f ${sitesAvailablePath}`, { timeout: 5000 })
       logger.info(`Removed config: ${sitesAvailablePath}`)
-    } catch (error) {
+    } catch {
       logger.info("Config doesn't exist or already removed")
     }
 

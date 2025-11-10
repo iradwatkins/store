@@ -29,7 +29,7 @@ export async function GET(
 
     // Fetch reviews
     const [reviews, totalCount] = await Promise.all([
-      prisma.productReview.findMany({
+      prisma.product_reviews.findMany({
         where: {
           productId,
           status: "PUBLISHED",
@@ -53,7 +53,7 @@ export async function GET(
           updatedAt: true,
         },
       }),
-      prisma.productReview.count({
+      prisma.product_reviews.count({
         where: {
           productId,
           status: "PUBLISHED",
@@ -62,7 +62,7 @@ export async function GET(
     ])
 
     // Get product aggregates
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       select: {
         averageRating: true,
@@ -71,7 +71,7 @@ export async function GET(
     })
 
     // Get rating distribution
-    const ratingDistribution = await prisma.productReview.groupBy({
+    const ratingDistribution = await prisma.product_reviews.groupBy({
       by: ["rating"],
       where: {
         productId,

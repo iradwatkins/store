@@ -22,7 +22,7 @@ export async function POST(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -81,7 +81,7 @@ export async function POST(
     }
 
     // 5. Update status to REQUESTING
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: params.id },
       data: {
         sslCertificateStatus: "REQUESTING",
@@ -102,7 +102,7 @@ export async function POST(
       // Get certificate info to get expiry date
       const certInfo = await getCertificateInfo(tenant.customDomain)
 
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           sslCertificateStatus: "ACTIVE",
@@ -123,7 +123,7 @@ export async function POST(
       })
     } else {
       // Certificate request failed
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           sslCertificateStatus: "FAILED",
@@ -151,7 +151,7 @@ export async function POST(
 
     // Revert status to PENDING on error
     try {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           sslCertificateStatus: "PENDING",
@@ -184,7 +184,7 @@ export async function GET(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -240,7 +240,7 @@ export async function GET(
               ? "EXPIRED"
               : "ACTIVE"
 
-          await prisma.tenant.update({
+          await prisma.tenants.update({
             where: { id: params.id },
             data: {
               sslCertificateStatus: newStatus,
@@ -292,7 +292,7 @@ export async function PUT(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -343,7 +343,7 @@ export async function PUT(
       // Get updated certificate info
       const certInfo = await getCertificateInfo(tenant.customDomain)
 
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           sslCertificateStatus: "ACTIVE",
@@ -395,7 +395,7 @@ export async function DELETE(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -427,10 +427,10 @@ export async function DELETE(
     // 4. Revoke certificate
     logger.info(`Revoking SSL certificate for ${tenant.customDomain}`)
 
-    const revokeResult = await revokeCertificate(tenant.customDomain)
+    await revokeCertificate(tenant.customDomain)
 
     // 5. Update tenant
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: params.id },
       data: {
         sslCertificateStatus: "PENDING",

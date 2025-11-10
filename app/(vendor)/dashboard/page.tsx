@@ -1,17 +1,19 @@
+import { redirect } from "next/navigation"
+import Link from "next/link"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
-import { redirect } from "next/navigation"
+import LowStockAlert from "./components/LowStockAlert"
 
 async function getDashboardData(userId: string) {
-  const store = await prisma.vendorStore.findFirst({
+  const store = await prisma.vendor_stores.findFirst({
     where: {
       userId,
     },
     include: {
       _count: {
         select: {
-          Product: true,
-          StoreOrder: true,
+          products: true,
+          store_orders: true,
         },
       },
     },
@@ -22,7 +24,7 @@ async function getDashboardData(userId: string) {
   }
 
   // Get recent orders
-  const recentOrders = await prisma.storeOrder.findMany({
+  const recentOrders = await prisma.store_orders.findMany({
     where: {
       vendorStoreId: store.id,
     },
@@ -66,7 +68,7 @@ export default async function DashboardPage() {
 
   const { store, recentOrders } = data
 
-  const hasNoProducts = store._count.Product === 0
+  const hasNoProducts = store._count.products === 0
   const needsStripeSetup = !store.stripeChargesEnabled
 
   return (
@@ -74,9 +76,12 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Welcome back! Here's an overview of your store.
+          Welcome back! Here&apos;s an overview of your store.
         </p>
       </div>
+
+      {/* Low Stock Alert */}
+      <LowStockAlert />
 
       {/* Welcome Banner for New Vendors */}
       {hasNoProducts && needsStripeSetup && (
@@ -105,7 +110,7 @@ export default async function DashboardPage() {
                   Welcome to Your Vendor Dashboard!
                 </h3>
                 <p className="text-blue-100 mb-4">
-                  Your store is created! Let's get you set up to start selling. Complete these quick steps:
+                  Your store is created! Let&apos;s get you set up to start selling. Complete these quick steps:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
@@ -120,12 +125,12 @@ export default async function DashboardPage() {
                         <p className="text-xs text-blue-100 mb-2">
                           List your products with photos and descriptions
                         </p>
-                        <a
+                        <Link
                           href="/dashboard/products/new"
                           className="inline-flex items-center px-3 py-1.5 bg-white text-blue-500 text-sm font-medium rounded hover:bg-blue-50 transition-colors"
                         >
                           Add Product
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -141,12 +146,12 @@ export default async function DashboardPage() {
                         <p className="text-xs text-blue-100 mb-2">
                           Connect Stripe to accept payments and receive payouts
                         </p>
-                        <a
+                        <Link
                           href="/dashboard/settings"
                           className="inline-flex items-center px-3 py-1.5 bg-white text-purple-600 text-sm font-medium rounded hover:bg-purple-50 transition-colors"
                         >
                           Setup Payments
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -182,12 +187,12 @@ export default async function DashboardPage() {
                   <strong>Get started:</strong> Add your first product to start selling!
                 </p>
               </div>
-              <a
+              <Link
                 href="/dashboard/products/new"
                 className="ml-4 flex-shrink-0 inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600"
               >
                 Add Product
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -218,12 +223,12 @@ export default async function DashboardPage() {
                   <strong>Action Required:</strong> Complete your Stripe setup to start accepting payments and processing orders.
                 </p>
               </div>
-              <a
+              <Link
                 href="/dashboard/settings"
                 className="ml-4 flex-shrink-0 inline-flex items-center px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700"
               >
                 Complete Setup
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -253,16 +258,16 @@ export default async function DashboardPage() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Products</dt>
                   <dd className="text-3xl font-semibold text-gray-900">
-                    {store._count.Product}
+                    {store._count.products}
                   </dd>
                 </dl>
               </div>
             </div>
           </div>
           <div className="bg-gray-50 px-5 py-3">
-            <a href="/dashboard/products" className="text-sm font-medium text-blue-500 hover:text-blue-400">
+            <Link href="/dashboard/products" className="text-sm font-medium text-blue-500 hover:text-blue-400">
               View all
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -287,15 +292,15 @@ export default async function DashboardPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
-                  <dd className="text-3xl font-semibold text-gray-900">{store._count.StoreOrder}</dd>
+                  <dd className="text-3xl font-semibold text-gray-900">{store._count.store_orders}</dd>
                 </dl>
               </div>
             </div>
           </div>
           <div className="bg-gray-50 px-5 py-3">
-            <a href="/dashboard/orders" className="text-sm font-medium text-blue-500 hover:text-blue-400">
+            <Link href="/dashboard/orders" className="text-sm font-medium text-blue-500 hover:text-blue-400">
               View all
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -328,9 +333,9 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="bg-gray-50 px-5 py-3">
-            <a href="/dashboard/analytics" className="text-sm font-medium text-blue-500 hover:text-blue-400">
+            <Link href="/dashboard/analytics" className="text-sm font-medium text-blue-500 hover:text-blue-400">
               View Analytics Dashboard
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -355,9 +360,9 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="bg-gray-50 px-5 py-3">
-            <a href="/dashboard/settings" className="text-sm font-medium text-blue-500 hover:text-blue-400">
+            <Link href="/dashboard/settings" className="text-sm font-medium text-blue-500 hover:text-blue-400">
               Settings
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -388,12 +393,12 @@ export default async function DashboardPage() {
                 Start adding products to your store to receive orders.
               </p>
               <div className="mt-6">
-                <a
+                <Link
                   href="/dashboard/products/new"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600"
                 >
                   Add Product
-                </a>
+                </Link>
               </div>
             </div>
           ) : (
@@ -457,26 +462,26 @@ export default async function DashboardPage() {
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <a
+          <Link
             href="/dashboard/products/new"
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600"
           >
             Add Product
-          </a>
-          <a
+          </Link>
+          <Link
             href="/dashboard/orders"
             className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
             View Orders
-          </a>
-          <a
+          </Link>
+          <Link
             href={`/store/${store.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
             Preview Store
-          </a>
+          </Link>
         </div>
       </div>
     </div>

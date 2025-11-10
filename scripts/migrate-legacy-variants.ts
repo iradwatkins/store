@@ -47,7 +47,7 @@ async function migrateProduct(productId: string, dryRun: boolean): Promise<{
 }> {
   try {
     // Fetch product with old variants
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
         variants: true,
@@ -86,7 +86,7 @@ async function migrateProduct(productId: string, dryRun: boolean): Promise<{
       const variantOptions = []
       for (let i = 0; i < uniqueValues.length; i++) {
         const value = uniqueValues[i]
-        const option = await tx.variantOption.create({
+        const option = await tx.variant_options.create({
           data: {
             productId: product.id,
             type: variantType,
@@ -104,7 +104,7 @@ async function migrateProduct(productId: string, dryRun: boolean): Promise<{
       // Step 2: Create VariantCombinations for each old variant
       const combinations = []
       for (const oldVariant of product.variants) {
-        const combination = await tx.variantCombination.create({
+        const combination = await tx.variant_combinations.create({
           data: {
             productId: product.id,
             combinationKey: `${variantType}:${oldVariant.value}`,
@@ -126,7 +126,7 @@ async function migrateProduct(productId: string, dryRun: boolean): Promise<{
       console.log(`   ✅ Created ${combinations.length} variant combinations`)
 
       // Step 3: Update product to use new multi-variant system
-      await tx.product.update({
+      await tx.products.update({
         where: { id: product.id },
         data: {
           variantTypes: [variantType],
@@ -191,7 +191,7 @@ async function runMigration(options: MigrationOptions): Promise<MigrationStats> 
   }
 
   // Fetch products to migrate
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where,
     select: {
       id: true,

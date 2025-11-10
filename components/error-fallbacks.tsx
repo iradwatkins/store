@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { AlertTriangle, RefreshCw, ShoppingCart, Menu, Search, Package } from 'lucide-react'
+import { AlertTriangle, RefreshCw, ShoppingCart, Search, Package } from 'lucide-react'
 import { ErrorFallbackProps } from './error-boundary'
 
 /**
@@ -70,7 +70,7 @@ export function CartErrorFallback({ resetError }: ErrorFallbackProps) {
  * 
  * Displays when product listings fail to load
  */
-export function ProductGridErrorFallback({ resetError, context }: ErrorFallbackProps) {
+export function ProductGridErrorFallback({ resetError }: ErrorFallbackProps) {
   return (
     <div className="border border-destructive/20 rounded-lg p-8 bg-destructive/5 text-center">
       <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
@@ -142,7 +142,7 @@ export function DashboardSectionErrorFallback({ resetError, context }: ErrorFall
               {sectionName} unavailable
             </h4>
             <p className="text-sm text-muted-foreground mt-1">
-              This section couldn't be loaded due to an error
+              This section couldn&apos;t be loaded due to an error
             </p>
           </div>
         </div>

@@ -101,7 +101,7 @@ export default function CustomerAccountPage() {
               >
                 Browse Products
               </Link>
-              {session.user.vendorStore ? (
+              {session.user.vendor_stores ? (
                 <Link
                   href="/dashboard"
                   className="block px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 rounded-md border border-blue-200"
@@ -122,7 +122,7 @@ export default function CustomerAccountPage() {
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Success Banner for New Vendors */}
-            {session.user.vendorStore && (
+            {session.user.vendor_stores && (
               <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg overflow-hidden">
                 <div className="px-6 py-6">
                   <div className="flex items-start">
@@ -197,7 +197,7 @@ export default function CustomerAccountPage() {
             )}
 
             {/* Vendor Invitation Banner (only show if user doesn't have a store) */}
-            {!session.user.vendorStore && (
+            {!session.user.vendor_stores && (
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg overflow-hidden">
                 <div className="px-6 py-8 sm:px-8">
                   <div className="flex items-center justify-between flex-wrap gap-4">
@@ -308,7 +308,7 @@ export default function CustomerAccountPage() {
                   <User className="text-orange-600" size={24} />
                 </div>
                 <div className="mt-2 text-lg font-semibold text-gray-900">
-                  {session.user.vendorStore ? "Customer & Vendor" : "Customer"}
+                  {session.user.vendor_stores ? "Customer & Vendor" : "Customer"}
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
                   Member since {new Date(session.user.createdAt || Date.now()).toLocaleDateString()}
@@ -404,7 +404,7 @@ export default function CustomerAccountPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                {!session.user.vendorStore && (
+                {!session.user.vendor_stores && (
                   <Link
                     href="/create-store"
                     className="flex items-center p-5 border-2 border-blue-300 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 hover:border-blue-400 transition-all shadow-sm hover:shadow-md group"

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Store slug is required" }, { status: 400 })
     }
 
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: { slug },
       select: {
         id: true,

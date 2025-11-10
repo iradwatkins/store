@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
-import { z } from "zod"
 import { logger } from "@/lib/logger"
 
 // Validation schema for tenant updates
@@ -25,7 +25,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       include: {
         owner: {
@@ -83,7 +83,7 @@ export async function PATCH(
     }
 
     // Check if tenant exists and user has permission
-    const existingTenant = await prisma.tenant.findUnique({
+    const existingTenant = await prisma.tenants.findUnique({
       where: { id: params.id },
     })
 
@@ -111,7 +111,7 @@ export async function PATCH(
       updateData.sslCertificateStatus = "PENDING"
     }
 
-    const tenant = await prisma.tenant.update({
+    const tenant = await prisma.tenants.update({
       where: { id: params.id },
       data: updateData,
       include: {
@@ -128,7 +128,7 @@ export async function PATCH(
     return NextResponse.json({ tenant })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 })
     }
 
     logger.error("Error updating tenant:", error)
@@ -154,7 +154,7 @@ export async function DELETE(
     }
 
     // Check if tenant exists
-    const existingTenant = await prisma.tenant.findUnique({
+    const existingTenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       include: {
         vendorStores: true,
@@ -173,7 +173,7 @@ export async function DELETE(
       )
     }
 
-    await prisma.tenant.delete({
+    await prisma.tenants.delete({
       where: { id: params.id },
     })
 

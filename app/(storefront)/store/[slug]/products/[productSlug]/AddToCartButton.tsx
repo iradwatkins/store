@@ -21,6 +21,21 @@ type Variant = {
   inventoryQuantity: number | null
 }
 
+type Addon = {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  fieldType: string
+  priceType: string
+  isRequired: boolean
+  allowMultiple: boolean
+  maxQuantity: number | null
+  options: any
+  minValue: number | null
+  maxValue: number | null
+}
+
 type Product = {
   id: string
   name: string
@@ -47,10 +62,12 @@ type CartSwitchInfo = {
 export default function AddToCartButton({
   product,
   variants,
+  addons = [],
   storeSlug,
 }: {
   product: Product
   variants: Variant[]
+  addons?: Addon[]
   storeSlug: string
 }) {
   const router = useRouter()
@@ -64,6 +81,10 @@ export default function AddToCartButton({
   )
   const [showCartSwitchModal, setShowCartSwitchModal] = useState(false)
   const [cartSwitchInfo, setCartSwitchInfo] = useState<CartSwitchInfo | null>(null)
+
+  // Addon selections state: { [addonId]: value }
+  const [addonSelections, setAddonSelections] = useState<Record<string, any>>({})
+
 
   const hasVariants = variants.length > 0
   const selectedVariantData = hasVariants
@@ -82,11 +103,51 @@ export default function AddToCartButton({
   const isOutOfStock =
     product.trackInventory && currentInventory !== null && currentInventory <= 0
 
+  // Calculate addon prices
+  const calculateAddonPrice = () => {
+    let addonTotal = 0
+    addons.forEach(addon => {
+      const selection = addonSelections[addon.id]
+      if (!selection) {return}
+
+      if (addon.priceType === 'FIXED') {
+        addonTotal += addon.price
+      } else if (addon.priceType === 'PERCENTAGE') {
+        addonTotal += (currentPrice * addon.price) / 100
+      }
+      // FORMULA type would need custom evaluation logic
+    })
+    return addonTotal
+  }
+
+  const addonPrice = calculateAddonPrice()
+  const totalPrice = (currentPrice + addonPrice) * quantity
+
   const handleAddToCart = async () => {
+    // Validate required addons
+    const missingRequired = addons.filter(
+      addon => addon.isRequired && !addonSelections[addon.id]
+    )
+    if (missingRequired.length > 0) {
+      setMessage({
+        type: "error",
+        text: `Please select: ${missingRequired.map(a => a.name).join(', ')}`
+      })
+      return
+    }
+
     setIsAdding(true)
     setMessage(null)
 
     try {
+      // Transform addons from object to array format
+      const addonsArray = Object.entries(addonSelections)
+        .filter(([_, value]) => value)
+        .map(([addonId, value]) => ({
+          addonId,
+          quantity: typeof value === 'number' ? value : 1,
+        }))
+
       const response = await fetch("/api/cart/add", {
         method: "POST",
         headers: {
@@ -97,6 +158,7 @@ export default function AddToCartButton({
           variantId: selectedVariant,
           quantity,
           storeSlug,
+          addons: addonsArray.length > 0 ? addonsArray : undefined,
         }),
       })
 
@@ -148,6 +210,14 @@ export default function AddToCartButton({
         throw new Error("Failed to clear cart")
       }
 
+      // Transform addons from object to array format
+      const addonsArray = Object.entries(addonSelections)
+        .filter(([_, value]) => value)
+        .map(([addonId, value]) => ({
+          addonId,
+          quantity: typeof value === 'number' ? value : 1,
+        }))
+
       // Add the new item
       const addResponse = await fetch("/api/cart/add", {
         method: "POST",
@@ -159,6 +229,7 @@ export default function AddToCartButton({
           variantId: selectedVariant,
           quantity,
           storeSlug,
+          addons: addonsArray.length > 0 ? addonsArray : undefined,
         }),
       })
 
@@ -227,6 +298,134 @@ export default function AddToCartButton({
           </div>
         )}
 
+        {/* Product Addons */}
+        {addons.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900">Customize Your Product</h3>
+            {addons.map(addon => (
+              <div key={addon.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-700">
+                      {addon.name}
+                      {addon.isRequired && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    {addon.description && (
+                      <p className="text-xs text-gray-500 mt-1">{addon.description}</p>
+                    )}
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {addon.priceType === 'PERCENTAGE' ? `+${addon.price}%` : `+$${addon.price.toFixed(2)}`}
+                  </div>
+                </div>
+
+                {/* Render different input types based on fieldType */}
+                {addon.fieldType === 'TEXT' && (
+                  <input
+                    type="text"
+                    value={addonSelections[addon.id] || ''}
+                    onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                    placeholder={`Enter ${addon.name.toLowerCase()}`}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                )}
+
+                {addon.fieldType === 'TEXTAREA' && (
+                  <textarea
+                    value={addonSelections[addon.id] || ''}
+                    onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                    placeholder={`Enter ${addon.name.toLowerCase()}`}
+                    rows={3}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                )}
+
+                {addon.fieldType === 'NUMBER' && (
+                  <input
+                    type="number"
+                    value={addonSelections[addon.id] || ''}
+                    onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                    min={addon.minValue || undefined}
+                    max={addon.maxValue || undefined}
+                    placeholder={`Enter ${addon.name.toLowerCase()}`}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                )}
+
+                {addon.fieldType === 'SELECT' && addon.options && (
+                  <select
+                    value={addonSelections[addon.id] || ''}
+                    onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="">Select an option...</option>
+                    {addon.options.map((opt: any, idx: number) => (
+                      <option key={idx} value={opt.value}>
+                        {opt.label} {opt.price ? `(+$${opt.price})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {addon.fieldType === 'RADIO' && addon.options && (
+                  <div className="mt-2 space-y-2">
+                    {addon.options.map((opt: any, idx: number) => (
+                      <label key={idx} className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`addon-${addon.id}`}
+                          value={opt.value}
+                          checked={addonSelections[addon.id] === opt.value}
+                          onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                          className="h-4 w-4 text-blue-500 border-gray-300"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          {opt.label} {opt.price ? `(+$${opt.price})` : ''}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {addon.fieldType === 'CHECKBOX' && (
+                  <label className="mt-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={!!addonSelections[addon.id]}
+                      onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.checked })}
+                      className="h-4 w-4 text-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      Yes, add this option
+                    </span>
+                  </label>
+                )}
+
+                {addon.fieldType === 'DATE' && (
+                  <input
+                    type="date"
+                    value={addonSelections[addon.id] || ''}
+                    onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                )}
+
+                {addon.fieldType === 'COLOR' && (
+                  <div className="mt-2 flex items-center space-x-3">
+                    <input
+                      type="color"
+                      value={addonSelections[addon.id] || '#000000'}
+                      onChange={(e) => setAddonSelections({ ...addonSelections, [addon.id]: e.target.value })}
+                      className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
+                    />
+                    <span className="text-sm text-gray-600">{addonSelections[addon.id] || 'No color selected'}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Quantity Selector */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -272,11 +471,25 @@ export default function AddToCartButton({
 
         {/* Price Summary */}
         <div className="border-t border-gray-200 pt-6">
-          <div className="flex items-center justify-between text-lg">
-            <span className="font-medium text-gray-900">Total:</span>
-            <span className="font-semibold text-gray-900">
-              ${(currentPrice * quantity).toFixed(2)}
-            </span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>Product Price:</span>
+              <span>${currentPrice.toFixed(2)}</span>
+            </div>
+            {addonPrice > 0 && (
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Add-ons:</span>
+                <span>+${addonPrice.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>Quantity:</span>
+              <span>×{quantity}</span>
+            </div>
+            <div className="flex items-center justify-between text-lg font-semibold text-gray-900 pt-2 border-t">
+              <span>Total:</span>
+              <span>${totalPrice.toFixed(2)}</span>
+            </div>
           </div>
         </div>
 

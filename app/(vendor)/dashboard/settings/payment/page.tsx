@@ -66,7 +66,7 @@ export default function PaymentSettingsPage() {
         const data = await response.json()
         alert(`Error: ${data.error || "Failed to save settings"}`)
       }
-    } catch (error) {
+    } catch {
       alert("Failed to save payment settings")
     } finally {
       setSaving(false)
@@ -177,7 +177,7 @@ export default function PaymentSettingsPage() {
             />
             <div className="flex-1">
               <div className="font-semibold">None</div>
-              <div className="text-sm text-gray-600">Don't offer a secondary payment method</div>
+              <div className="text-sm text-gray-600">Don&apos;t offer a secondary payment method</div>
             </div>
           </label>
 
@@ -273,7 +273,7 @@ export default function PaymentSettingsPage() {
                 className="w-full border rounded-lg px-4 py-2"
               />
               <p className="text-sm text-gray-500 mt-1">
-                This is where you'll receive PayPal payments
+                This is where you&apos;ll receive PayPal payments
               </p>
             </div>
             <div>

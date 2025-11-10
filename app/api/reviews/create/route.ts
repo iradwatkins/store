@@ -22,13 +22,13 @@ export async function POST(request: NextRequest) {
     const validatedData = createReviewSchema.parse(body)
 
     // Check if order item exists and is eligible for review
-    const orderItem = await prisma.storeOrderItem.findUnique({
+    const orderItem = await prisma.store_ordersItem.findUnique({
       where: { id: validatedData.orderItemId },
       include: {
         order: true,
         product: {
           include: {
-            vendorStore: true,
+            vendor_stores: true,
           },
         },
         review: true, // Check if already reviewed
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the review
-    const review = await prisma.productReview.create({
+    const review = await prisma.product_reviews.create({
       data: {
         productId: orderItem.productId,
         orderItemId: validatedData.orderItemId,
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
 // Helper: Update product average rating and review count
 async function updateProductAggregates(productId: string) {
-  const aggregates = await prisma.productReview.aggregate({
+  const aggregates = await prisma.product_reviews.aggregate({
     where: {
       productId,
       status: "PUBLISHED",
@@ -161,7 +161,7 @@ async function updateProductAggregates(productId: string) {
     },
   })
 
-  await prisma.product.update({
+  await prisma.products.update({
     where: { id: productId },
     data: {
       averageRating: aggregates._avg.rating || null,
@@ -172,7 +172,7 @@ async function updateProductAggregates(productId: string) {
 
 // Helper: Update shop rating aggregates
 async function updateShopAggregates(vendorStoreId: string) {
-  const aggregates = await prisma.productReview.aggregate({
+  const aggregates = await prisma.product_reviews.aggregate({
     where: {
       vendorStoreId,
       status: "PUBLISHED",
@@ -185,7 +185,7 @@ async function updateShopAggregates(vendorStoreId: string) {
     },
   })
 
-  const ratingDistribution = await prisma.productReview.groupBy({
+  const ratingDistribution = await prisma.product_reviews.groupBy({
     by: ["rating"],
     where: {
       vendorStoreId,
@@ -205,11 +205,11 @@ async function updateShopAggregates(vendorStoreId: string) {
   }
 
   ratingDistribution.forEach((item) => {
-    if (item.rating === 5) distribution.fiveStars = item._count.rating
-    if (item.rating === 4) distribution.fourStars = item._count.rating
-    if (item.rating === 3) distribution.threeStars = item._count.rating
-    if (item.rating === 2) distribution.twoStars = item._count.rating
-    if (item.rating === 1) distribution.oneStar = item._count.rating
+    if (item.rating === 5) {distribution.fiveStars = item._count.rating}
+    if (item.rating === 4) {distribution.fourStars = item._count.rating}
+    if (item.rating === 3) {distribution.threeStars = item._count.rating}
+    if (item.rating === 2) {distribution.twoStars = item._count.rating}
+    if (item.rating === 1) {distribution.oneStar = item._count.rating}
   })
 
   // Upsert ShopRating
@@ -230,7 +230,7 @@ async function updateShopAggregates(vendorStoreId: string) {
   })
 
   // Update VendorStore aggregates
-  await prisma.vendorStore.update({
+  await prisma.vendor_stores.update({
     where: { id: vendorStoreId },
     data: {
       averageRating: aggregates._avg.rating || null,

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Professional logging utility for production-ready applications
  * Replaces console.* statements with structured, configurable logging
@@ -41,7 +42,7 @@ class Logger {
   }
 
   private output(entry: LogEntry): void {
-    if (!this.shouldLog(entry.level)) return
+    if (!this.shouldLog(entry.level)) {return}
 
     if (this.isDevelopment) {
       // Development: Use console with colors
@@ -52,11 +53,27 @@ class Logger {
         error: '\x1b[31m', // Red
       }
       const reset = '\x1b[0m'
-      
-      console[entry.level === 'debug' ? 'log' : entry.level](
-        `${colors[entry.level]}[${entry.level.toUpperCase()}]${reset} ${entry.message}`,
-        entry.context ? entry.context : ''
-      )
+
+      const formattedMessage = `${colors[entry.level]}[${entry.level.toUpperCase()}]${reset} ${entry.message}`
+      const contextData = entry.context ? entry.context : ''
+
+      // Safe console method selection
+      switch (entry.level) {
+        case 'debug':
+          console.log(formattedMessage, contextData)
+          break
+        case 'info':
+          console.info(formattedMessage, contextData)
+          break
+        case 'warn':
+          console.warn(formattedMessage, contextData)
+          break
+        case 'error':
+          console.error(formattedMessage, contextData)
+          break
+        default:
+          console.log(formattedMessage, contextData)
+      }
     } else {
       // Production: Structured JSON logging
       console.error(JSON.stringify(entry))

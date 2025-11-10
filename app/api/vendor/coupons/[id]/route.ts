@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import prisma from "@/lib/db"
+import { NextRequest } from "next/server"
 import { z } from "zod"
-import { logger } from "@/lib/logger"
+import prisma from "@/lib/db"
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 
 const updateCouponSchema = z.object({
   description: z.string().optional(),
@@ -26,24 +31,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Get coupon
-    const coupon = await prisma.coupon.findFirst({
+    const coupon = await prisma.coupons.findFirst({
       where: {
         id: params.id,
         vendorStoreId: vendorStore.id,
@@ -51,16 +43,12 @@ export async function GET(
     })
 
     if (!coupon) {
-      return NextResponse.json({ error: "Coupon not found" }, { status: 404 })
+      throw new BusinessLogicError("Coupon not found")
     }
 
-    return NextResponse.json({ coupon })
+    return successResponse({ coupon })
   } catch (error) {
-    logger.error("Error fetching coupon:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch coupon" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch coupon')
   }
 }
 
@@ -70,24 +58,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Check if coupon exists and belongs to vendor
-    const existingCoupon = await prisma.coupon.findFirst({
+    const existingCoupon = await prisma.coupons.findFirst({
       where: {
         id: params.id,
         vendorStoreId: vendorStore.id,
@@ -95,7 +70,7 @@ export async function PUT(
     })
 
     if (!existingCoupon) {
-      return NextResponse.json({ error: "Coupon not found" }, { status: 404 })
+      throw new BusinessLogicError("Coupon not found")
     }
 
     // Parse and validate request body
@@ -108,10 +83,7 @@ export async function PUT(
       existingCoupon.discountType === "PERCENTAGE"
     ) {
       if (validatedData.discountValue > 100) {
-        return NextResponse.json(
-          { error: "Percentage discount cannot exceed 100%" },
-          { status: 400 }
-        )
+        throw new BusinessLogicError("Percentage discount cannot exceed 100%")
       }
     }
 
@@ -124,61 +96,47 @@ export async function PUT(
       : existingCoupon.endDate
 
     if (startDate && endDate && endDate <= startDate) {
-      return NextResponse.json(
-        { error: "End date must be after start date" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("End date must be after start date")
     }
 
     // Build update data
     const updateData: any = {}
     if (validatedData.description !== undefined)
-      updateData.description = validatedData.description
+      {updateData.description = validatedData.description}
     if (validatedData.discountValue !== undefined)
-      updateData.discountValue = validatedData.discountValue
+      {updateData.discountValue = validatedData.discountValue}
     if (validatedData.minPurchaseAmount !== undefined)
-      updateData.minPurchaseAmount = validatedData.minPurchaseAmount
+      {updateData.minPurchaseAmount = validatedData.minPurchaseAmount}
     if (validatedData.maxDiscountAmount !== undefined)
-      updateData.maxDiscountAmount = validatedData.maxDiscountAmount
+      {updateData.maxDiscountAmount = validatedData.maxDiscountAmount}
     if (validatedData.usageLimit !== undefined)
-      updateData.usageLimit = validatedData.usageLimit
+      {updateData.usageLimit = validatedData.usageLimit}
     if (validatedData.perCustomerLimit !== undefined)
-      updateData.perCustomerLimit = validatedData.perCustomerLimit
+      {updateData.perCustomerLimit = validatedData.perCustomerLimit}
     if (validatedData.startDate !== undefined)
-      updateData.startDate = validatedData.startDate ? new Date(validatedData.startDate) : null
+      {updateData.startDate = validatedData.startDate ? new Date(validatedData.startDate) : null}
     if (validatedData.endDate !== undefined)
-      updateData.endDate = validatedData.endDate ? new Date(validatedData.endDate) : null
+      {updateData.endDate = validatedData.endDate ? new Date(validatedData.endDate) : null}
     if (validatedData.isActive !== undefined)
-      updateData.isActive = validatedData.isActive
+      {updateData.isActive = validatedData.isActive}
     if (validatedData.applicableProducts !== undefined)
-      updateData.applicableProducts = validatedData.applicableProducts
+      {updateData.applicableProducts = validatedData.applicableProducts}
     if (validatedData.applicableCategories !== undefined)
-      updateData.applicableCategories = validatedData.applicableCategories
+      {updateData.applicableCategories = validatedData.applicableCategories}
     if (validatedData.excludedProducts !== undefined)
-      updateData.excludedProducts = validatedData.excludedProducts
+      {updateData.excludedProducts = validatedData.excludedProducts}
     if (validatedData.firstTimeCustomersOnly !== undefined)
-      updateData.firstTimeCustomersOnly = validatedData.firstTimeCustomersOnly
+      {updateData.firstTimeCustomersOnly = validatedData.firstTimeCustomersOnly}
 
     // Update coupon
-    const coupon = await prisma.coupon.update({
+    const coupon = await prisma.coupons.update({
       where: { id: params.id },
       data: updateData,
     })
 
-    return NextResponse.json({ coupon })
+    return successResponse({ coupon })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    logger.error("Error updating coupon:", error)
-    return NextResponse.json(
-      { error: "Failed to update coupon" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update coupon')
   }
 }
 
@@ -188,24 +146,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Check if coupon exists and belongs to vendor
-    const existingCoupon = await prisma.coupon.findFirst({
+    const existingCoupon = await prisma.coupons.findFirst({
       where: {
         id: params.id,
         vendorStoreId: vendorStore.id,
@@ -213,20 +158,16 @@ export async function DELETE(
     })
 
     if (!existingCoupon) {
-      return NextResponse.json({ error: "Coupon not found" }, { status: 404 })
+      throw new BusinessLogicError("Coupon not found")
     }
 
     // Delete coupon
-    await prisma.coupon.delete({
+    await prisma.coupons.delete({
       where: { id: params.id },
     })
 
-    return NextResponse.json({ success: true, message: "Coupon deleted successfully" })
+    return successResponse({ message: "Coupon deleted successfully" })
   } catch (error) {
-    logger.error("Error deleting coupon:", error)
-    return NextResponse.json(
-      { error: "Failed to delete coupon" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Delete coupon')
   }
 }

@@ -66,13 +66,13 @@ export function Step5Review({
   }
 
   const getTotalInventory = () => {
-    if (!bulkSettings.applyDefaultInventory || !bulkSettings.defaultInventory) return 0
+    if (!bulkSettings.applyDefaultInventory || !bulkSettings.defaultInventory) {return 0}
     return bulkSettings.defaultInventory * getTotalCombinations()
   }
 
   const getOptionsList = (type: string): string[] => {
     const options = variantOptions[type]
-    if (!options) return []
+    if (!options) {return []}
 
     const allOptions = [
       ...options.selectedPresetOptions.map(opt => opt.displayName),
@@ -107,7 +107,7 @@ export function Step5Review({
                   Ready to generate variants
                 </p>
                 <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                  Review your configuration below. Click "Complete" to generate all variant combinations.
+                  Review your configuration below. Click &quot;Complete&quot; to generate all variant combinations.
                 </p>
               </div>
             </div>
@@ -118,7 +118,7 @@ export function Step5Review({
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                You're creating {totalCombinations} variant combinations. This is a large number
+                You&apos;re creating {totalCombinations} variant combinations. This is a large number
                 and may take a few minutes to generate. Consider reducing options if possible.
               </AlertDescription>
             </Alert>

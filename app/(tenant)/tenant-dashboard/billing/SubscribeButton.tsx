@@ -25,7 +25,7 @@ interface SubscribeButtonProps {
 
 export default function SubscribeButton({
   tenantId,
-  planId,
+  planId: _planId,
   planName,
   planPrice,
   priceId,
@@ -180,7 +180,7 @@ function CheckoutModal({
         {/* Header */}
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Subscribe to {planName}</h2>
         <p className="text-gray-600 mb-6">
-          You'll be charged <span className="font-semibold">${planPrice}/month</span>
+          You&apos;ll be charged <span className="font-semibold">${planPrice}/month</span>
         </p>
 
         {/* Payment Form */}

@@ -7,10 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import prisma from '@/lib/db'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import { auth } from '@/lib/auth'
+import prisma from '@/lib/db'
 import { logger } from "@/lib/logger"
 
 // Validation schema for bulk updates
@@ -33,7 +33,7 @@ const bulkUpdateSchema = z.object({
   applyToAll: z.boolean().default(false),
 })
 
-type BulkUpdateInput = z.infer<typeof bulkUpdateSchema>
+// type BulkUpdateInput = z.infer<typeof bulkUpdateSchema> // Unused type
 
 /**
  * PATCH - Bulk update variant combinations
@@ -52,10 +52,10 @@ export async function PATCH(
     const productId = params.id
 
     // Verify product ownership
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        vendorStore: true,
+        vendor_stores: true,
       },
     })
 
@@ -63,7 +63,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    if (product.vendorStore.userId !== session.user.id) {
+    if (product.vendor_stores.userId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -123,7 +123,7 @@ export async function PATCH(
     }
 
     // Perform bulk update
-    const result = await prisma.variantCombination.updateMany({
+    const result = await prisma.variant_combinations.updateMany({
       where,
       data: updateData as any,
     })
@@ -138,7 +138,7 @@ export async function PATCH(
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid request data', details: error.errors },
+        { error: 'Invalid request data', details: error.issues },
         { status: 400 }
       )
     }
@@ -168,10 +168,10 @@ export async function POST(
     const productId = params.id
 
     // Verify product ownership
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        vendorStore: true,
+        vendor_stores: true,
       },
     })
 
@@ -179,7 +179,7 @@ export async function POST(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    if (product.vendorStore.userId !== session.user.id) {
+    if (product.vendor_stores.userId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -199,7 +199,7 @@ export async function POST(
       variants.map((variant: any) => {
         const combinationKey = variant.combinationKey
 
-        return prisma.variantCombination.upsert({
+        return prisma.variant_combinations.upsert({
           where: {
             productId_combinationKey: {
               productId,

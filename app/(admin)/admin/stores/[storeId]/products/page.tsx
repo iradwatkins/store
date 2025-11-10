@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 
@@ -55,11 +55,7 @@ export default function AdminStoreProductsPage() {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
   const [togglingStatusProductId, setTogglingStatusProductId] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchProducts()
-  }, [storeId])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
@@ -78,7 +74,11 @@ export default function AdminStoreProductsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [storeId])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const handleDeleteProduct = async (product: Product) => {
     const confirmMessage = `Are you sure you want to delete "${product.name}"?\n\nThis will permanently delete:\n- ${product._count.variants} variants\n- ${product._count.images} images\n- ${product._count.reviews} reviews\n- ${product._count.orderItems} order references\n\nThis action CANNOT be undone!`
@@ -257,11 +257,11 @@ export default function AdminStoreProductsPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12">
-                              {product.images[0] ? (
+                              {product.product_images[0] ? (
                                 <img
                                   className="h-12 w-12 rounded object-cover"
-                                  src={product.images[0].url}
-                                  alt={product.images[0].altText || product.name}
+                                  src={product.product_images[0].url}
+                                  alt={product.product_images[0].altText || product.name}
                                 />
                               ) : (
                                 <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center">

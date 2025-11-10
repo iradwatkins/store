@@ -16,7 +16,7 @@ const credentialsSchema = z.object({
   password: z.string().min(1, "Password is required"),
 })
 
-type EmailFormData = z.infer<typeof emailSchema>
+// type _EmailFormData = z.infer<typeof emailSchema> // Reserved for magic link feature
 type CredentialsFormData = z.infer<typeof credentialsSchema>
 
 type AuthMode = "credentials" | "magic-link"

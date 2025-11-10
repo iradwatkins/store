@@ -27,10 +27,10 @@ export async function POST(
     const validatedData = respondSchema.parse(body)
 
     // Get review and check ownership
-    const review = await prisma.productReview.findUnique({
+    const review = await prisma.product_reviews.findUnique({
       where: { id: reviewId },
       include: {
-        vendorStore: true,
+        vendor_stores: true,
       },
     })
 
@@ -39,7 +39,7 @@ export async function POST(
     }
 
     // Check if user owns the vendor store
-    if (review.vendorStore.userId !== session.user.id) {
+    if (review.vendor_stores.userId !== session.user.id) {
       return NextResponse.json(
         { error: "You can only respond to reviews on your own products" },
         { status: 403 }
@@ -55,7 +55,7 @@ export async function POST(
     }
 
     // Update review with vendor response
-    const updatedReview = await prisma.productReview.update({
+    const updatedReview = await prisma.product_reviews.update({
       where: { id: reviewId },
       data: {
         vendorResponse: validatedData.response,
@@ -83,7 +83,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }

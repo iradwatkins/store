@@ -277,7 +277,7 @@ export default function SettingsPage() {
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-yellow-800 text-sm">
-                  Stripe is not connected. You won't be able to accept payments until you complete the Stripe setup.
+                  Stripe is not connected. You won&apos;t be able to accept payments until you complete the Stripe setup.
                 </p>
               </div>
             )}

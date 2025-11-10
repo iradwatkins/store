@@ -9,12 +9,10 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Check, Save } from 'lucide-react'
-
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
-
 import { Step1ProductType } from './Step1ProductType'
 import { Step2VariantTypes } from './Step2VariantTypes'
 import { Step3ConfigureOptions } from './Step3ConfigureOptions'
@@ -105,7 +103,7 @@ interface ProductVariantWizardProps {
 }
 
 export function ProductVariantWizard({
-  productId,
+  productId: _productId,
   initialData,
   onComplete,
   onCancel,
@@ -207,7 +205,7 @@ export function ProductVariantWizard({
   }
 
   const handleSaveDraft = async () => {
-    if (!onSaveDraft) return
+    if (!onSaveDraft) {return}
 
     setIsSaving(true)
     try {
@@ -216,7 +214,7 @@ export function ProductVariantWizard({
         title: 'Draft Saved',
         description: 'Your progress has been saved',
       })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to save draft',
@@ -235,7 +233,7 @@ export function ProductVariantWizard({
         title: 'Success',
         description: 'Product variants created successfully',
       })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to create product variants',

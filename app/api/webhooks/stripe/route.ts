@@ -6,7 +6,7 @@ import { sendOrderConfirmation, sendVendorNewOrderAlert, sendOrderPaymentFailed,
 import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-09-30.clover",
 })
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -61,7 +61,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   try {
     // Check if order already exists
-    const existingOrder = await prisma.storeOrder.findUnique({
+    const existingOrder = await prisma.store_orders.findUnique({
       where: { paymentIntentId: paymentIntent.id },
     })
 
@@ -83,10 +83,10 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     const cart = JSON.parse(cartData as string)
 
     // Create order in database
-    const order = await prisma.storeOrder.create({
+    const order = await prisma.store_orders.create({
       data: {
         orderNumber: metadata.orderNumber,
-        vendorStoreId: metadata.vendorStoreId,
+        vendorStoreId: metadata.vendor_storesId,
         customerId: metadata.customerId || null,
         customerEmail: metadata.customerEmail,
         customerName: metadata.customerName,
@@ -137,8 +137,8 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     await redis.del(`cart:${cartSessionId}`)
 
     // Update vendor store stats
-    const updatedStore = await prisma.vendorStore.update({
-      where: { id: metadata.vendorStoreId },
+    const updatedStore = await prisma.vendor_stores.update({
+      where: { id: metadata.vendor_storesId },
       data: {
         totalOrders: { increment: 1 },
         totalSales: { increment: parseFloat(metadata.vendorPayout) },
@@ -147,7 +147,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
     // Increment order count for tenant (if applicable)
     if (updatedStore.tenantId) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: updatedStore.tenantId },
         data: { currentOrders: { increment: 1 } },
       })
@@ -156,9 +156,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     // Update product sales counts and inventory
     for (const item of cart.items) {
       // Fetch product to check current stock
-      const product = await prisma.product.findUnique({
+      const product = await prisma.products.findUnique({
         where: { id: item.productId },
-        include: { variants: true },
+        include: { product_variants: true },
       })
 
       if (!product) {
@@ -170,9 +170,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       if (product.trackInventory) {
         if (item.variantId) {
           // Update variant inventory
-          const variant = product.variants.find((v) => v.id === item.variantId)
+          const variant = product.product_variants.find((v) => v.id === item.variantId)
           if (variant && variant.quantity >= item.quantity) {
-            await prisma.productVariant.update({
+            await prisma.product_variants.update({
               where: { id: item.variantId },
               data: {
                 quantity: { decrement: item.quantity },
@@ -184,7 +184,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         } else {
           // Update product inventory
           if (product.quantity >= item.quantity) {
-            await prisma.product.update({
+            await prisma.products.update({
               where: { id: item.productId },
               data: {
                 quantity: { decrement: item.quantity },
@@ -197,7 +197,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       }
 
       // Always update sales count
-      await prisma.product.update({
+      await prisma.products.update({
         where: { id: item.productId },
         data: {
           salesCount: { increment: item.quantity },
@@ -208,14 +208,14 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     logger.info(`Order ${order.orderNumber} created successfully via webhook`)
 
     // Fetch order with full details for emails
-    const fullOrder = await prisma.storeOrder.findUnique({
+    const fullOrder = await prisma.store_orders.findUnique({
       where: { id: order.id },
       include: {
         items: {
           include: {
             product: {
               include: {
-                vendorStore: {
+                vendor_stores: {
                   select: {
                     name: true,
                     email: true,
@@ -272,7 +272,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
     // Send new order alert email to vendor
     try {
-      const vendorStore = fullOrder.items[0]?.product.vendorStore
+      const vendorStore = fullOrder.items[0]?.product.vendor_stores
       if (vendorStore) {
         // Get vendor user details
         const vendorUser = await prisma.user.findUnique({
@@ -325,12 +325,12 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   const metadata = paymentIntent.metadata
 
   // Update order if it exists
-  const order = await prisma.storeOrder.findUnique({
+  const order = await prisma.store_orders.findUnique({
     where: { paymentIntentId: paymentIntent.id },
   })
 
   if (order) {
-    await prisma.storeOrder.update({
+    await prisma.store_orders.update({
       where: { id: order.id },
       data: {
         paymentStatus: "FAILED",
@@ -379,7 +379,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     return
   }
 
-  const order = await prisma.storeOrder.findUnique({
+  const order = await prisma.store_orders.findUnique({
     where: { paymentIntentId },
   })
 
@@ -391,7 +391,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   const refundAmount = charge.amount_refunded / 100 // Convert from cents
   const isFullRefund = charge.refunded
 
-  await prisma.storeOrder.update({
+  await prisma.store_orders.update({
     where: { id: order.id },
     data: {
       paymentStatus: isFullRefund ? "REFUNDED" : "PARTIALLY_REFUNDED",

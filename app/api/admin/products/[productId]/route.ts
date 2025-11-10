@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import prisma from "@/lib/db"
+import { NextRequest } from "next/server"
 import { z } from "zod"
-import { logger } from "@/lib/logger"
+import prisma from "@/lib/db"
+import {
+  requireAdmin,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { NotFoundError, ValidationError, BusinessLogicError } from "@/lib/errors"
 
 const updateProductSchema = z.object({
   name: z.string().min(3).optional(),
@@ -23,28 +27,20 @@ export async function GET(
   { params }: { params: { productId: string } }
 ) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     const { productId } = params
 
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        images: {
+        product_images: {
           orderBy: { sortOrder: "asc" },
         },
-        variants: {
+        product_variants: {
           orderBy: { createdAt: "asc" },
         },
-        vendorStore: {
+        vendor_stores: {
           select: {
             id: true,
             name: true,
@@ -53,27 +49,20 @@ export async function GET(
         },
         _count: {
           select: {
-            orderItems: true,
-            reviews: true,
+            store_order_items: true,
+            product_reviews: true,
           },
         },
       },
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new NotFoundError('Product not found')
     }
 
-    return NextResponse.json({ product })
+    return successResponse({ product })
   } catch (error) {
-    logger.error("Admin get product error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch product (admin)')
   }
 }
 
@@ -83,23 +72,15 @@ export async function PUT(
   { params }: { params: { productId: string } }
 ) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     const { productId } = params
 
     // Verify product exists
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        vendorStore: {
+        vendor_stores: {
           select: {
             id: true,
             name: true,
@@ -109,41 +90,27 @@ export async function PUT(
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new NotFoundError('Product not found')
     }
 
     const body = await request.json()
     const validatedData = updateProductSchema.parse(body)
 
     // Update product
-    const updatedProduct = await prisma.product.update({
+    const updatedProduct = await prisma.products.update({
       where: { id: productId },
       data: validatedData,
     })
 
-    logger.info(`Admin updated product: ${updatedProduct.name} (${updatedProduct.id})`)
-
-    return NextResponse.json({
+    return successResponse({
       message: "Product updated successfully",
       product: updatedProduct,
     })
   } catch (error) {
-    logger.error("Admin update product error:", error)
-
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: error.errors },
-        { status: 400 }
-      )
+      throw new ValidationError('Invalid input data', error.issues)
     }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update product (admin)')
   }
 }
 
@@ -153,58 +120,38 @@ export async function PATCH(
   { params }: { params: { productId: string } }
 ) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     const { productId } = params
 
     // Verify product exists
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new NotFoundError('Product not found')
     }
 
     const body = await request.json()
     const { status } = body
 
     if (!status || !["DRAFT", "ACTIVE", "OUT_OF_STOCK", "ARCHIVED"].includes(status)) {
-      return NextResponse.json(
-        { error: "Invalid status. Must be DRAFT, ACTIVE, OUT_OF_STOCK, or ARCHIVED" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError('Invalid status. Must be DRAFT, ACTIVE, OUT_OF_STOCK, or ARCHIVED')
     }
 
     // Update product status
-    const updatedProduct = await prisma.product.update({
+    const updatedProduct = await prisma.products.update({
       where: { id: productId },
       data: { status },
     })
 
-    logger.info(`Admin changed product status: ${updatedProduct.name} → ${status}`)
-
-    return NextResponse.json({
+    return successResponse({
       message: `Product status changed to ${status}`,
       product: updatedProduct,
     })
   } catch (error) {
-    logger.error("Admin update product status error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update product status (admin)')
   }
 }
 
@@ -214,23 +161,15 @@ export async function DELETE(
   { params }: { params: { productId: string } }
 ) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     const { productId } = params
 
     // Verify product exists
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        vendorStore: {
+        vendor_stores: {
           select: {
             id: true,
             name: true,
@@ -239,23 +178,17 @@ export async function DELETE(
         },
         _count: {
           select: {
-            variants: true,
-            images: true,
-            reviews: true,
+            product_variants: true,
+            product_images: true,
+            product_reviews: true,
           },
         },
       },
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      )
+      throw new NotFoundError('Product not found')
     }
-
-    logger.info(`Starting deletion of product: ${product.name} (${product.id})`)
-    logger.info(`Product has ${product._count.variants} variants, ${product._count.images} images, ${product._count.reviews} reviews`)
 
     // CASCADE DELETION ORDER:
     // 1. Reviews (dependent on product and order items)
@@ -265,60 +198,50 @@ export async function DELETE(
     // 5. Product itself
 
     // Delete reviews for this product
-    await prisma.productReview.deleteMany({
+    await prisma.product_reviews.deleteMany({
       where: { productId: productId },
     })
-    logger.info("Deleted product reviews")
 
     // Delete order items (but not the orders themselves)
-    await prisma.storeOrderItem.deleteMany({
+    await prisma.store_order_items.deleteMany({
       where: { productId: productId },
     })
-    logger.info("Deleted order items")
 
     // Delete product variants
-    await prisma.productVariant.deleteMany({
+    await prisma.product_variants.deleteMany({
       where: { productId: productId },
     })
-    logger.info("Deleted product variants")
 
     // Delete product images
-    await prisma.productImage.deleteMany({
+    await prisma.product_images.deleteMany({
       where: { productId: productId },
     })
-    logger.info("Deleted product images")
 
     // Delete the product
-    await prisma.product.delete({
+    await prisma.products.delete({
       where: { id: productId },
     })
-    logger.info("Deleted product")
 
     // Decrement product count for tenant (if applicable)
-    if (product.vendorStore.tenantId) {
-      await prisma.tenant.update({
-        where: { id: product.vendorStore.tenantId },
+    if (product.vendor_stores.tenantId) {
+      await prisma.tenants.update({
+        where: { id: product.vendor_stores.tenantId },
         data: { currentProducts: { decrement: 1 } },
       })
-      logger.info("Decremented tenant product count")
     }
 
-    return NextResponse.json({
+    return successResponse({
       message: "Product and all related data deleted successfully",
       deletedProduct: {
         id: product.id,
         name: product.name,
-        storeName: product.vendorStore.name,
-        variantsDeleted: product._count.variants,
-        imagesDeleted: product._count.images,
-        reviewsDeleted: product._count.reviews,
+        storeName: product.vendor_stores.name,
+        variantsDeleted: product._count.product_variants,
+        imagesDeleted: product._count.product_images,
+        reviewsDeleted: product._count.product_reviews,
       },
     })
   } catch (error) {
-    logger.error("Admin delete product error:", error)
-    return NextResponse.json(
-      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Delete product (admin)')
   }
 }

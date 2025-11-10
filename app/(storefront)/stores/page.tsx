@@ -1,11 +1,11 @@
 import Link from "next/link"
-import prisma from "@/lib/db"
 import { Suspense } from "react"
+import prisma from "@/lib/db"
 
 export const dynamic = 'force-dynamic'
 
 async function StoresGrid() {
-  const stores = await prisma.vendorStore.findMany({
+  const stores = await prisma.vendor_stores.findMany({
     where: {
       isActive: true,
     },
@@ -15,7 +15,7 @@ async function StoresGrid() {
     include: {
       _count: {
         select: {
-          Product: {
+          products: {
             where: {
               status: 'ACTIVE',
             },
@@ -59,7 +59,7 @@ async function StoresGrid() {
                 </p>
               )}
               <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>{store._count.Product} Products</span>
+                <span>{store._count.products} Products</span>
                 {store.totalOrders > 0 && (
                   <span>{store.totalOrders} Orders</span>
                 )}

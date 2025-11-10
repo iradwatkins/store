@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     logger.info("Starting low stock check...")
 
     // Find all products with low stock (where inventory is tracked)
-    const lowStockProducts = await prisma.product.findMany({
+    const lowStockProducts = await prisma.products.findMany({
       where: {
         trackInventory: true,
         status: "ACTIVE", // Only check active products
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         ],
       },
       include: {
-        vendorStore: {
+        vendor_stores: {
           include: {
             User: {
               select: {
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         currentStock: product.quantity,
         lowStockThreshold: product.lowStockThreshold,
         imageUrl:
-          product.images[0]?.medium || product.images[0]?.url || undefined,
+          product.product_images[0]?.medium || product.product_images[0]?.url || undefined,
         hasVariants: product.hasVariants,
       }
 
@@ -129,13 +129,13 @@ export async function POST(request: NextRequest) {
 
       // Add to vendor's low stock list
       if (isLowStock) {
-        const vendorStoreId = product.vendorStore.id
+        const vendorStoreId = product.vendor_stores.id
         if (!vendorLowStockMap.has(vendorStoreId)) {
           vendorLowStockMap.set(vendorStoreId, [])
         }
         vendorLowStockMap
           .get(vendorStoreId)!
-          .push({ ...productData, vendorStore: product.vendorStore })
+          .push({ ...productData, vendor_stores: product.vendor_stores })
       }
     }
 
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     const errors: string[] = []
 
     for (const [vendorStoreId, products] of vendorLowStockMap.entries()) {
-      const vendorStore = products[0].vendorStore
+      const vendorStore = products[0].vendor_stores
       const vendorUser = vendorStore.User
 
       if (!vendorUser?.email) {

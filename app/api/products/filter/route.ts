@@ -26,26 +26,26 @@ export async function GET(request: NextRequest) {
     if (priceRange) {
       const [min, max] = priceRange.split("-").map((v) => (v ? parseFloat(v) : null))
       where.price = {}
-      if (min !== null) where.price.gte = min
-      if (max !== null) where.price.lte = max
+      if (min !== null) {where.price.gte = min}
+      if (max !== null) {where.price.lte = max}
     }
 
     // Determine sort order
     let orderBy: any = { createdAt: "desc" }
-    if (sort === "price_asc") orderBy = { price: "asc" }
-    if (sort === "price_desc") orderBy = { price: "desc" }
-    if (sort === "newest") orderBy = { createdAt: "desc" }
+    if (sort === "price_asc") {orderBy = { price: "asc" }}
+    if (sort === "price_desc") {orderBy = { price: "desc" }}
+    if (sort === "newest") {orderBy = { createdAt: "desc" }}
 
     // Fetch products
-    const products = await prisma.product.findMany({
+    const products = await prisma.products.findMany({
       where,
       take: 100,
       orderBy,
       include: {
-        images: {
+        product_images: {
           take: 1,
         },
-        vendorStore: {
+        vendor_stores: {
           select: {
             name: true,
             slug: true,
@@ -61,9 +61,9 @@ export async function GET(request: NextRequest) {
       slug: product.slug,
       price: Number(product.price),
       category: product.category,
-      image: product.images[0]?.medium || product.images[0]?.url || null,
-      storeName: product.vendorStore.name,
-      storeSlug: product.vendorStore.slug,
+      image: product.product_images[0]?.medium || product.product_images[0]?.url || null,
+      storeName: product.vendor_stores.name,
+      storeSlug: product.vendor_stores.slug,
     }))
 
     return NextResponse.json({ products: formattedProducts })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import prisma from "@/lib/db"
 import { z } from "zod"
+import prisma from "@/lib/db"
 import { redis } from "@/lib/redis"
 import { getClientIp } from "@/lib/utils/ip"
 import { logger } from "@/lib/logger"
@@ -37,7 +37,7 @@ export async function POST(
         )
       } else {
         // User is changing their vote - decrement old, increment new
-        const review = await prisma.productReview.findUnique({
+        const review = await prisma.product_reviews.findUnique({
           where: { id: params.reviewId },
         })
 
@@ -46,7 +46,7 @@ export async function POST(
         }
 
         // Atomic vote change
-        const updatedReview = await prisma.productReview.update({
+        const updatedReview = await prisma.product_reviews.update({
           where: { id: params.reviewId },
           data: {
             helpfulCount:
@@ -78,7 +78,7 @@ export async function POST(
     }
 
     // New vote - find the review
-    const review = await prisma.productReview.findUnique({
+    const review = await prisma.product_reviews.findUnique({
       where: { id: params.reviewId },
     })
 
@@ -87,7 +87,7 @@ export async function POST(
     }
 
     // Update vote count
-    const updatedReview = await prisma.productReview.update({
+    const updatedReview = await prisma.product_reviews.update({
       where: { id: params.reviewId },
       data:
         type === "helpful"

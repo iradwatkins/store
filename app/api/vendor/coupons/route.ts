@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import prisma from "@/lib/db"
 import { z } from "zod"
-import { logger } from "@/lib/logger"
+import prisma from "@/lib/db"
+import {
+  requireAuth,
+  requireVendorStore,
+  getPaginationParams,
+  buildPaginatedResponse,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 
 const createCouponSchema = z.object({
   code: z
@@ -29,94 +36,56 @@ const createCouponSchema = z.object({
 // GET /api/vendor/coupons - List all coupons for vendor's store
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    // Auth check
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
-
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams
-    const isActive = searchParams.get("isActive")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "20")
-    const skip = (page - 1) * limit
+    // Pagination
+    const { page, limit, skip } = getPaginationParams(request.nextUrl.searchParams)
 
     // Build where clause
+    const isActive = request.nextUrl.searchParams.get("isActive")
     const where: any = { vendorStoreId: vendorStore.id }
     if (isActive !== null) {
       where.isActive = isActive === "true"
     }
 
-    // Get coupons with pagination
+    // Fetch coupons
     const [coupons, total] = await Promise.all([
-      prisma.coupon.findMany({
+      prisma.coupons.findMany({
         where,
         orderBy: { createdAt: "desc" },
         take: limit,
         skip,
       }),
-      prisma.coupon.count({ where }),
+      prisma.coupons.count({ where }),
     ])
 
+    // Return response
     return NextResponse.json({
       coupons,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      ...buildPaginatedResponse(coupons, total, page, limit).pagination,
     })
   } catch (error) {
-    logger.error("Error fetching coupons:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch coupons" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch coupons')
   }
 }
 
 // POST /api/vendor/coupons - Create new coupon
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    // Auth check
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Parse and validate request body
     const body = await request.json()
     const validatedData = createCouponSchema.parse(body)
 
-    // Validate discount value based on type
+    // Business logic validation
     if (validatedData.discountType === "PERCENTAGE") {
       if (validatedData.discountValue > 100) {
-        return NextResponse.json(
-          { error: "Percentage discount cannot exceed 100%" },
-          { status: 400 }
-        )
+        throw new BusinessLogicError("Percentage discount cannot exceed 100%")
       }
     }
 
@@ -125,15 +94,12 @@ export async function POST(request: NextRequest) {
       const start = new Date(validatedData.startDate)
       const end = new Date(validatedData.endDate)
       if (end <= start) {
-        return NextResponse.json(
-          { error: "End date must be after start date" },
-          { status: 400 }
-        )
+        throw new BusinessLogicError("End date must be after start date")
       }
     }
 
     // Check if coupon code already exists for this store
-    const existingCoupon = await prisma.coupon.findUnique({
+    const existingCoupon = await prisma.coupons.findUnique({
       where: {
         vendorStoreId_code: {
           vendorStoreId: vendorStore.id,
@@ -143,14 +109,11 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingCoupon) {
-      return NextResponse.json(
-        { error: "Coupon code already exists for your store" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Coupon code already exists for your store")
     }
 
     // Create coupon
-    const coupon = await prisma.coupon.create({
+    const coupon = await prisma.coupons.create({
       data: {
         vendorStoreId: vendorStore.id,
         code: validatedData.code,
@@ -171,19 +134,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ coupon }, { status: 201 })
+    // Return success response
+    return successResponse({ coupon }, 201)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    logger.error("Error creating coupon:", error)
-    return NextResponse.json(
-      { error: "Failed to create coupon" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Create coupon')
   }
 }

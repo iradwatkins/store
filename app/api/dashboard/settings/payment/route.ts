@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import prisma from "@/lib/db"
+import { NextRequest } from "next/server"
 import { z } from "zod"
-import { logger } from "@/lib/logger"
+import prisma from "@/lib/db"
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 
 const paymentSettingsSchema = z.object({
   primaryPaymentProcessor: z.enum(["STRIPE", "PAYPAL", "SQUARE", "CASH"]),
@@ -17,14 +22,11 @@ const paymentSettingsSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
+    const storeSettings = await prisma.vendor_stores.findUnique({
+      where: { id: vendorStore.id },
       select: {
         id: true,
         primaryPaymentProcessor: true,
@@ -40,27 +42,16 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(vendorStore)
+    return successResponse(storeSettings)
   } catch (error) {
-    logger.error("Error fetching payment settings:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch payment settings" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch payment settings')
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     const body = await request.json()
     const validatedData = paymentSettingsSchema.parse(body)
@@ -70,23 +61,11 @@ export async function PUT(request: NextRequest) {
       validatedData.secondaryPaymentProcessor &&
       validatedData.primaryPaymentProcessor === validatedData.secondaryPaymentProcessor
     ) {
-      return NextResponse.json(
-        { error: "Primary and secondary payment methods must be different" },
-        { status: 400 }
-      )
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: { userId: session.user.id },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 })
+      throw new BusinessLogicError("Primary and secondary payment methods must be different")
     }
 
     // Update payment settings
-    const updated = await prisma.vendorStore.update({
+    const updated = await prisma.vendor_stores.update({
       where: { id: vendorStore.id },
       data: {
         primaryPaymentProcessor: validatedData.primaryPaymentProcessor,
@@ -111,20 +90,8 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(updated)
+    return successResponse(updated)
   } catch (error) {
-    logger.error("Error updating payment settings:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: error.issues },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to update payment settings" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update payment settings')
   }
 }

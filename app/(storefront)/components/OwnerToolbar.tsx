@@ -1,9 +1,11 @@
+import Link from "next/link"
+
 type OwnerToolbarProps = {
   productId?: string
   storeSlug: string
 }
 
-export default function OwnerToolbar({ productId, storeSlug }: OwnerToolbarProps) {
+export default function OwnerToolbar({ productId, storeSlug: _storeSlug }: OwnerToolbarProps) {
   return (
     <div className="bg-blue-500 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -21,7 +23,7 @@ export default function OwnerToolbar({ productId, storeSlug }: OwnerToolbarProps
           <div className="flex items-center gap-3">
             {/* Edit Product Button (if on product page) */}
             {productId && (
-              <a
+              <Link
                 href={`/dashboard/products/${productId}/edit`}
                 className="inline-flex items-center px-3 py-1.5 border border-white/20 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
               >
@@ -29,11 +31,11 @@ export default function OwnerToolbar({ productId, storeSlug }: OwnerToolbarProps
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Edit Product
-              </a>
+              </Link>
             )}
 
             {/* Dashboard Link */}
-            <a
+            <Link
               href="/dashboard/products"
               className="inline-flex items-center px-3 py-1.5 border border-white/20 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
             >
@@ -41,7 +43,7 @@ export default function OwnerToolbar({ productId, storeSlug }: OwnerToolbarProps
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
               Dashboard
-            </a>
+            </Link>
 
             {/* Info Badge */}
             <span className="inline-flex items-center px-2.5 py-1 bg-blue-400 rounded-md text-xs font-medium">

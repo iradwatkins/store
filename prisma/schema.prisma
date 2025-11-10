@@ -20,7 +20,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId, provider])
@@ -31,7 +31,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Store {
@@ -54,8 +54,8 @@ model User {
   createdAt                          DateTime          @default(now())
   updatedAt                          DateTime          @default(now())
   password                           String?
-  Account                            Account[]
-  Session                            Session[]
+  accounts                           Account[]
+  sessions                           Session[]
   article_likes                      article_likes[]
   articles_articles_authorIdToUser   articles[]        @relation("articles_authorIdToUser")
   articles_articles_reviewedByToUser articles[]        @relation("articles_reviewedByToUser")
@@ -68,6 +68,8 @@ model User {
   tenants                            tenants[]
   vendor_stores                      vendor_stores[]
   writer_profiles                    writer_profiles?
+  announcements                      announcements[]
+  vendor_followers                   vendor_followers[]
 
   @@index([email])
 }
@@ -243,24 +245,31 @@ model media {
 }
 
 model product_addons {
-  id                  String    @id
+  id                  String          @id
   productId           String?
   storeId             String
   name                String
   description         String?
-  price               Decimal   @db.Decimal(10, 2)
-  isRequired          Boolean   @default(false)
-  allowMultiple       Boolean   @default(false)
+  price               Decimal         @db.Decimal(10, 2)
+  isRequired          Boolean         @default(false)
+  allowMultiple       Boolean         @default(false)
   maxQuantity         Int?
   requiredForVariants Json?
   excludedForVariants Json?
   imageUrl            String?
   icon                String?
-  sortOrder           Int       @default(0)
-  isActive            Boolean   @default(true)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @default(now())
-  products            products? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sortOrder           Int             @default(0)
+  isActive            Boolean         @default(true)
+  fieldType           AddonFieldType  @default(TEXT)
+  options             Json?
+  conditionalLogic    Json?
+  priceType           PriceType       @default(FIXED)
+  priceFormula        String?
+  minValue            Decimal?        @db.Decimal(10, 2)
+  maxValue            Decimal?        @db.Decimal(10, 2)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @default(now())
+  products            products?       @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId, isActive])
   @@index([storeId, isActive])
@@ -343,6 +352,9 @@ model products {
   compareAtPrice       Decimal?               @db.Decimal(10, 2)
   sku                  String?
   quantity             Int                    @default(0)
+  quantityAvailable    Int?
+  quantityOnHold       Int                    @default(0)
+  quantityCommitted    Int                    @default(0)
   trackInventory       Boolean                @default(true)
   lowStockThreshold    Int                    @default(5)
   category             ProductCategory
@@ -372,6 +384,7 @@ model products {
   store_order_items    store_order_items[]
   variant_combinations variant_combinations[]
   variant_options      variant_options[]
+  order_promotions     order_promotions[]
 
   @@unique([vendorStoreId, slug])
   @@index([category])
@@ -551,6 +564,9 @@ model variant_combinations {
   price             Decimal? @db.Decimal(10, 2)
   compareAtPrice    Decimal? @db.Decimal(10, 2)
   quantity          Int      @default(0)
+  quantityAvailable Int?
+  quantityOnHold    Int      @default(0)
+  quantityCommitted Int      @default(0)
   inventoryTracked  Boolean  @default(true)
   lowStockThreshold Int?
   available         Boolean  @default(true)
@@ -618,16 +634,30 @@ model vendor_stores {
   paypalMerchantId          String?
   squareAccessToken         String?
   squareLocationId          String?
-  acceptsCash               Boolean           @default(false)
+  acceptsCash               Boolean              @default(false)
   cashInstructions          String?
   tenantId                  String?
+  withdrawBalance           Decimal              @default(0) @db.Decimal(12, 2)
+  withdrawMethod            WithdrawMethod?
+  bankAccountDetails        Json?
+  minimumWithdraw           Decimal              @default(50) @db.Decimal(10, 2)
+  isVerified                Boolean              @default(false)
+  verifiedAt                DateTime?
   coupons                   coupons[]
   product_reviews           product_reviews[]
   products                  products[]
   shop_ratings              shop_ratings?
   store_orders              store_orders[]
-  tenants                   tenants?          @relation(fields: [tenantId], references: [id])
-  User                      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenants                   tenants?             @relation(fields: [tenantId], references: [id])
+  User                      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendor_withdraws          vendor_withdraws[]
+  announcement_reads        announcement_reads[]
+  store_hours               store_hours?
+  store_vacations           store_vacations[]
+  shipping_zones            shipping_zones[]
+  vendor_followers          vendor_followers[]
+  order_promotions          order_promotions[]
+  abandoned_carts           abandoned_carts[]
 
   @@index([isActive])
   @@index([slug])
@@ -653,6 +683,127 @@ model writer_profiles {
   User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model vendor_withdraws {
+  id              String         @id
+  vendorStoreId   String
+  amount          Decimal        @db.Decimal(10, 2)
+  method          WithdrawMethod
+  status          WithdrawStatus @default(PENDING)
+  requestedAt     DateTime       @default(now())
+  processedAt     DateTime?
+  notes           String?
+  adminNotes      String?
+  bankDetails     Json?
+  vendor_stores   vendor_stores  @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+
+  @@index([vendorStoreId, status])
+  @@index([status, requestedAt])
+}
+
+model announcements {
+  id                 String              @id
+  title              String
+  content            String
+  targetType         AnnouncementTarget
+  targetVendors      String[]
+  status             AnnouncementStatus  @default(DRAFT)
+  publishAt          DateTime?
+  createdAt          DateTime            @default(now())
+  createdBy          String
+  User               User                @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  announcement_reads announcement_reads[]
+
+  @@index([status, publishAt])
+  @@index([createdBy])
+}
+
+model announcement_reads {
+  id            String        @id
+  announcementId String
+  vendorStoreId String
+  readAt        DateTime      @default(now())
+  announcements announcements @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  vendor_stores vendor_stores @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, vendorStoreId])
+  @@index([vendorStoreId, readAt])
+}
+
+model store_hours {
+  id            String        @id
+  vendorStoreId String        @unique
+  monday        Json?
+  tuesday       Json?
+  wednesday     Json?
+  thursday      Json?
+  friday        Json?
+  saturday      Json?
+  sunday        Json?
+  timezone      String        @default("America/New_York")
+  isEnabled     Boolean       @default(true)
+  vendor_stores vendor_stores @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+}
+
+model store_vacations {
+  id            String        @id
+  vendorStoreId String
+  startDate     DateTime
+  endDate       DateTime
+  message       String?
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  vendor_stores vendor_stores @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+
+  @@index([vendorStoreId, startDate])
+  @@index([vendorStoreId, isActive])
+}
+
+model shipping_zones {
+  id             String          @id
+  vendorStoreId  String
+  name           String
+  regions        Json
+  isEnabled      Boolean         @default(true)
+  priority       Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now())
+  vendor_stores  vendor_stores   @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+  shipping_rates shipping_rates[]
+
+  @@index([vendorStoreId, isEnabled])
+}
+
+model shipping_rates {
+  id             String         @id
+  zoneId         String
+  name           String
+  type           ShippingType
+  cost           Decimal        @db.Decimal(10, 2)
+  minOrderAmount Decimal?       @db.Decimal(10, 2)
+  isEnabled      Boolean        @default(true)
+  sortOrder      Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now())
+  shipping_zones shipping_zones @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@index([zoneId, isEnabled])
+}
+
+model vendor_followers {
+  id            String        @id
+  vendorStoreId String
+  customerId    String
+  followedAt    DateTime      @default(now())
+  notifyNewProducts Boolean   @default(true)
+  notifySales   Boolean       @default(true)
+  vendor_stores vendor_stores @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+  User          User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorStoreId, customerId])
+  @@index([customerId])
+  @@index([vendorStoreId])
 }
 
 enum ArticleCategory {
@@ -796,4 +947,127 @@ enum UserRole {
 enum VariantType {
   SIZE
   COLOR
+}
+
+enum WithdrawMethod {
+  BANK_TRANSFER
+  PAYPAL
+  STRIPE
+  SKRILL
+}
+
+enum WithdrawStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  PAID
+  CANCELLED
+  REJECTED
+}
+
+enum AnnouncementTarget {
+  ALL_VENDORS
+  SPECIFIC_VENDORS
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum ShippingType {
+  FLAT_RATE
+  FREE_SHIPPING
+  WEIGHT_BASED
+  LOCAL_PICKUP
+}
+
+enum AddonFieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  SELECT
+  CHECKBOX
+  RADIO
+  DATE
+  FILE
+  COLOR
+  IMAGE_BUTTONS
+}
+
+enum PriceType {
+  FIXED
+  PERCENTAGE
+  FORMULA
+}
+
+model order_promotions {
+  id            String          @id @default(cuid())
+  vendorStoreId String
+  type          PromotionType
+  title         String
+  description   String?
+  productId     String
+  variantId     String?
+  discountType  DiscountType
+  discountValue Decimal         @db.Decimal(10, 2)
+  freeShipping  Boolean         @default(false)
+  status        PromotionStatus @default(ACTIVE)
+  priority      Int             @default(0)
+  conditions    Json?
+  displayCount  Int             @default(0)
+  acceptedCount Int             @default(0)
+  revenueAdded  Decimal         @default(0) @db.Decimal(12, 2)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now())
+  vendor_stores vendor_stores   @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+  products      products        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([vendorStoreId, status])
+  @@index([status, priority])
+}
+
+enum PromotionType {
+  ORDER_BUMP
+  UPSELL
+  CROSS_SELL
+}
+
+enum PromotionStatus {
+  ACTIVE
+  INACTIVE
+  SCHEDULED
+  EXPIRED
+}
+
+model abandoned_carts {
+  id                    String   @id @default(cuid())
+  cartSessionId         String   @unique
+  vendorStoreId         String
+  customerEmail         String?
+  customerName          String?
+  cartData              Json
+  cartTotal             Decimal  @db.Decimal(10, 2)
+  itemCount             Int
+  recoveryToken         String   @unique @default(cuid())
+  reminderSentAt        DateTime?
+  secondReminderSentAt  DateTime?
+  thirdReminderSentAt   DateTime?
+  recoveredAt           DateTime?
+  isRecovered           Boolean  @default(false)
+  discountCode          String?  @unique
+  discountPercent       Int      @default(10)
+  discountCodeUsed      Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now())
+  expiresAt             DateTime
+  vendor_stores         vendor_stores @relation(fields: [vendorStoreId], references: [id], onDelete: Cascade)
+
+  @@index([vendorStoreId, isRecovered])
+  @@index([customerEmail])
+  @@index([expiresAt])
+  @@index([discountCode])
+  @@index([reminderSentAt])
 }

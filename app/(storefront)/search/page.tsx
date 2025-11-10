@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { logger } from "@/lib/logger"
@@ -47,15 +47,7 @@ function SearchContent() {
   })
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    if (query) {
-      fetchResults()
-    } else {
-      setIsLoading(false)
-    }
-  }, [query, type, sortBy])
-
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
@@ -72,7 +64,15 @@ function SearchContent() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [query, type, sortBy])
+
+  useEffect(() => {
+    if (query) {
+      fetchResults()
+    } else {
+      setIsLoading(false)
+    }
+  }, [query, fetchResults])
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -177,7 +177,7 @@ function SearchContent() {
             </svg>
             <h3 className="mt-4 text-lg font-medium text-foreground">No results found</h3>
             <p className="mt-2 text-muted-foreground">
-              Try adjusting your search or filters to find what you're looking for.
+              Try adjusting your search or filters to find what you&apos;re looking for.
             </p>
           </div>
         )}

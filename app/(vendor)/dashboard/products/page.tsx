@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { logger } from "@/lib/logger"
 import LowStockBadge from "../components/LowStockBadge"
 import ProductPreviewModal from "./components/ProductPreviewModal"
-import { logger } from "@/lib/logger"
 
 type Product = {
   id: string
@@ -52,16 +53,7 @@ export default function ProductsPage() {
     }
   }, [])
 
-  // Fetch store slug on mount
-  useEffect(() => {
-    fetchStoreSlug()
-  }, [])
-
-  useEffect(() => {
-    fetchProducts()
-  }, [statusFilter, categoryFilter, searchQuery, lowStockFilter, currentPage])
-
-  const fetchStoreSlug = async () => {
+  const fetchStoreSlug = useCallback(async () => {
     try {
       const response = await fetch("/api/vendor/stores")
       if (response.ok) {
@@ -73,9 +65,9 @@ export default function ProductsPage() {
     } catch (err) {
       logger.error("Failed to fetch store slug:", err)
     }
-  }
+  }, [])
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
@@ -85,10 +77,10 @@ export default function ProductsPage() {
         limit: "10",
       })
 
-      if (statusFilter) params.append("status", statusFilter)
-      if (categoryFilter) params.append("category", categoryFilter)
-      if (searchQuery) params.append("search", searchQuery)
-      if (lowStockFilter) params.append("lowStock", "true")
+      if (statusFilter) {params.append("status", statusFilter)}
+      if (categoryFilter) {params.append("category", categoryFilter)}
+      if (searchQuery) {params.append("search", searchQuery)}
+      if (lowStockFilter) {params.append("lowStock", "true")}
 
       const response = await fetch(`/api/vendor/products?${params.toString()}`)
 
@@ -104,7 +96,16 @@ export default function ProductsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [currentPage, statusFilter, categoryFilter, searchQuery, lowStockFilter])
+
+  // Fetch store slug on mount
+  useEffect(() => {
+    fetchStoreSlug()
+  }, [fetchStoreSlug])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const handleDelete = async (productId: string) => {
     if (!confirm("Are you sure you want to delete this product?")) {
@@ -219,7 +220,7 @@ export default function ProductsPage() {
             Manage your product catalog
           </p>
         </div>
-        <a
+        <Link
           href="/dashboard/products/new"
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600"
         >
@@ -227,7 +228,7 @@ export default function ProductsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Product
-        </a>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -362,12 +363,12 @@ export default function ProductsPage() {
               Get started by adding your first product.
             </p>
             <div className="mt-6">
-              <a
+              <Link
                 href="/dashboard/products/new"
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600"
               >
                 Add Product
-              </a>
+              </Link>
             </div>
           </div>
         ) : (
@@ -404,11 +405,11 @@ export default function ProductsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
-                          {product.images[0] ? (
+                          {product.product_images[0] ? (
                             <img
                               className="h-10 w-10 rounded object-cover"
-                              src={product.images[0].url}
-                              alt={product.images[0].altText || product.name}
+                              src={product.product_images[0].url}
+                              alt={product.product_images[0].altText || product.name}
                             />
                           ) : (
                             <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
@@ -480,7 +481,7 @@ export default function ProductsPage() {
                         </button>
 
                         {/* Edit */}
-                        <a
+                        <Link
                           href={`/dashboard/products/${product.id}/edit`}
                           className="text-gray-600 hover:text-blue-600 transition-colors"
                           title="Edit"
@@ -488,7 +489,7 @@ export default function ProductsPage() {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                        </a>
+                        </Link>
 
                         {/* Duplicate */}
                         <button
@@ -503,7 +504,7 @@ export default function ProductsPage() {
 
                         {/* View on Store */}
                         {storeSlug && (
-                          <a
+                          <Link
                             href={`/store/${storeSlug}/products/${product.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -513,7 +514,7 @@ export default function ProductsPage() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
-                          </a>
+                          </Link>
                         )}
 
                         {/* Delete */}

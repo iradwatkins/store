@@ -1,6 +1,6 @@
+import { redirect } from "next/navigation"
 import { getCurrentTenant } from "@/lib/tenant"
 import { auth } from "@/lib/auth"
-import { redirect } from "next/navigation"
 import prisma from "@/lib/db"
 
 // Force dynamic rendering
@@ -28,14 +28,14 @@ export default async function TenantDashboardPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-          <p className="text-muted-foreground">You don't have permission to access this tenant's dashboard.</p>
+          <p className="text-muted-foreground">You don&apos;t have permission to access this tenant&apos;s dashboard.</p>
         </div>
       </div>
     )
   }
 
   // Fetch tenant statistics
-  const stats = await prisma.tenant.findUnique({
+  const stats = await prisma.tenants.findUnique({
     where: { id: tenant.id },
     select: {
       currentProducts: true,
@@ -48,7 +48,7 @@ export default async function TenantDashboardPage() {
       subscriptionPlan: true,
       subscriptionStatus: true,
       trialEndsAt: true,
-      vendorStores: {
+      vendor_stores: {
         select: {
           id: true,
           name: true,
@@ -149,7 +149,7 @@ export default async function TenantDashboardPage() {
                 </svg>
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{stats?.vendorStores.length || 0}</p>
+            <p className="text-3xl font-bold text-foreground">{stats?.vendor_stores.length || 0}</p>
             <p className="text-sm text-muted-foreground mt-1">Active storefronts</p>
           </div>
 
@@ -165,7 +165,7 @@ export default async function TenantDashboardPage() {
             </div>
             <p className="text-3xl font-bold text-gray-900">
               $
-              {stats?.vendorStores
+              {stats?.vendor_stores
                 .reduce((sum, store) => sum + parseFloat(store.totalSales.toString()), 0)
                 .toFixed(2) || "0.00"}
             </p>
@@ -183,7 +183,7 @@ export default async function TenantDashboardPage() {
               </div>
             </div>
             <p className="text-3xl font-bold text-gray-900">
-              {stats?.vendorStores.reduce((sum, store) => sum + store.totalOrders, 0) || 0}
+              {stats?.vendor_stores.reduce((sum, store) => sum + store.totalOrders, 0) || 0}
             </p>
             <p className="text-sm text-gray-500 mt-1">All time</p>
           </div>
@@ -272,9 +272,9 @@ export default async function TenantDashboardPage() {
           {/* Manage Stores */}
           <div className="bg-white rounded-xl shadow p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Stores</h3>
-            {stats?.vendorStores && stats.vendorStores.length > 0 ? (
+            {stats?.vendor_stores && stats.vendor_stores.length > 0 ? (
               <div className="space-y-3">
-                {stats.vendorStores.map((store) => (
+                {stats.vendor_stores.map((store) => (
                   <div key={store.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{store.name}</p>
@@ -316,7 +316,7 @@ export default async function TenantDashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Platform Fee</span>
-                <span className="font-semibold text-gray-900">{stats?.platformFeePercent}%</span>
+                <span className="font-semibold text-gray-900">{stats?.platformFeePercent.toString()}%</span>
               </div>
               {stats?.trialEndsAt && (
                 <div className="flex items-center justify-between">

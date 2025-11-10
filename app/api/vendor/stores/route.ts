@@ -1,13 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { z } from "zod"
-import { auth } from "@/lib/auth"
-import prisma from "@/lib/db"
 import Stripe from "stripe"
+import prisma from "@/lib/db"
 import { sendWelcomeVendor } from "@/lib/email"
 import { logger } from "@/lib/logger"
+import {
+  requireAuth,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-09-30.clover",
 })
 
 const createStoreSchema = z.object({
@@ -28,44 +33,32 @@ const createStoreSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const body = await request.json()
 
     // Validate input
     const validatedData = createStoreSchema.parse(body)
 
     // Check if slug is already taken
-    const existingStore = await prisma.vendorStore.findUnique({
+    const existingStore = await prisma.vendor_stores.findUnique({
       where: {
         slug: validatedData.slug,
       },
     })
 
     if (existingStore) {
-      return NextResponse.json(
-        { error: "Store URL is already taken" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Store URL is already taken")
     }
 
     // Check if user already has a store
-    const userStore = await prisma.vendorStore.findFirst({
+    const userStore = await prisma.vendor_stores.findFirst({
       where: {
         userId: session.user.id,
       },
     })
 
     if (userStore) {
-      return NextResponse.json(
-        { error: "You already have a store" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("You already have a store")
     }
 
     // Use default platform fee (can be made configurable later)
@@ -107,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     // First create the Store registry entry
-    const storeRegistry = await prisma.store.create({
+    const storeRegistry = await prisma.Store.create({
       data: {
         name: validatedData.name,
         slug: validatedData.slug,
@@ -117,7 +110,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Create vendor store with link to Store registry
-    const store = await prisma.vendorStore.create({
+    const store = await prisma.vendor_stores.create({
       data: {
         storeId: storeRegistry.id,
         userId: session.user.id,
@@ -165,7 +158,7 @@ export async function POST(request: NextRequest) {
       // Don't fail the store creation if email fails
     }
 
-    return NextResponse.json(
+    return successResponse(
       {
         message: "Store created successfully",
         store: {
@@ -175,36 +168,19 @@ export async function POST(request: NextRequest) {
         },
         stripeOnboardingUrl,
       },
-      { status: 201 }
+      201
     )
   } catch (error) {
-    logger.error("Store creation error:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Create store')
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Check authentication
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const session = await requireAuth()
 
     // Get user's store
-    const store = await prisma.vendorStore.findFirst({
+    const store = await prisma.vendor_stores.findFirst({
       where: {
         userId: session.user.id,
       },
@@ -219,43 +195,33 @@ export async function GET(request: NextRequest) {
     })
 
     if (!store) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 })
+      throw new BusinessLogicError("Store not found")
     }
 
-    return NextResponse.json({ store })
+    return successResponse({ store })
   } catch (error) {
-    logger.error("Get store error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Get store')
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const body = await request.json()
 
     // Get user's store
-    const existingStore = await prisma.vendorStore.findFirst({
+    const existingStore = await prisma.vendor_stores.findFirst({
       where: {
         userId: session.user.id,
       },
     })
 
     if (!existingStore) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 })
+      throw new BusinessLogicError("Store not found")
     }
 
     // Update store
-    const store = await prisma.vendorStore.update({
+    const store = await prisma.vendor_stores.update({
       where: {
         id: existingStore.id,
       },
@@ -270,12 +236,8 @@ export async function PATCH(request: NextRequest) {
 
     logger.info(`Store updated: ${store.slug} by user ${session.user.id}`)
 
-    return NextResponse.json({ store })
+    return successResponse({ store })
   } catch (error) {
-    logger.error("Update store error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update store')
   }
 }

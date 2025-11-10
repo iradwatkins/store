@@ -4,6 +4,7 @@ import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { sendOrderConfirmation, sendVendorNewOrderAlert } from "@/lib/email"
 import { logger } from "@/lib/logger"
+import { reserveStock } from "@/lib/stock-management"
 
 const createCashOrderSchema = z.object({
   cartSessionId: z.string().min(1),
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Get vendor store
     const vendorStoreId = cart.items[0].vendorStoreId
-    const vendorStore = await prisma.vendorStore.findUnique({
+    const vendorStore = await prisma.vendor_stores.findUnique({
       where: { id: vendorStoreId },
       select: {
         id: true,
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = `SL-CASH-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
 
     // Create order
-    const order = await prisma.storeOrder.create({
+    const order = await prisma.store_orders.create({
       data: {
         orderNumber,
         vendorStoreId: vendorStore.id,
@@ -136,20 +137,33 @@ export async function POST(request: NextRequest) {
     await redis.del(`cart:${validatedData.cartSessionId}`)
 
     // Update vendor store stats
-    await prisma.vendorStore.update({
+    await prisma.vendor_stores.update({
       where: { id: vendorStore.id },
       data: {
         totalOrders: { increment: 1 },
       },
     })
 
-    // Update product sales counts and inventory
+    // Reserve stock and update product sales counts
     for (const item of cart.items) {
-      await prisma.product.update({
+      // Reserve stock (moves from available to onHold)
+      const stockReserved = await reserveStock(
+        item.productId,
+        item.quantity,
+        item.variantId || undefined,
+        item.variantCombinationId || undefined
+      )
+
+      if (!stockReserved) {
+        logger.error(`Failed to reserve stock for product ${item.productId}`)
+        // Continue anyway - order is created
+      }
+
+      // Update sales count
+      await prisma.products.update({
         where: { id: item.productId },
         data: {
           salesCount: { increment: item.quantity },
-          quantity: { decrement: item.quantity },
         },
       })
     }

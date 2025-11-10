@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import prisma from "@/lib/db"
 import Link from "next/link"
+import { auth } from "@/lib/auth"
+import prisma from "@/lib/db"
 
 export default async function AdminOrdersPage() {
   const session = await auth()
@@ -12,18 +12,18 @@ export default async function AdminOrdersPage() {
   }
 
   // Fetch all orders
-  const orders = await prisma.storeOrder.findMany({
+  const orders = await prisma.store_orders.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      vendorStore: {
+      vendor_stores: {
         select: { name: true, slug: true },
       },
-      customer: {
+      User: {
         select: { name: true, email: true },
       },
-      items: {
+      store_order_items: {
         include: {
-          product: {
+          products: {
             select: { name: true },
           },
         },
@@ -125,19 +125,19 @@ export default async function AdminOrdersPage() {
                       {order.paymentStatus === "PAID" && <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Paid</span>}
                     </div>
                     <p className="text-sm text-gray-600 mb-1">
-                      Store: <Link href={`/${order.vendorStore.slug}`} className="text-blue-600 hover:underline">
-                        {order.vendorStore.name}
+                      Store: <Link href={`/${order.vendor_stores.slug}`} className="text-blue-600 hover:underline">
+                        {order.vendor_stores.name}
                       </Link>
                     </p>
                     <p className="text-sm text-gray-600 mb-1">
-                      Customer: {order.customer?.name || order.customer?.email || order.customerName}
+                      Customer: {order.User?.name || order.User?.email || order.customerName}
                     </p>
                     <p className="text-sm text-gray-600 mb-1">
                       Shipping: {(order.shippingAddress as any).address}, {(order.shippingAddress as any).city}, {(order.shippingAddress as any).state} {(order.shippingAddress as any).zipCode}
                     </p>
                     <div className="text-sm text-gray-500 mb-1">
-                      Items: {order.items.map(item =>
-                        `${item.product.name} (${item.quantity}x)`
+                      Items: {order.store_order_items.map(item =>
+                        `${item.products.name} (${item.quantity}x)`
                       ).join(", ")}
                     </div>
                     {order.trackingNumber && (

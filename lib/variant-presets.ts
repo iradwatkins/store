@@ -204,6 +204,9 @@ export const COLOR_PALETTE: ColorOption[] = [
   { name: 'Copper', hex: '#B87333', icon: '🟤', description: 'Metallic copper' }
 ]
 
+// Export alias for backward compatibility
+export const COLOR_OPTIONS = COLOR_PALETTE
+
 // ============================================
 // MATERIAL OPTIONS (by Category)
 // ============================================

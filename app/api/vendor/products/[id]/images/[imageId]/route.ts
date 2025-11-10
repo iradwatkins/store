@@ -18,12 +18,12 @@ export async function DELETE(
     const isAdmin = session.user.role === "ADMIN"
 
     // Get image and verify ownership
-    const image = await prisma.productImage.findUnique({
+    const image = await prisma.product_images.findUnique({
       where: { id: params.imageId },
       include: {
         product: {
           include: {
-            vendorStore: {
+            vendor_stores: {
               include: {
                 Tenant: true,
               },
@@ -43,7 +43,7 @@ export async function DELETE(
     }
 
     const product = image.product
-    const store = product.vendorStore
+    const store = product.vendor_stores
 
     // Check permission: admin can delete any image, vendor can only delete their own
     if (!isAdmin) {
@@ -94,13 +94,13 @@ export async function DELETE(
     const estimatedSizeGB = (pathsToDelete.length * 0.105) / 1024 // ~105KB average per file in GB
 
     // Delete image record from database
-    await prisma.productImage.delete({
+    await prisma.product_images.delete({
       where: { id: params.imageId },
     })
 
     // Decrement storage usage for tenant (if applicable)
     if (store.tenantId && estimatedSizeGB > 0) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: {
           currentStorageGB: {

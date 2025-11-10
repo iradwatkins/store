@@ -123,10 +123,10 @@ export const cacheKeys = {
     page?: number
   }) => {
     const parts = ["products", "catalog"]
-    if (filters?.category) parts.push(`category:${filters.category}`)
-    if (filters?.vendor) parts.push(`vendor:${filters.vendor}`)
-    if (filters?.search) parts.push(`search:${filters.search}`)
-    if (filters?.page) parts.push(`page:${filters.page}`)
+    if (filters?.category) {parts.push(`category:${filters.category}`)}
+    if (filters?.vendor) {parts.push(`vendor:${filters.vendor}`)}
+    if (filters?.search) {parts.push(`search:${filters.search}`)}
+    if (filters?.page) {parts.push(`page:${filters.page}`)}
     return parts.join(":")
   },
 

@@ -9,7 +9,7 @@ import { auth } from "@/lib/auth"
 import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-09-30.clover",
 })
 
 // P0 FIX: Add Zod validation schemas for input validation
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Invalid input",
-          details: validationResult.error.errors,
+          details: validationResult.error.issues,
         },
         { status: 400 }
       )
@@ -153,9 +153,9 @@ export async function POST(request: NextRequest) {
 
     // Validate stock availability before creating payment intent
     for (const item of cart.items) {
-      const product = await prisma.product.findUnique({
+      const product = await prisma.products.findUnique({
         where: { id: item.productId },
-        include: { variants: true },
+        include: { product_variants: true },
       })
 
       if (!product) {
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
       if (product.trackInventory) {
         const availableStock = item.variantId
-          ? product.variants.find((v) => v.id === item.variantId)?.quantity
+          ? product.product_variants.find((v) => v.id === item.variantId)?.quantity
           : product.quantity
 
         if (availableStock === undefined || availableStock === null) {
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     const total = subtotal + shippingCost + taxAmount
 
     // Get vendor store info
-    const vendorStore = await prisma.vendorStore.findUnique({
+    const vendorStore = await prisma.vendor_stores.findUnique({
       where: { slug: cart.storeSlug },
       select: {
         id: true,

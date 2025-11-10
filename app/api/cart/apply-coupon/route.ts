@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { validateAndCalculateCoupon } from "@/lib/coupon"
 import prisma from "@/lib/db"
-import { z } from "zod"
 import { logger } from "@/lib/logger"
 
 const applyCouponSchema = z.object({
@@ -32,9 +32,43 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = applyCouponSchema.parse(body)
 
+    // Check if this is a recovery discount code
+    const recoveryCart = await prisma.abandoned_carts.findFirst({
+      where: {
+        discountCode: validatedData.couponCode,
+        discountCodeUsed: false,
+        vendorStoreId: validatedData.vendorStoreId,
+        expiresAt: { gte: new Date() },
+      },
+    })
+
+    if (recoveryCart) {
+      // Calculate recovery discount
+      const discountAmount = Number(
+        (validatedData.subtotal * (recoveryCart.discountPercent / 100)).toFixed(2)
+      )
+
+      // Mark discount code as used
+      await prisma.abandoned_carts.update({
+        where: { id: recoveryCart.id },
+        data: { discountCodeUsed: true },
+      })
+
+      return NextResponse.json({
+        success: true,
+        discountAmount,
+        coupon: {
+          code: recoveryCart.discountCode,
+          discountType: "PERCENTAGE",
+          discountValue: recoveryCart.discountPercent,
+        },
+        message: `Recovery code applied! You saved $${discountAmount.toFixed(2)}`,
+      })
+    }
+
     // Get product categories for items
     const productIds = validatedData.cartItems.map((item) => item.productId)
-    const products = await prisma.product.findMany({
+    const products = await prisma.products.findMany({
       where: { id: { in: productIds } },
       select: { id: true, category: true },
     })
@@ -72,7 +106,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       )
     }

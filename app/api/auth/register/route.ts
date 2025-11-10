@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import prisma from '@/lib/db'
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const result = registerSchema.safeParse(body)
     if (!result.success) {
       return NextResponse.json(
-        { message: "Invalid input", errors: result.error.errors },
+        { message: "Invalid input", errors: result.error.issues },
         { status: 400 }
       )
     }
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Registration error:', error)
     return NextResponse.json(
       { message: "An error occurred during registration" },

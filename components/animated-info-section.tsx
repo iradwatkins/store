@@ -73,7 +73,7 @@ export function AnimatedInfoSection() {
             </motion.div>
             <h3 className="text-xl font-bold text-foreground mb-2">Support independent creators</h3>
             <p className="text-muted-foreground">
-              There's no Stepperslife warehouse – just independent sellers making and selling unique products.
+              There&apos;s no Stepperslife warehouse – just independent sellers making and selling unique products.
             </p>
           </motion.div>
 
@@ -89,7 +89,7 @@ export function AnimatedInfoSection() {
             </motion.div>
             <h3 className="text-xl font-bold text-foreground mb-2">Peace of mind</h3>
             <p className="text-muted-foreground">
-              Your privacy is our highest priority. Payments are secure, and if something goes wrong with an order, we're here to help.
+              Your privacy is our highest priority. Payments are secure, and if something goes wrong with an order, we&apos;re here to help.
             </p>
           </motion.div>
         </motion.div>

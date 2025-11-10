@@ -139,7 +139,7 @@ export default function ShippingMethodStep({ onComplete, onBack }: Props) {
 
 function getEstimatedDeliveryDate(estimatedDays: string): string {
   const match = estimatedDays.match(/(\d+)-(\d+)/)
-  if (!match) return "Soon"
+  if (!match) {return "Soon"}
 
   const maxDays = parseInt(match[2])
   const deliveryDate = new Date()

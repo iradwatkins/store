@@ -9,7 +9,6 @@
 import { Ruler, Palette, Box, Sparkles, Droplet, FileText } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 
 const VARIANT_TYPES = [
@@ -181,7 +180,7 @@ export function Step2VariantTypes({
           <div className="flex flex-wrap gap-2 mt-2">
             {selectedTypes.map((typeId) => {
               const type = VARIANT_TYPES.find((t) => t.id === typeId)
-              if (!type) return null
+              if (!type) {return null}
               const Icon = type.icon
               return (
                 <div
@@ -195,7 +194,7 @@ export function Step2VariantTypes({
             })}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            Next, you'll configure the specific options for each variant type using templates
+            Next, you&apos;ll configure the specific options for each variant type using templates
             or custom values.
           </p>
         </div>

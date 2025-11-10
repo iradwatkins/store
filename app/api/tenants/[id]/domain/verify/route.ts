@@ -1,8 +1,8 @@
+import { promisify } from "util"
+import dns from "dns"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
-import { promisify } from "util"
-import dns from "dns"
 import { logger } from "@/lib/logger"
 
 // Promisify DNS lookup functions
@@ -115,8 +115,8 @@ async function verifyDnsConfiguration(
       result.message = "DNS configuration verified successfully!"
     } else {
       const errors: string[] = []
-      if (!result.cnameValid) errors.push(result.cnameError || "CNAME invalid")
-      if (!result.txtValid) errors.push(result.txtError || "TXT invalid")
+      if (!result.cnameValid) {errors.push(result.cnameError || "CNAME invalid")}
+      if (!result.txtValid) {errors.push(result.txtError || "TXT invalid")}
       result.message = `Verification failed: ${errors.join(", ")}`
     }
   } catch (error: any) {
@@ -139,7 +139,7 @@ export async function POST(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -190,7 +190,7 @@ export async function POST(
     }
 
     // 5. Update status to VERIFYING
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: params.id },
       data: {
         customDomainStatus: "VERIFYING",
@@ -207,7 +207,7 @@ export async function POST(
     // 7. Update tenant based on verification result
     if (verificationResult.overallValid) {
       // DNS verification successful
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           customDomainVerified: true,
@@ -240,7 +240,7 @@ export async function POST(
       })
     } else {
       // DNS verification failed
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           customDomainStatus: "FAILED",
@@ -283,7 +283,7 @@ export async function POST(
 
     // Revert status back to PENDING on error
     try {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           customDomainStatus: "PENDING",
@@ -316,7 +316,7 @@ export async function GET(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,

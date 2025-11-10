@@ -17,7 +17,7 @@ export default function OnboardingPage() {
       }
 
       // Check if user already has a vendor store
-      if (session.user.vendorStore) {
+      if (session.user.vendor_stores) {
         router.push("/dashboard")
       }
     }

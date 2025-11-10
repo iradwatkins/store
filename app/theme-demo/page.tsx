@@ -1,12 +1,10 @@
 "use client"
 
-import { ThemeToggle } from "@/components/theme-toggle"
 import { useState } from "react"
 import {
   Heart,
   MessageCircle,
   Repeat2,
-  Share,
   Bookmark,
   Search,
   Home,
@@ -14,10 +12,10 @@ import {
   Mail,
   User,
   Settings,
-  ChevronRight,
   Check,
   X
 } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function ThemeDemoPage() {
   const [liked, setLiked] = useState(false)

@@ -9,7 +9,6 @@
 import { Package, Layers } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Label } from '@/components/ui/label'
 
 interface Step1ProductTypeProps {
   value: boolean | undefined
@@ -21,7 +20,7 @@ export function Step1ProductType({ value, onChange }: Step1ProductTypeProps) {
     <div className="space-y-6">
       <div className="text-sm text-muted-foreground">
         Select whether this product will have variants (like different sizes or colors) or
-        if it's a simple product with no variations.
+        if it&apos;s a simple product with no variations.
       </div>
 
       <RadioGroup
@@ -123,10 +122,10 @@ export function Step1ProductType({ value, onChange }: Step1ProductTypeProps) {
       {value === true && (
         <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-            Great choice! Next, you'll select which variant types apply to your product.
+            Great choice! Next, you&apos;ll select which variant types apply to your product.
           </p>
           <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-            We'll guide you through templates and bulk operations to make setup fast and easy.
+            We&apos;ll guide you through templates and bulk operations to make setup fast and easy.
           </p>
         </div>
       )}
@@ -137,7 +136,7 @@ export function Step1ProductType({ value, onChange }: Step1ProductTypeProps) {
             You can always add variants later if needed.
           </p>
           <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">
-            Simple products are perfect for unique items that don't have variations.
+            Simple products are perfect for unique items that don&apos;t have variations.
           </p>
         </div>
       )}

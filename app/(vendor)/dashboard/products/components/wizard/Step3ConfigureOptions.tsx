@@ -6,11 +6,11 @@
  * Configure specific options for each selected variant type using templates or custom values
  */
 
-import { VariantTemplateSelector } from '../VariantTemplateSelector'
+import { AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle } from 'lucide-react'
+import { VariantTemplateSelector } from '../VariantTemplateSelector'
 
 interface VariantOption {
   value: string
@@ -91,7 +91,7 @@ export function Step3ConfigureOptions({
 
   const getSelectedOptions = (variantType: string): VariantOption[] => {
     const options = variantOptions[variantType]
-    if (!options) return []
+    if (!options) {return []}
 
     // Combine preset options and custom options
     const allOptions = [...options.selectedPresetOptions]
@@ -193,7 +193,7 @@ export function Step3ConfigureOptions({
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Variant Combinations</CardTitle>
             <CardDescription className="text-xs">
-              Based on your selections, we'll generate the following combinations
+              Based on your selections, we&apos;ll generate the following combinations
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -229,7 +229,7 @@ export function Step3ConfigureOptions({
                       Large number of combinations
                     </p>
                     <p className="text-xs text-amber-700 dark:text-amber-300">
-                      You're creating {getTotalCombinations()} variant combinations. Consider using bulk
+                      You&apos;re creating {getTotalCombinations()} variant combinations. Consider using bulk
                       settings in the next step to speed up configuration.
                     </p>
                   </div>

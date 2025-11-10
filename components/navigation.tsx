@@ -4,8 +4,8 @@ import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ThemeToggleSimple } from "./theme-toggle"
 import { logger } from "@/lib/logger"
+import { ThemeToggleSimple } from "./theme-toggle"
 
 export default function Navigation() {
   const router = useRouter()
@@ -13,6 +13,7 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [cartItemCount, setCartItemCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
+  const [cartBadgeAnimate, setCartBadgeAnimate] = useState(false)
 
   // Fetch cart count on mount and when cart is updated
   useEffect(() => {
@@ -21,6 +22,10 @@ export default function Navigation() {
     // Listen for cart updates
     const handleCartUpdate = () => {
       fetchCartCount()
+
+      // Trigger badge animation
+      setCartBadgeAnimate(true)
+      setTimeout(() => setCartBadgeAnimate(false), 300)
     }
 
     window.addEventListener("cartUpdated", handleCartUpdate)
@@ -47,7 +52,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50">
+    <nav className="bg-card border-b border-border sticky top-0 z-50" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and primary navigation */}
@@ -72,7 +77,7 @@ export default function Navigation() {
               >
                 Products
               </Link>
-              {!session?.user?.vendorStore && (
+              {!session?.user?.vendor_stores && (
                 <Link
                   href="/create-store"
                   className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors duration-200 rounded-xl hover:bg-accent"
@@ -85,20 +90,26 @@ export default function Navigation() {
 
           {/* Search Bar - Desktop */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="w-full">
+            <form onSubmit={handleSearch} className="w-full" role="search">
+              <label htmlFor="desktop-search" className="sr-only">
+                Search products and stores
+              </label>
               <div className="relative">
                 <input
-                  type="text"
+                  id="desktop-search"
+                  type="search"
                   placeholder="Search products and stores..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-2 pl-10 pr-4 text-sm border border-border rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  aria-label="Search products and stores"
                 />
                 <svg
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -114,16 +125,23 @@ export default function Navigation() {
           {/* Auth buttons and theme toggle */}
           <div className="flex items-center space-x-4">
             {/* Cart Icon */}
-            <Link href="/cart" className="relative p-2 text-foreground hover:text-primary hover:bg-accent rounded-full transition-colors duration-200">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              onClick={() => window.dispatchEvent(new Event('cartUpdated'))}
+              className="relative p-2 text-foreground hover:text-primary hover:bg-accent rounded-full transition-colors duration-200"
+              aria-label={`Shopping cart${cartItemCount > 0 ? ` with ${cartItemCount} item${cartItemCount > 1 ? 's' : ''}` : ', empty'}`}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span
+                  className={`absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ${cartBadgeAnimate ? 'animate-pulse-scale' : ''}`}
+                  aria-hidden="true"
+                >
                   {cartItemCount > 9 ? '9+' : cartItemCount}
                 </span>
               )}
-            </Link>
+            </button>
 
             {/* Theme Toggle */}
             <ThemeToggleSimple />
@@ -135,7 +153,11 @@ export default function Navigation() {
             ) : session ? (
               <div className="flex items-center space-x-4">
                 <div className="relative group">
-                  <button className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors duration-200">
+                  <button
+                    className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors duration-200"
+                    aria-label="User menu"
+                    aria-haspopup="true"
+                  >
                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
                       {session.user?.name?.charAt(0).toUpperCase() || session.user?.email?.charAt(0).toUpperCase() || "U"}
                     </div>
@@ -158,7 +180,7 @@ export default function Navigation() {
                     >
                       My Account
                     </Link>
-                    {session.user?.vendorStore && (
+                    {session.user?.vendor_stores && (
                       <>
                         <Link
                           href="/dashboard"
@@ -225,8 +247,11 @@ export default function Navigation() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-full text-foreground hover:text-primary hover:bg-accent transition-colors duration-200"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (
@@ -239,23 +264,29 @@ export default function Navigation() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-border mt-2">
+          <div id="mobile-menu" className="md:hidden pb-4 border-t border-border mt-2">
             <div className="flex flex-col space-y-2 pt-2">
               {/* Search Bar - Mobile */}
-              <form onSubmit={handleSearch} className="px-3 pb-2">
+              <form onSubmit={handleSearch} className="px-3 pb-2" role="search">
+                <label htmlFor="mobile-search" className="sr-only">
+                  Search products and stores
+                </label>
                 <div className="relative">
                   <input
-                    type="text"
+                    id="mobile-search"
+                    type="search"
                     placeholder="Search products and stores..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-4 py-2 pl-10 pr-4 text-sm border border-border rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    aria-label="Search products and stores"
                   />
                   <svg
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -267,18 +298,20 @@ export default function Navigation() {
                 </div>
               </form>
 
-              <Link
-                href="/cart"
-                className="text-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center justify-between"
-                onClick={() => setMobileMenuOpen(false)}
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new Event('cartUpdated'))
+                  setMobileMenuOpen(false)
+                }}
+                className="text-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center justify-between w-full"
               >
                 <span>Cart</span>
                 {cartItemCount > 0 && (
-                  <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className={`bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ${cartBadgeAnimate ? 'animate-pulse-scale' : ''}`}>
                     {cartItemCount > 9 ? '9+' : cartItemCount}
                   </span>
                 )}
-              </Link>
+              </button>
               <Link
                 href="/stores"
                 className="text-foreground hover:text-primary hover:bg-accent px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200"
@@ -293,7 +326,7 @@ export default function Navigation() {
               >
                 Products
               </Link>
-              {session?.user?.vendorStore ? (
+              {session?.user?.vendor_stores ? (
                 <>
                   <div className="border-t border-border my-2"></div>
                   <Link

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { storageHelpers } from "@/lib/storage"
@@ -12,6 +11,13 @@ import {
   calculateCompressionRatio
 } from "@/lib/image-optimizer"
 import { invalidateProductCache, invalidateVendorCache } from "@/lib/cache"
+import {
+  requireAuth,
+  requireVendorStore,
+  getPaginationParams,
+  buildPaginatedResponse,
+  handleApiError,
+} from "@/lib/utils/api"
 
 const createProductSchema = z.object({
   name: z.string().min(3),
@@ -61,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's store
-    const store = await prisma.vendorStore.findFirst({
+    const store = await prisma.vendor_stores.findFirst({
       where: {
         userId: session.user.id,
       },
@@ -126,7 +132,7 @@ export async function POST(request: NextRequest) {
       .replace(/(^-|-$)/g, "")
 
     // Check if slug exists for this store
-    const existingProduct = await prisma.product.findFirst({
+    const existingProduct = await prisma.products.findFirst({
       where: {
         vendorStoreId: store.id,
         slug,
@@ -163,7 +169,7 @@ export async function POST(request: NextRequest) {
     // Create product
     // Important: If product has variants, product-level inventory is ignored (set to 0)
     // Only variant-level inventory is used
-    const product = await prisma.product.create({
+    const product = await prisma.products.create({
       data: {
         vendorStoreId: store.id,
         name: validatedData.name,
@@ -225,7 +231,7 @@ export async function POST(request: NextRequest) {
       const variants = JSON.parse(validatedData.variants!)
 
       for (const variant of variants) {
-        await prisma.productVariant.create({
+        await prisma.product_variants.create({
           data: {
             productId: product.id,
             name: variant.name,
@@ -317,7 +323,7 @@ export async function POST(request: NextRequest) {
       totalUploadedSizeGB += allSizesTotal / (1024 * 1024 * 1024) // Convert to GB
 
       // Create ProductImage record with separate size URLs
-      await prisma.productImage.create({
+      await prisma.product_images.create({
         data: {
           productId: product.id,
           url: imageUrls.large, // Main/large image URL
@@ -332,7 +338,7 @@ export async function POST(request: NextRequest) {
 
     // Increment storage usage for tenant (if applicable and images uploaded)
     if (store.tenantId && totalUploadedSizeGB > 0) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: {
           currentStorageGB: {
@@ -344,7 +350,7 @@ export async function POST(request: NextRequest) {
 
     // Increment product count for tenant (if applicable)
     if (store.tenantId) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: { currentProducts: { increment: 1 } },
       })
@@ -370,7 +376,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input data", details: error.errors },
+        { error: "Invalid input data", details: error.issues },
         { status: 400 }
       )
     }
@@ -384,32 +390,18 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await auth()
+    // Auth check
+    const session = await requireAuth()
+    const store = await requireVendorStore(session.user.id)
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Pagination
+    const { page, limit, skip } = getPaginationParams(request.nextUrl.searchParams, 50)
 
-    // Get user's store
-    const store = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-    })
-
-    if (!store) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 })
-    }
-
-    // Get query params
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
-    const status = searchParams.get("status")
-    const category = searchParams.get("category")
-    const search = searchParams.get("search")
-    const lowStock = searchParams.get("lowStock") === "true"
+    // Query params for filtering
+    const status = request.nextUrl.searchParams.get("status")
+    const category = request.nextUrl.searchParams.get("category")
+    const search = request.nextUrl.searchParams.get("search")
+    const lowStock = request.nextUrl.searchParams.get("lowStock") === "true"
 
     // Build where clause
     const where: any = {
@@ -440,7 +432,7 @@ export async function GET(request: NextRequest) {
 
     // Get products with pagination
     const [products, total] = await Promise.all([
-      prisma.product.findMany({
+      prisma.products.findMany({
         where,
         include: {
           images: {
@@ -459,26 +451,17 @@ export async function GET(request: NextRequest) {
         orderBy: {
           createdAt: "desc",
         },
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
       }),
-      prisma.product.count({ where }),
+      prisma.products.count({ where }),
     ])
 
     return NextResponse.json({
       products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      ...buildPaginatedResponse(products, total, page, limit).pagination,
     })
   } catch (error) {
-    logger.error("Get products error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch products')
   }
 }

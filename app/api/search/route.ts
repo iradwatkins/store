@@ -48,17 +48,17 @@ export async function GET(request: NextRequest) {
 
       if (minPrice || maxPrice) {
         productWhere.price = {}
-        if (minPrice) productWhere.price.gte = parseFloat(minPrice)
-        if (maxPrice) productWhere.price.lte = parseFloat(maxPrice)
+        if (minPrice) {productWhere.price.gte = parseFloat(minPrice)}
+        if (maxPrice) {productWhere.price.lte = parseFloat(maxPrice)}
       }
 
       // Determine sort order
       let orderBy: any = { createdAt: "desc" }
-      if (sortBy === "price_asc") orderBy = { price: "asc" }
-      if (sortBy === "price_desc") orderBy = { price: "desc" }
-      if (sortBy === "newest") orderBy = { createdAt: "desc" }
+      if (sortBy === "price_asc") {orderBy = { price: "asc" }}
+      if (sortBy === "price_desc") {orderBy = { price: "desc" }}
+      if (sortBy === "newest") {orderBy = { createdAt: "desc" }}
 
-      const products = await prisma.product.findMany({
+      const products = await prisma.products.findMany({
         where: productWhere,
         take: 50,
         orderBy,
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
           images: {
             take: 1,
           },
-          vendorStore: {
+          vendor_stores: {
             select: {
               name: true,
               slug: true,
@@ -82,16 +82,16 @@ export async function GET(request: NextRequest) {
         description: product.description,
         price: Number(product.price),
         category: product.category,
-        image: product.images[0]?.medium || product.images[0]?.url || null,
-        storeName: product.vendorStore.name,
-        storeSlug: product.vendorStore.slug,
+        image: product.product_images[0]?.medium || product.product_images[0]?.url || null,
+        storeName: product.vendor_stores.name,
+        storeSlug: product.vendor_stores.slug,
         quantity: product.quantity,
       }))
     }
 
     // Search stores
     if (type === "all" || type === "stores") {
-      const stores = await prisma.vendorStore.findMany({
+      const stores = await prisma.vendor_stores.findMany({
         where: {
           isActive: true,
           OR: [

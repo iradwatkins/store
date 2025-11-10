@@ -157,6 +157,105 @@ a {
   text-decoration: none;
 }
 
+/* ============================================
+   ACCESSIBILITY ENHANCEMENTS (WCAG 2.1 AA)
+   ============================================ */
+
+/* Focus Indicators - Visible focus state for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove focus outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip Navigation Link - Screen reader and keyboard accessibility */
+.skip-nav {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  z-index: 1000;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  font-weight: 600;
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-nav:focus {
+  top: 0;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Screen Reader Only - Visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Show sr-only content when focused (for skip links) */
+.sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Focus within - Highlight containers when child has focus */
+.focus-within-highlight:focus-within {
+  box-shadow: 0 0 0 2px var(--ring);
+  border-radius: 4px;
+}
+
+/* Reduced Motion - Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  * {
+    outline-width: 3px;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+}
+
+/* ============================================
+   END ACCESSIBILITY ENHANCEMENTS
+   ============================================ */
+
 /* Prevent layout shift for loading states */
 .min-h-nav {
   min-height: 64px; /* Matches nav height */
@@ -264,4 +363,34 @@ textarea {
     --background: #000000;
     --foreground: #e7e9ea;
   }
+}
+/* Cart item slide-in animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+/* Pulse animation for cart badge */
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 0.3s ease-in-out;
 }

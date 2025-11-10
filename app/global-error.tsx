@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { logger } from '@/lib/logger'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface GlobalErrorProps {
   error: Error & { digest?: string }
@@ -53,7 +53,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 Application Error
               </h1>
               <p className="text-lg text-slate-600 dark:text-slate-400">
-                We're sorry, but something went wrong with the application.
+                We&apos;re sorry, but something went wrong with the application.
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-500">
                 Our team has been notified and is working to fix the issue.

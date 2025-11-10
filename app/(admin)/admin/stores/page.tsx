@@ -21,8 +21,8 @@ type Store = {
     role: string
   }
   _count: {
-    Product: number
-    StoreOrder: number
+    products: number
+    store_orders: number
   }
 }
 
@@ -57,7 +57,7 @@ export default function AdminStoresPage() {
   }
 
   const handleDeleteStore = async (store: Store) => {
-    const confirmMessage = `Are you absolutely sure you want to delete the store "${store.name}"?\n\nThis will permanently delete:\n- ${store._count.Product} products\n- ${store._count.StoreOrder} orders\n- All product images, variants, and reviews\n- All order data\n\nThis action CANNOT be undone!`
+    const confirmMessage = `Are you absolutely sure you want to delete the store "${store.name}"?\n\nThis will permanently delete:\n- ${store._count.products} products\n- ${store._count.store_orders} orders\n- All product images, variants, and reviews\n- All order data\n\nThis action CANNOT be undone!`
 
     if (!confirm(confirmMessage)) {
       return
@@ -161,7 +161,7 @@ export default function AdminStoresPage() {
                         Email: {store.email} {store.phone && `• Phone: ${store.phone}`}
                       </p>
                       <p className="text-sm text-gray-500 mb-1">
-                        {store._count.Product} products • {store._count.StoreOrder} orders
+                        {store._count.products} products • {store._count.store_orders} orders
                       </p>
                       {store.tagline && (
                         <p className="text-sm text-gray-600 italic mt-2">{store.tagline}</p>

@@ -63,7 +63,7 @@ export async function requestCertificate(
     })
 
     logger.info("Certbot stdout:", { data: stdout })
-    if (stderr) logger.info("Certbot stderr:", { data: stderr })
+    if (stderr) {logger.info("Certbot stderr:", { data: stderr })}
 
     // Check if certificate was successfully created
     const certPath = `/etc/letsencrypt/live/${domain}/fullchain.pem`
@@ -202,7 +202,7 @@ export async function renewCertificate(domain: string): Promise<CertbotResult> {
     })
 
     logger.info("Certbot renew stdout:", { data: stdout })
-    if (stderr) logger.info("Certbot renew stderr:", { data: stderr })
+    if (stderr) {logger.info("Certbot renew stderr:", { data: stderr })}
 
     // Check if renewal was successful
     if (stdout.includes("Certificate not yet due for renewal")) {
@@ -270,7 +270,7 @@ export async function revokeCertificate(
     })
 
     logger.info("Certbot delete stdout:", { data: stdout })
-    if (stderr) logger.info("Certbot delete stderr:", { data: stderr })
+    if (stderr) {logger.info("Certbot delete stderr:", { data: stderr })}
 
     return {
       success: true,

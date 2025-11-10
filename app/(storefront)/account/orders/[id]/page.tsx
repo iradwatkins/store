@@ -46,7 +46,7 @@ type Order = {
   cancelledAt: string | null
   cancelReason: string | null
   items: OrderItem[]
-  vendorStore: {
+  vendor_stores: {
     name: string
     slug: string
     email: string | null
@@ -60,17 +60,6 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push(`/login?callbackUrl=/account/orders/${params.id}`)
-      return
-    }
-
-    if (status === "authenticated") {
-      fetchOrder()
-    }
-  }, [status, params.id, router, fetchOrder])
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -91,6 +80,17 @@ export default function OrderTrackingPage() {
     }
   }, [params.id])
 
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/login?callbackUrl=/account/orders/${params.id}`)
+      return
+    }
+
+    if (status === "authenticated") {
+      fetchOrder()
+    }
+  }, [status, params.id, router, fetchOrder])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PAID":
@@ -107,7 +107,7 @@ export default function OrderTrackingPage() {
   }
 
   const getTimelineSteps = () => {
-    if (!order) return []
+    if (!order) {return []}
 
     const steps = [
       {
@@ -366,13 +366,13 @@ export default function OrderTrackingPage() {
             {/* Vendor Info */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Seller</h2>
-              <p className="text-base font-medium text-gray-900">{order.vendorStore.name}</p>
-              <Link href={`/store/${order.vendorStore.slug}`} className="text-sm text-blue-500 hover:text-blue-600 mt-2 inline-block">
+              <p className="text-base font-medium text-gray-900">{order.vendor_stores.name}</p>
+              <Link href={`/store/${order.vendor_stores.slug}`} className="text-sm text-blue-500 hover:text-blue-600 mt-2 inline-block">
                 Visit Store
               </Link>
-              {order.vendorStore.email && (
+              {order.vendor_stores.email && (
                 <p className="text-sm text-gray-600 mt-2">
-                  <a href={`mailto:${order.vendorStore.email}`} className="text-blue-500 hover:text-blue-600">
+                  <a href={`mailto:${order.vendor_stores.email}`} className="text-blue-500 hover:text-blue-600">
                     Contact Seller
                   </a>
                 </p>

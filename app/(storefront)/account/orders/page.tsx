@@ -29,7 +29,7 @@ type Order = {
   fulfillmentStatus: string
   trackingNumber: string | null
   carrier: string | null
-  vendorStore: {
+  vendor_stores: {
     name: string
     slug: string
   }
@@ -102,24 +102,24 @@ export default function CustomerOrdersPage() {
 
   const canReviewItem = (order: Order, item: typeof order.items[0]) => {
     // Already reviewed
-    if (item.review) return false
+    if (item.review) {return false}
 
     // Must be paid
-    if (order.paymentStatus !== "PAID") return false
+    if (order.paymentStatus !== "PAID") {return false}
 
     // Must be shipped
-    if (!order.shippedAt) return false
+    if (!order.shippedAt) {return false}
 
     // Must be at least 3 days since shipment
     const shippedDate = new Date(order.shippedAt)
     const threeDaysAgo = new Date()
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
-    if (shippedDate > threeDaysAgo) return false
+    if (shippedDate > threeDaysAgo) {return false}
 
     // Must not be more than 100 days old
     const hundredDaysAgo = new Date()
     hundredDaysAgo.setDate(hundredDaysAgo.getDate() - 100)
-    if (shippedDate < hundredDaysAgo) return false
+    if (shippedDate < hundredDaysAgo) {return false}
 
     return true
   }
@@ -249,10 +249,10 @@ export default function CustomerOrdersPage() {
                       <p className="text-sm text-gray-600 mb-2">
                         Sold by{" "}
                         <Link
-                          href={`/store/${order.vendorStore.slug}`}
+                          href={`/store/${order.vendor_stores.slug}`}
                           className="font-medium text-blue-500 hover:text-blue-900"
                         >
-                          {order.vendorStore.name}
+                          {order.vendor_stores.name}
                         </Link>
                       </p>
 
@@ -316,7 +316,7 @@ export default function CustomerOrdersPage() {
                                   </div>
                                 ) : canReviewItem(order, item) ? (
                                   <Link
-                                    href={`/products/${item.productId}/review?orderItemId=${item.id}&storeSlug=${order.vendorStore.slug}`}
+                                    href={`/products/${item.productId}/review?orderItemId=${item.id}&storeSlug=${order.vendor_stores.slug}`}
                                     className="inline-flex items-center px-3 py-1 border border-blue-600 text-xs font-medium rounded text-blue-500 hover:bg-blue-50"
                                   >
                                     Write Review

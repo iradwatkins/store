@@ -1,6 +1,6 @@
+import { randomUUID } from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { randomUUID } from "crypto"
 import { z } from "zod"
 import redis from "@/lib/redis"
 import prisma from "@/lib/db"
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Invalid input",
-          details: validationResult.error.errors,
+          details: validationResult.error.issues,
         },
         { status: 400 }
       )
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     const total = subtotal + shippingCost + taxAmount
 
     // Get vendor store info
-    const vendorStore = await prisma.vendorStore.findUnique({
+    const vendorStore = await prisma.vendor_stores.findUnique({
       where: { slug: cart.storeSlug },
       select: {
         id: true,
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
     const payment = await squareClient.payments.create(paymentPayload)
 
     // Create order in database immediately (since Square doesn't use webhooks the same way)
-    const order = await prisma.storeOrder.create({
+    const order = await prisma.store_orders.create({
       data: {
         orderNumber,
         vendorStoreId: vendorStore.id,

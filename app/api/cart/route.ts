@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 import { redisHelpers } from "@/lib/redis"
 import { logger } from "@/lib/logger"
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const cartId = cookieStore.get("cart_id")?.value
@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       cart,
       total,
       itemCount,
+      cartSessionId: cartId,
     })
   } catch (error) {
     logger.error("Get cart error:", error)
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const cartId = cookieStore.get("cart_id")?.value

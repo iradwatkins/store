@@ -3,9 +3,10 @@ import Stripe from "stripe"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { logger } from "@/lib/logger"
+import { reserveStock } from "@/lib/stock-management"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-09-30.clover",
 })
 
 export async function GET(request: Request) {
@@ -33,11 +34,11 @@ export async function GET(request: Request) {
     const metadata = paymentIntent.metadata
 
     // Check if order already exists
-    let order = await prisma.storeOrder.findUnique({
+    let order = await prisma.store_orders.findUnique({
       where: { paymentIntentId },
       include: {
         items: true,
-        vendorStore: {
+        vendor_stores: {
           select: {
             name: true,
             slug: true,
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
       const cart = JSON.parse(cartData as string)
 
       // Create order
-      order = await prisma.storeOrder.create({
+      order = await prisma.store_orders.create({
         data: {
           orderNumber: metadata.orderNumber,
           vendorStoreId: metadata.vendorStoreId,
@@ -113,7 +114,7 @@ export async function GET(request: Request) {
         },
         include: {
           items: true,
-          vendorStore: {
+          vendor_stores: {
             select: {
               name: true,
               slug: true,
@@ -127,7 +128,7 @@ export async function GET(request: Request) {
       await redis.del(`cart:${cartSessionId}`)
 
       // Update vendor store stats
-      await prisma.vendorStore.update({
+      await prisma.vendor_stores.update({
         where: { id: metadata.vendorStoreId },
         data: {
           totalOrders: { increment: 1 },
@@ -135,13 +136,26 @@ export async function GET(request: Request) {
         },
       })
 
-      // Update product sales counts
+      // Reserve stock and update product sales counts
       for (const item of cart.items) {
-        await prisma.product.update({
+        // Reserve stock (moves from available to onHold)
+        const stockReserved = await reserveStock(
+          item.productId,
+          item.quantity,
+          item.variantId || undefined,
+          item.variantCombinationId || undefined
+        )
+
+        if (!stockReserved) {
+          logger.error(`Failed to reserve stock for product ${item.productId}`)
+          // Continue anyway - order is already paid
+        }
+
+        // Update sales count
+        await prisma.products.update({
           where: { id: item.productId },
           data: {
             salesCount: { increment: item.quantity },
-            quantity: { decrement: item.quantity },
           },
         })
       }
@@ -165,7 +179,7 @@ export async function GET(request: Request) {
       shippingCost: Number(order.shippingCost),
       taxAmount: Number(order.taxAmount),
       total: Number(order.total),
-      vendorStore: order.vendorStore,
+      vendor_stores: order.vendor_stores,
     }
 
     return NextResponse.json({ order: orderData })

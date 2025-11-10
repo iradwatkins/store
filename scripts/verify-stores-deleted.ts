@@ -4,8 +4,8 @@ const prisma = new PrismaClient()
 
 async function verifyDeletion() {
   try {
-    const storeCount = await prisma.vendorStore.count()
-    const productCount = await prisma.product.count()
+    const storeCount = await prisma.vendor_stores.count()
+    const productCount = await prisma.products.count()
     const storeOwnerCount = await prisma.user.count({
       where: { role: 'STORE_OWNER' }
     })

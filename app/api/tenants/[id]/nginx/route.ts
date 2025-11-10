@@ -26,7 +26,7 @@ export async function POST(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -132,7 +132,7 @@ export async function POST(
 
     // 9. Update tenant domain status to ACTIVE if SSL is present
     if (hasSSL && tenant.customDomainStatus !== "ACTIVE") {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: params.id },
         data: {
           customDomainStatus: "ACTIVE",
@@ -174,7 +174,7 @@ export async function PUT(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -258,7 +258,7 @@ export async function PUT(
     }
 
     // 7. Update tenant status to ACTIVE
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: params.id },
       data: {
         customDomainStatus: "ACTIVE",
@@ -297,7 +297,7 @@ export async function DELETE(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -387,7 +387,7 @@ export async function GET(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,

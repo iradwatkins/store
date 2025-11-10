@@ -8,31 +8,31 @@ async function deleteAllStores() {
 
     // Delete all related data in order
     console.log('Deleting product reviews...')
-    const reviewsDeleted = await prisma.productReview.deleteMany({})
+    const reviewsDeleted = await prisma.product_reviews.deleteMany({})
     console.log(`✅ Deleted ${reviewsDeleted.count} product reviews`)
 
     console.log('Deleting order items...')
-    const orderItemsDeleted = await prisma.storeOrderItem.deleteMany({})
+    const orderItemsDeleted = await prisma.store_order_items.deleteMany({})
     console.log(`✅ Deleted ${orderItemsDeleted.count} order items`)
 
     console.log('Deleting orders...')
-    const ordersDeleted = await prisma.storeOrder.deleteMany({})
+    const ordersDeleted = await prisma.store_orders.deleteMany({})
     console.log(`✅ Deleted ${ordersDeleted.count} orders`)
 
     console.log('Deleting product variants...')
-    const variantsDeleted = await prisma.productVariant.deleteMany({})
+    const variantsDeleted = await prisma.product_variants.deleteMany({})
     console.log(`✅ Deleted ${variantsDeleted.count} product variants`)
 
     console.log('Deleting product images...')
-    const imagesDeleted = await prisma.productImage.deleteMany({})
+    const imagesDeleted = await prisma.product_images.deleteMany({})
     console.log(`✅ Deleted ${imagesDeleted.count} product images`)
 
     console.log('Deleting products...')
-    const productsDeleted = await prisma.product.deleteMany({})
+    const productsDeleted = await prisma.products.deleteMany({})
     console.log(`✅ Deleted ${productsDeleted.count} products`)
 
     console.log('Deleting stores...')
-    const storesDeleted = await prisma.vendorStore.deleteMany({})
+    const storesDeleted = await prisma.vendor_stores.deleteMany({})
     console.log(`✅ Deleted ${storesDeleted.count} stores`)
 
     console.log('Downgrading store owners to regular users...')

@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { signIn } from "next-auth/react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -21,7 +21,6 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>
 
 function RegisterForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)

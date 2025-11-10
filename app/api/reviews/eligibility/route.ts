@@ -22,13 +22,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch order item with all necessary relations
-    const orderItem = await prisma.storeOrderItem.findUnique({
+    const orderItem = await prisma.store_ordersItem.findUnique({
       where: { id: orderItemId },
       include: {
         order: true,
         product: {
           include: {
-            vendorStore: true,
+            vendor_stores: true,
           },
         },
         review: true,
@@ -135,10 +135,10 @@ export async function GET(request: NextRequest) {
         name: orderItem.product.name,
         slug: orderItem.product.slug,
       },
-      vendorStore: {
-        id: orderItem.product.vendorStore.id,
-        name: orderItem.product.vendorStore.name,
-        slug: orderItem.product.vendorStore.slug,
+      vendor_stores: {
+        id: orderItem.product.vendor_stores.id,
+        name: orderItem.product.vendor_stores.name,
+        slug: orderItem.product.vendor_stores.slug,
       },
     })
   } catch (error) {

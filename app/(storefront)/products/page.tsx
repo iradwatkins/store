@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { logger } from "@/lib/logger"
+import ProductQuickView from "@/components/ProductQuickView"
 
 type Product = {
   id: string
@@ -52,17 +53,14 @@ function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
+  const [quickViewProductId, setQuickViewProductId] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchProducts()
-  }, [category, priceRange, sortBy])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
-      if (category) params.set("category", category)
-      if (priceRange) params.set("priceRange", priceRange)
+      if (category) {params.set("category", category)}
+      if (priceRange) {params.set("priceRange", priceRange)}
       params.set("sort", sortBy)
 
       const response = await fetch(`/api/products/filter?${params}`)
@@ -73,7 +71,11 @@ function ProductsContent() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [category, priceRange, sortBy])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -230,42 +232,64 @@ function ProductsContent() {
             </svg>
             <h3 className="mt-4 text-lg font-medium text-foreground">No products found</h3>
             <p className="mt-2 text-muted-foreground">
-              Try adjusting your filters to find what you're looking for.
+              Try adjusting your filters to find what you&apos;re looking for.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/store/${product.storeSlug}/products/${product.slug}`}
-                className="group"
-              >
-                <div className="aspect-square bg-muted relative overflow-hidden rounded-lg mb-2">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                      No Image
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-medium text-sm text-card-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-xs text-muted-foreground mb-1">{product.storeName}</p>
-                <p className="text-sm font-semibold text-foreground">
-                  ${product.price.toFixed(2)}
-                </p>
-              </Link>
+              <div key={product.id} className="group relative">
+                <Link
+                  href={`/store/${product.storeSlug}/products/${product.slug}`}
+                  className="block"
+                >
+                  <div className="aspect-square bg-muted relative overflow-hidden rounded-lg mb-2">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                        No Image
+                      </div>
+                    )}
+                    {/* Quick View Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setQuickViewProductId(product.id)
+                      }}
+                      className="absolute inset-x-0 bottom-0 bg-white/95 text-gray-900 py-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-600 hover:text-white"
+                      aria-label={`Quick view ${product.name}`}
+                    >
+                      Quick View
+                    </button>
+                  </div>
+                  <h3 className="font-medium text-sm text-card-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-1">{product.storeName}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    ${product.price.toFixed(2)}
+                  </p>
+                </Link>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Quick View Modal */}
+      {quickViewProductId && (
+        <ProductQuickView
+          isOpen={!!quickViewProductId}
+          onClose={() => setQuickViewProductId(null)}
+          productId={quickViewProductId}
+        />
+      )}
     </div>
   )
 }

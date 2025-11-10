@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 
 interface Review {
@@ -32,11 +32,7 @@ export default function VendorReviewsPage() {
   const [responseText, setResponseText] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetchReviews()
-  }, [filter])
-
-  async function fetchReviews() {
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true)
       const url = `/api/dashboard/reviews?filter=${filter}`
@@ -53,10 +49,14 @@ export default function VendorReviewsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
+
+  useEffect(() => {
+    fetchReviews()
+  }, [fetchReviews])
 
   async function handleRespond(reviewId: string) {
-    if (!responseText.trim()) return
+    if (!responseText.trim()) {return}
 
     setSubmitting(true)
     try {

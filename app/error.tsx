@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { logger } from '@/lib/logger'
 import { AlertTriangle, RefreshCw, Home, ArrowLeft, Bug } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface ErrorPageProps {
   error: Error & { digest?: string }
@@ -58,7 +58,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             We encountered an unexpected error while loading this page.
           </p>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Don't worry, this has been automatically reported to our team. 
+            Don&apos;t worry, this has been automatically reported to our team.
             You can try refreshing the page or go back to continue browsing.
           </p>
         </div>

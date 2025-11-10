@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import prisma from "@/lib/db"
 import Link from "next/link"
+import { auth } from "@/lib/auth"
+import prisma from "@/lib/db"
 
 export default async function AdminUsersPage() {
   const session = await auth()
@@ -15,11 +15,11 @@ export default async function AdminUsersPage() {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      VendorStore: {
+      vendor_stores: {
         select: { name: true, slug: true },
       },
       _count: {
-        select: { StoreOrder: true },
+        select: { store_orders: true },
       },
     },
   })
@@ -95,15 +95,15 @@ export default async function AdminUsersPage() {
                         Has profile image
                       </p>
                     )}
-                    {user.VendorStore.length > 0 && (
+                    {user.vendor_stores.length > 0 && (
                       <p className="text-sm text-gray-600 mb-1">
-                        Store: <Link href={`/${user.VendorStore[0].slug}`} className="text-blue-600 hover:underline">
-                          {user.VendorStore[0].name}
+                        Store: <Link href={`/${user.vendor_stores[0].slug}`} className="text-blue-600 hover:underline">
+                          {user.vendor_stores[0].name}
                         </Link>
                       </p>
                     )}
                     <p className="text-sm text-gray-500 mb-1">
-                      {user._count.StoreOrder} orders placed
+                      {user._count.store_orders} orders placed
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
                       ID: {user.id}

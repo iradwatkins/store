@@ -13,6 +13,7 @@ import QuotaWarningEmail from '@/emails/QuotaWarning';
 import OrderPaymentFailedEmail from '@/emails/OrderPaymentFailed';
 import OrderRefundConfirmationEmail from '@/emails/OrderRefundConfirmation';
 import LowStockAlertEmail from '@/emails/LowStockAlert';
+import AbandonedCartRecoveryEmail from '@/emails/AbandonedCartRecovery';
 import { logger } from "@/lib/logger"
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -635,6 +636,46 @@ export async function sendLowStockAlert(data: LowStockAlertData) {
   }
 }
 
+export interface AbandonedCartRecoveryData {
+  customerName: string;
+  customerEmail: string;
+  storeName: string;
+  cartItems: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    imageUrl?: string;
+  }>;
+  cartTotal: number;
+  recoveryUrl: string;
+  expiresIn: string;
+  discountCode?: string;
+  discountPercent?: number;
+  reminderStage?: number; // 1, 2, or 3
+}
+
+/**
+ * Send abandoned cart recovery email
+ */
+export async function sendAbandonedCartRecovery(data: AbandonedCartRecoveryData) {
+  try {
+    const emailHtml = render(AbandonedCartRecoveryEmail(data));
+
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: data.customerEmail,
+      subject: `Complete your purchase at ${data.storeName}`,
+      html: emailHtml,
+    });
+
+    logger.info(`Abandoned cart recovery email sent: ${result.data?.id}`);
+    return result;
+  } catch (error) {
+    logger.error("Failed to send abandoned cart recovery email:", error);
+    throw error;
+  }
+}
+
 /**
  * Email service object with all email sending functions
  */
@@ -652,4 +693,5 @@ export const emailService = {
   sendSubscriptionCancelled,
   sendQuotaWarning,
   sendLowStockAlert,
+  sendAbandonedCartRecovery,
 };

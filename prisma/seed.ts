@@ -65,7 +65,7 @@ async function main() {
   // Create vendor stores
   logger.info('Creating vendor stores')
 
-  const store1 = await prisma.vendorStore.create({
+  const store1 = await prisma.vendor_stores.create({
     data: {
       userId: vendor1.id,
       name: 'Steppers Paradise',
@@ -79,7 +79,7 @@ async function main() {
     },
   })
 
-  const store2 = await prisma.vendorStore.create({
+  const store2 = await prisma.vendor_stores.create({
     data: {
       userId: vendor2.id,
       name: 'Dance Elegance',
@@ -98,7 +98,7 @@ async function main() {
   // Create products for store 1
   logger.info('Creating products')
 
-  const product1 = await prisma.product.create({
+  const product1 = await prisma.products.create({
     data: {
       vendorStoreId: store1.id,
       name: 'Premium Stepping Shoes - Black',
@@ -115,7 +115,7 @@ async function main() {
     },
   })
 
-  const product2 = await prisma.product.create({
+  const product2 = await prisma.products.create({
     data: {
       vendorStoreId: store1.id,
       name: 'Classic Stepping Dress Shirt',
@@ -132,7 +132,7 @@ async function main() {
     },
   })
 
-  const product3 = await prisma.product.create({
+  const product3 = await prisma.products.create({
     data: {
       vendorStoreId: store1.id,
       name: 'Stepping Accessories Kit',
@@ -149,7 +149,7 @@ async function main() {
   })
 
   // Create products for store 2
-  const product4 = await prisma.product.create({
+  const product4 = await prisma.products.create({
     data: {
       vendorStoreId: store2.id,
       name: 'Elegant Evening Gown',
@@ -166,7 +166,7 @@ async function main() {
     },
   })
 
-  const product5 = await prisma.product.create({
+  const product5 = await prisma.products.create({
     data: {
       vendorStoreId: store2.id,
       name: "Women's Dance Heels - Red",
@@ -182,7 +182,7 @@ async function main() {
     },
   })
 
-  const product6 = await prisma.product.create({
+  const product6 = await prisma.products.create({
     data: {
       vendorStoreId: store2.id,
       name: 'Rhinestone Clutch Purse',
@@ -203,7 +203,7 @@ async function main() {
   // Create multi-variant test products
   logger.info('Creating multi-variant test products')
   
-  const multiVariantProduct1 = await prisma.product.create({
+  const multiVariantProduct1 = await prisma.products.create({
     data: {
       vendorStoreId: store1.id,
       name: 'Multi-Variant T-Shirt',
@@ -253,7 +253,7 @@ async function main() {
 
   // Create variant options
   for (const option of [...sizeOptions, ...colorOptions]) {
-    await prisma.variantOption.create({
+    await prisma.variant_options.create({
       data: {
         productId: multiVariantProduct1.id,
         type: option.type,
@@ -296,7 +296,7 @@ async function main() {
 
   // Create all variant combinations
   for (const combination of combinations) {
-    await prisma.variantCombination.create({
+    await prisma.variant_combinations.create({
       data: combination,
     })
   }
@@ -305,12 +305,12 @@ async function main() {
   logger.info('Multi-Variant T-Shirt created', { combinations: combinations.length })
 
   // Update store totals
-  await prisma.vendorStore.update({
+  await prisma.vendor_stores.update({
     where: { id: store1.id },
     data: { totalProducts: 4 }, // 3 regular + 1 multi-variant
   })
 
-  await prisma.vendorStore.update({
+  await prisma.vendor_stores.update({
     where: { id: store2.id },
     data: { totalProducts: 3 },
   })

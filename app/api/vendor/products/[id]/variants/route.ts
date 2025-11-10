@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { z } from "zod"
-import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import {
+  requireAuth,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 import { logger } from "@/lib/logger"
 
 const createVariantSchema = z.object({
@@ -18,41 +23,36 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const isAdmin = session.user.role === "ADMIN"
 
     // Verify product ownership
     let product
     if (isAdmin) {
-      product = await prisma.product.findUnique({
+      product = await prisma.products.findUnique({
         where: { id: params.id },
-        include: { variants: true },
+        include: { product_variants: true },
       })
     } else {
-      const store = await prisma.vendorStore.findFirst({
+      const store = await prisma.vendor_stores.findFirst({
         where: { userId: session.user.id },
       })
 
       if (!store) {
-        return NextResponse.json({ error: "Store not found" }, { status: 404 })
+        throw new BusinessLogicError("Store not found")
       }
 
-      product = await prisma.product.findFirst({
+      product = await prisma.products.findFirst({
         where: {
           id: params.id,
           vendorStoreId: store.id,
         },
-        include: { variants: true },
+        include: { product_variants: true },
       })
     }
 
     if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 })
+      throw new BusinessLogicError("Product not found")
     }
 
     const body = await request.json()
@@ -64,7 +64,7 @@ export async function POST(
       : -1
 
     // Create variant
-    const variant = await prisma.productVariant.create({
+    const variant = await prisma.product_variants.create({
       data: {
         productId: product.id,
         name: validatedData.name,
@@ -79,7 +79,7 @@ export async function POST(
 
     // Update product hasVariants flag if this is the first variant
     if (product.variants.length === 0) {
-      await prisma.product.update({
+      await prisma.products.update({
         where: { id: product.id },
         data: { hasVariants: true },
       })
@@ -87,26 +87,14 @@ export async function POST(
 
     logger.info(`${isAdmin ? 'Admin' : 'Vendor'} added variant to product: ${product.name}`)
 
-    return NextResponse.json(
+    return successResponse(
       {
         message: "Variant created successfully",
         variant,
       },
-      { status: 201 }
+      201
     )
   } catch (error) {
-    logger.error("Create variant error:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Create variant')
   }
 }

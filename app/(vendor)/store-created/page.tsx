@@ -136,7 +136,7 @@ function StoreCreatedContent() {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Payment setup skipped.</strong> You can add products now and complete payment setup later from your dashboard settings. Payment processing is only required when you're ready to start selling.
+                  <strong>Payment setup skipped.</strong> You can add products now and complete payment setup later from your dashboard settings. Payment processing is only required when you&apos;re ready to start selling.
                 </p>
               </div>
             </div>
@@ -170,9 +170,9 @@ function StoreCreatedContent() {
           </div>
         )}
 
-        {/* What's Next Section */}
+        {/* What&apos;s Next Section */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">What's Next?</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">What&apos;s Next?</h2>
 
           <div className="space-y-6">
             {/* Step 1: Add Products */}

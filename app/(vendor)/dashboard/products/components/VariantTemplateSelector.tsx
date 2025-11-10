@@ -120,7 +120,7 @@ export function VariantTemplateSelector({
   }
 
   const handleAddCustomOption = () => {
-    if (!customValue.trim()) return
+    if (!customValue.trim()) {return}
 
     const newOption: VariantOption = {
       value: customValue.trim(),
@@ -136,7 +136,7 @@ export function VariantTemplateSelector({
     onChange(selectedOptions.filter((opt) => opt.value !== value))
   }
 
-  const isOptionSelected = (value: string) => {
+  const _isOptionSelected = (value: string) => {
     return selectedOptions.some((opt) => opt.value === value)
   }
 

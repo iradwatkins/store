@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 type ProductPreviewModalProps = {
   productId: string | null
@@ -48,14 +48,8 @@ export default function ProductPreviewModal({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (productId) {
-      fetchProduct()
-    }
-  }, [productId])
-
-  const fetchProduct = async () => {
-    if (!productId) return
+  const fetchProduct = useCallback(async () => {
+    if (!productId) {return}
 
     setIsLoading(true)
     setError(null)
@@ -74,9 +68,15 @@ export default function ProductPreviewModal({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [productId])
 
-  if (!productId) return null
+  useEffect(() => {
+    if (productId) {
+      fetchProduct()
+    }
+  }, [productId, fetchProduct])
+
+  if (!productId) {return null}
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -147,16 +147,16 @@ export default function ProductPreviewModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Images */}
                   <div>
-                    {product.images.length > 0 ? (
+                    {product.product_images.length > 0 ? (
                       <div className="space-y-4">
                         <img
-                          src={product.images[0].url}
-                          alt={product.images[0].altText || product.name}
+                          src={product.product_images[0].url}
+                          alt={product.product_images[0].altText || product.name}
                           className="w-full rounded-lg object-cover"
                         />
-                        {product.images.length > 1 && (
+                        {product.product_images.length > 1 && (
                           <div className="grid grid-cols-4 gap-2">
-                            {product.images.slice(1, 5).map((image) => (
+                            {product.product_images.slice(1, 5).map((image) => (
                               <img
                                 key={image.id}
                                 src={image.url}

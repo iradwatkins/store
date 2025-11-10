@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 
@@ -59,13 +59,7 @@ export default function OrderDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [fulfilling, setFulfilling] = useState(false)
 
-  useEffect(() => {
-    if (orderId) {
-      fetchOrder()
-    }
-  }, [orderId])
-
-  async function fetchOrder() {
+  const fetchOrder = useCallback(async () => {
     try {
       const response = await fetch(`/api/dashboard/orders/${orderId}`)
 
@@ -80,10 +74,16 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [orderId])
+
+  useEffect(() => {
+    if (orderId) {
+      fetchOrder()
+    }
+  }, [orderId, fetchOrder])
 
   async function markAsFulfilled() {
-    if (!confirm("Mark this order as fulfilled and shipped?")) return
+    if (!confirm("Mark this order as fulfilled and shipped?")) {return}
 
     setFulfilling(true)
     try {

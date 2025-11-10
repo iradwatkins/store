@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import prisma from "@/lib/db"
 import { promisify } from "util"
 import dns from "dns"
+import { NextRequest, NextResponse } from "next/server"
+import prisma from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 // Promisify DNS lookup functions
@@ -44,7 +44,7 @@ async function checkDomainDns(
       }
     } catch (cnameError: any) {
       // CNAME check failed - will be reflected in cnameValid = false
-      if (!error) error = `CNAME: ${cnameError.code || cnameError.message}`
+      if (!error) {error = `CNAME: ${cnameError.code || cnameError.message}`}
     }
 
     // Check TXT record
@@ -62,7 +62,7 @@ async function checkDomainDns(
       }
     } catch (txtError: any) {
       // TXT check failed
-      if (!error) error = `TXT: ${txtError.code || txtError.message}`
+      if (!error) {error = `TXT: ${txtError.code || txtError.message}`}
     }
   } catch (err: any) {
     error = err.message
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     logger.info("🔍 Starting domain status check cron job...")
 
     // Find all tenants with custom domains that need checking
-    const tenantsToCheck = await prisma.tenant.findMany({
+    const tenantsToCheck = await prisma.tenants.findMany({
       where: {
         customDomain: { not: null },
         customDomainStatus: {
@@ -140,13 +140,13 @@ export async function GET(request: NextRequest) {
 
         // Determine new status based on DNS check
         let newStatus = tenant.customDomainStatus
-        let verified = tenant.customDomainVerified
+        const _verified = tenant.customDomainVerified
 
         if (dnsCheck.cnameValid && dnsCheck.txtValid) {
           // DNS is valid - mark as VERIFIED
           if (tenant.customDomainStatus !== "VERIFIED") {
             newStatus = "VERIFIED"
-            verified = true
+            const _verified = true
             result.updated = true
 
             logger.info(
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
             )
 
             // Update tenant in database
-            await prisma.tenant.update({
+            await prisma.tenants.update({
               where: { id: tenant.id },
               data: {
                 customDomainStatus: "VERIFIED",
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
               `❌ Domain verification failed: ${tenant.customDomain} (${tenant.slug})`
             )
 
-            await prisma.tenant.update({
+            await prisma.tenants.update({
               where: { id: tenant.id },
               data: {
                 customDomainStatus: "FAILED",

@@ -31,7 +31,7 @@ export default async function AuthRedirectPage({
   }
 
   // Vendors go to vendor dashboard
-  if (user.vendorStore) {
+  if (user.vendor_stores) {
     redirect("/dashboard")
   }
 

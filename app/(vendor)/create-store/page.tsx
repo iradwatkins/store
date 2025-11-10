@@ -424,12 +424,12 @@ export default function CreateStorePage() {
 
               <div className="bg-blue-50 p-4 rounded-md">
                 <p className="text-sm text-blue-800">
-                  <strong>You can set up payments now or later.</strong> Your store will be created immediately, and you can add products anytime. Payment setup is only required when you're ready to start selling.
+                  <strong>You can set up payments now or later.</strong> Your store will be created immediately, and you can add products anytime. Payment setup is only required when you&apos;re ready to start selling.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">If you set up now, you'll need:</h3>
+                <h3 className="text-lg font-semibold">If you set up now, you&apos;ll need:</h3>
                 <ul className="list-disc list-inside space-y-2 text-gray-700">
                   <li>Business information (Tax ID, EIN, or SSN)</li>
                   <li>Bank account details for payouts</li>

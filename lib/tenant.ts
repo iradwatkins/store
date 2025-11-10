@@ -15,7 +15,7 @@ export async function getCurrentTenant() {
   }
 
   try {
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: {
         slug: tenantSlug,
         isActive: true,
@@ -92,7 +92,7 @@ export async function isCurrentTenantOwner(userId: string): Promise<boolean> {
  */
 export async function getTenantBySlug(slug: string) {
   try {
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: {
         slug,
         isActive: true,

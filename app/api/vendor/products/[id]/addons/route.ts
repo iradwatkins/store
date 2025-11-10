@@ -5,20 +5,32 @@
  * POST /api/vendor/products/[id]/addons - Create new addon
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import prisma from '@/lib/db'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { logger } from "@/lib/logger"
+import prisma from '@/lib/db'
+import {
+  requireAuth,
+  handleApiError,
+  successResponse,
+  generateId,
+} from '@/lib/utils/api'
+import { BusinessLogicError } from '@/lib/errors'
 
 // Validation schema for creating addons
 const createAddonSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   price: z.number().min(0),
+  fieldType: z.enum(["TEXT", "TEXTAREA", "NUMBER", "SELECT", "CHECKBOX", "RADIO", "DATE", "FILE", "COLOR", "IMAGE_BUTTONS"]).default("TEXT"),
+  priceType: z.enum(["FIXED", "PERCENTAGE", "FORMULA"]).default("FIXED"),
   isRequired: z.boolean().default(false),
   allowMultiple: z.boolean().default(false),
   maxQuantity: z.number().int().min(1).optional(),
+  options: z.any().optional(),
+  conditionalLogic: z.any().optional(),
+  priceFormula: z.string().optional(),
+  minValue: z.number().optional(),
+  maxValue: z.number().optional(),
   requiredForVariants: z.array(z.string()).optional(),
   excludedForVariants: z.array(z.string()).optional(),
   imageUrl: z.string().optional(),
@@ -26,7 +38,7 @@ const createAddonSchema = z.object({
   sortOrder: z.number().int().min(0).default(0),
 })
 
-type CreateAddonInput = z.infer<typeof createAddonSchema>
+// type CreateAddonInput = z.infer<typeof createAddonSchema> // Unused type
 
 /**
  * GET - Fetch all addons for a product
@@ -36,20 +48,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const productId = params.id
 
     // Verify product ownership
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        vendorStore: true,
-        addons: {
+        vendor_stores: true,
+        product_addons: {
           where: { isActive: true },
           orderBy: { sortOrder: 'asc' },
         },
@@ -57,24 +64,19 @@ export async function GET(
     })
 
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+      throw new BusinessLogicError('Product not found')
     }
 
-    if (product.vendorStore.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (product.vendor_stores.userId !== session.user.id) {
+      throw new BusinessLogicError('Forbidden')
     }
 
-    return NextResponse.json({
-      success: true,
-      addons: product.addons,
-      total: product.addons.length,
+    return successResponse({
+      product_addons: product.product_addons,
+      total: product.product_addons.length,
     })
   } catch (error: any) {
-    logger.error("Error fetching addons:", error)
-    return NextResponse.json(
-      { error: 'Failed to fetch addons' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch product addons')
   }
 }
 
@@ -86,28 +88,23 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const productId = params.id
 
     // Verify product ownership
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
       include: {
-        vendorStore: true,
+        vendor_stores: true,
       },
     })
 
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+      throw new BusinessLogicError('Product not found')
     }
 
-    if (product.vendorStore.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (product.vendor_stores.userId !== session.user.id) {
+      throw new BusinessLogicError('Forbidden')
     }
 
     // Parse and validate request body
@@ -115,18 +112,26 @@ export async function POST(
     const validatedData = createAddonSchema.parse(body)
 
     // Create addon
-    const addon = await prisma.productAddon.create({
+    const addon = await prisma.product_addons.create({
       data: {
+        id: generateId('addon'),
         productId,
-        storeId: product.vendorStoreId,
+        storeId: product.vendor_storesId,
         name: validatedData.name,
         description: validatedData.description,
         price: validatedData.price,
+        fieldType: validatedData.fieldType,
+        priceType: validatedData.priceType,
         isRequired: validatedData.isRequired,
         allowMultiple: validatedData.allowMultiple,
         maxQuantity: validatedData.maxQuantity,
-        requiredForVariants: validatedData.requiredForVariants || [],
-        excludedForVariants: validatedData.excludedForVariants || [],
+        options: validatedData.options,
+        conditionalLogic: validatedData.conditionalLogic,
+        priceFormula: validatedData.priceFormula,
+        minValue: validatedData.minValue,
+        maxValue: validatedData.maxValue,
+        requiredForVariants: validatedData.requiredForVariants,
+        excludedForVariants: validatedData.excludedForVariants,
         imageUrl: validatedData.imageUrl,
         icon: validatedData.icon,
         sortOrder: validatedData.sortOrder,
@@ -134,27 +139,14 @@ export async function POST(
       },
     })
 
-    return NextResponse.json(
+    return successResponse(
       {
-        success: true,
         message: 'Addon created successfully',
         addon,
       },
-      { status: 201 }
+      201
     )
   } catch (error: any) {
-    logger.error("Error creating addon:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid request data', details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to create addon' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Create addon')
   }
 }

@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { NextRequest } from "next/server"
 import prisma from "@/lib/db"
-import { logger } from "@/lib/logger"
+import {
+  requireAdmin,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { NotFoundError } from "@/lib/errors"
 
 // DELETE /api/admin/stores/[storeId] - Delete a store and all related data
 export async function DELETE(
@@ -9,20 +13,12 @@ export async function DELETE(
   { params }: { params: { storeId: string } }
 ) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     const { storeId } = params
 
     // Verify store exists
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: { id: storeId },
       include: {
         User: {
@@ -33,18 +29,15 @@ export async function DELETE(
         },
         _count: {
           select: {
-            Product: true,
-            StoreOrder: true,
+            products: true,
+            store_orders: true,
           },
         },
       },
     })
 
     if (!store) {
-      return NextResponse.json(
-        { error: "Store not found" },
-        { status: 404 }
-      )
+      throw new NotFoundError('Store not found')
     }
 
     // CASCADE DELETION ORDER:
@@ -57,80 +50,69 @@ export async function DELETE(
     // 7. Shop ratings
     // 8. Store itself
 
-    logger.info(`Starting deletion of store: ${store.name} (${store.id})`)
-    logger.info(`Store has ${store._count.Product} products and ${store._count.StoreOrder} orders`)
-
     // Delete all reviews for products in this store
-    await prisma.productReview.deleteMany({
+    await prisma.product_reviews.deleteMany({
       where: { vendorStoreId: storeId },
     })
-    logger.info("Deleted product reviews")
 
     // Delete all order items for orders in this store
-    const orderIds = await prisma.storeOrder.findMany({
+    const orderIds = await prisma.store_orders.findMany({
       where: { vendorStoreId: storeId },
       select: { id: true },
     })
 
     if (orderIds.length > 0) {
-      await prisma.storeOrderItem.deleteMany({
+      await prisma.store_order_items.deleteMany({
         where: {
           storeOrderId: { in: orderIds.map((o) => o.id) },
         },
       })
-      logger.info("Deleted order items")
     }
 
     // Delete all orders
-    await prisma.storeOrder.deleteMany({
+    await prisma.store_orders.deleteMany({
       where: { vendorStoreId: storeId },
     })
-    logger.info("Deleted orders")
 
     // Get all products to delete their related data
-    const productIds = await prisma.product.findMany({
+    const productIds = await prisma.products.findMany({
       where: { vendorStoreId: storeId },
       select: { id: true },
     })
 
     if (productIds.length > 0) {
       // Delete product variants
-      await prisma.productVariant.deleteMany({
+      await prisma.product_variants.deleteMany({
         where: {
           productId: { in: productIds.map((p) => p.id) },
         },
       })
-      logger.info("Deleted product variants")
 
       // Delete product images
-      await prisma.productImage.deleteMany({
+      await prisma.product_images.deleteMany({
         where: {
           productId: { in: productIds.map((p) => p.id) },
         },
       })
-      logger.info("Deleted product images")
 
       // Delete products
-      await prisma.product.deleteMany({
+      await prisma.products.deleteMany({
         where: { vendorStoreId: storeId },
       })
-      logger.info("Deleted products")
     }
 
     // Delete shop rating
-    await prisma.shopRating.deleteMany({
+    await prisma.shop_ratings.deleteMany({
       where: { vendorStoreId: storeId },
     })
-    logger.info("Deleted shop rating")
 
     // Delete the store
-    await prisma.vendorStore.delete({
+    await prisma.vendor_stores.delete({
       where: { id: storeId },
     })
-    logger.info("Deleted store")
 
     // Check if user has any other stores
-    const userStoreCount = await prisma.vendorStore.count({
+    const userStoreCount = await prisma.vendor_stores.count({
       where: { userId: store.User.id },
     })
 
@@ -146,24 +128,19 @@ export async function DELETE(
           where: { id: store.User.id },
           data: { role: "USER" },
         })
-        logger.info(`Downgraded user ${store.User.email} from STORE_OWNER to USER`)
       }
     }
 
-    return NextResponse.json({
+    return successResponse({
       message: "Store and all related data deleted successfully",
       deletedStore: {
         id: store.id,
         name: store.name,
-        productsDeleted: store._count.Product,
-        ordersDeleted: store._count.StoreOrder,
+        productsDeleted: store._count.products,
+        ordersDeleted: store._count.store_orders,
       },
     })
   } catch (error) {
-    logger.error("Admin delete store error:", error)
-    return NextResponse.json(
-      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Delete store (admin)')
   }
 }

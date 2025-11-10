@@ -1,8 +1,8 @@
+import crypto from "crypto"
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
-import { z } from "zod"
-import crypto from "crypto"
 import { logger } from "@/lib/logger"
 
 // Validation schema for domain
@@ -118,7 +118,7 @@ export async function POST(
     }
 
     // 3. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -173,7 +173,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Invalid domain format",
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       )
@@ -193,7 +193,7 @@ export async function POST(
     }
 
     // 7. Check if domain is already claimed by another tenant
-    const existingDomain = await prisma.tenant.findFirst({
+    const existingDomain = await prisma.tenants.findFirst({
       where: {
         customDomain: customDomain,
         id: { not: params.id },
@@ -215,7 +215,7 @@ export async function POST(
     const verificationToken = generateVerificationToken()
 
     // 9. Update tenant with domain and token
-    const updatedTenant = await prisma.tenant.update({
+    const updatedTenant = await prisma.tenants.update({
       where: { id: params.id },
       data: {
         customDomain: customDomain,
@@ -279,7 +279,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Validation error",
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400 }
       )
@@ -305,7 +305,7 @@ export async function DELETE(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -339,7 +339,7 @@ export async function DELETE(
     const removedDomain = tenant.customDomain
 
     // 5. Remove domain and reset all related fields
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: params.id },
       data: {
         customDomain: null,
@@ -384,7 +384,7 @@ export async function GET(
     }
 
     // 2. Verify tenant exists and user has permission
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.tenants.findUnique({
       where: { id: params.id },
       select: {
         id: true,

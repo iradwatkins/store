@@ -71,7 +71,7 @@ export class ProductService {
    */
   async checkProductQuota(storeId: string): Promise<QuotaCheck> {
     try {
-      const store = await prisma.vendorStore.findUnique({
+      const store = await prisma.vendor_stores.findUnique({
         where: { id: storeId },
         include: { Tenant: true }
       })
@@ -110,7 +110,7 @@ export class ProductService {
     additionalSizeGB: number
   ): Promise<QuotaCheck> {
     try {
-      const store = await prisma.vendorStore.findUnique({
+      const store = await prisma.vendor_stores.findUnique({
         where: { id: storeId },
         include: { Tenant: true }
       })
@@ -145,7 +145,7 @@ export class ProductService {
    * Generate unique product slug
    */
   async generateProductSlug(storeId: string, name: string, excludeId?: string): Promise<string> {
-    let baseSlug = name
+    const baseSlug = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "")
@@ -221,7 +221,7 @@ export class ProductService {
         totalUploadedSizeGB += allSizesTotal / (1024 * 1024 * 1024)
 
         // Create ProductImage record
-        await prisma.productImage.create({
+        await prisma.product_images.create({
           data: {
             productId,
             url: imageUrls.large,
@@ -382,7 +382,7 @@ export class ProductService {
     } else if (productData.variants) {
       // Old variant system
       for (const variant of productData.variants) {
-        await prisma.productVariant.create({
+        await prisma.product_variants.create({
           data: {
             productId,
             name: variant.name,
@@ -400,13 +400,13 @@ export class ProductService {
    * Update storage usage for tenant
    */
   private async updateStorageUsage(storeId: string, additionalGB: number): Promise<void> {
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: { id: storeId },
       select: { tenantId: true }
     })
 
     if (store?.tenantId) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: {
           currentStorageGB: { increment: additionalGB }
@@ -419,13 +419,13 @@ export class ProductService {
    * Increment product count for tenant
    */
   private async incrementProductCount(storeId: string): Promise<void> {
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: { id: storeId },
       select: { tenantId: true }
     })
 
     if (store?.tenantId) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: { currentProducts: { increment: 1 } }
       })

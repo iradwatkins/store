@@ -44,28 +44,28 @@ export interface AdminContext extends AuthenticatedContext {
 }
 
 // API Handler Types
-export type ApiHandler<T = any> = (
+export type ApiHandler<_T = any> = (
   req: NextRequest,
   context: { params?: any }
 ) => Promise<NextResponse>
 
-export type AuthenticatedApiHandler<T = any> = (
+export type AuthenticatedApiHandler<_T = any> = (
   req: NextRequest,
   context: AuthenticatedContext & { params?: any }
 ) => Promise<NextResponse>
 
-export type VendorApiHandler<T = any> = (
+export type VendorApiHandler<_T = any> = (
   req: NextRequest,
   context: VendorContext & { params?: any }
 ) => Promise<NextResponse>
 
-export type AdminApiHandler<T = any> = (
+export type AdminApiHandler<_T = any> = (
   req: NextRequest,
   context: AdminContext & { params?: any }
 ) => Promise<NextResponse>
 
 // Base Authentication Middleware
-export function withAuth<T extends Record<string, any> = {}>(
+export function withAuth<T extends Record<string, any> = Record<string, never>>(
   handler: AuthenticatedApiHandler<T>
 ): ApiHandler<T> {
   return async (req: NextRequest, context: { params?: any } = {}) => {
@@ -110,13 +110,13 @@ export function withAuth<T extends Record<string, any> = {}>(
 }
 
 // Vendor Store Access Middleware
-export function withVendorStore<T extends Record<string, any> = {}>(
+export function withVendorStore<T extends Record<string, any> = Record<string, never>>(
   handler: VendorApiHandler<T>
 ): ApiHandler<T> {
   return withAuth(async (req: NextRequest, context: AuthenticatedContext & { params?: any }) => {
     try {
       // Get user's store
-      const store = await prisma.vendorStore.findFirst({
+      const store = await prisma.vendor_stores.findFirst({
         where: {
           userId: context.user.id,
         },
@@ -173,7 +173,7 @@ export function withVendorStore<T extends Record<string, any> = {}>(
 }
 
 // Admin Access Middleware
-export function withAdmin<T extends Record<string, any> = {}>(
+export function withAdmin<T extends Record<string, any> = Record<string, never>>(
   handler: AdminApiHandler<T>
 ): ApiHandler<T> {
   return withAuth(async (req: NextRequest, context: AuthenticatedContext & { params?: any }) => {
@@ -212,7 +212,7 @@ export function withAdmin<T extends Record<string, any> = {}>(
 }
 
 // Specific Product Access Middleware (for product-specific routes)
-export function withProductAccess<T extends Record<string, any> = {}>(
+export function withProductAccess<T extends Record<string, any> = Record<string, never>>(
   handler: (
     req: NextRequest,
     context: VendorContext & { product: any; params?: any }
@@ -227,7 +227,7 @@ export function withProductAccess<T extends Record<string, any> = {}>(
       }
 
       // Get product and verify ownership
-      const product = await prisma.product.findFirst({
+      const product = await prisma.products.findFirst({
         where: {
           id: productId,
           vendorStoreId: context.store.id
@@ -268,10 +268,10 @@ export function withProductAccess<T extends Record<string, any> = {}>(
 
 // Rate Limiting Middleware (can be combined with auth)
 export function withRateLimit(
-  requests: number = 100,
-  windowMs: number = 60000 // 1 minute
+  _requests: number = 100,
+  _windowMs: number = 60000 // 1 minute
 ) {
-  return function<T extends Record<string, any> = {}>(
+  return function<T extends Record<string, any> = Record<string, never>>(
     middleware: ApiHandler<T>
   ): ApiHandler<T> {
     return async (req: NextRequest, context: { params?: any } = {}) => {

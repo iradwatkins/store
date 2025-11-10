@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { logger } from "@/lib/logger"
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+} from "@/lib/utils/api"
 
 const CACHE_TTL = 300 // 5 minutes in seconds
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const session = await requireAuth()
 
     // Rate limiting: 10 requests per minute per user
     const rateLimitResult = await checkRateLimit(`analytics:${session.user.id}`, 10, 60)
@@ -21,19 +20,7 @@ export async function GET(request: Request) {
       return rateLimitResult.response!
     }
 
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Check Redis cache first
     const cacheKey = `analytics:${vendorStore.id}`
@@ -60,7 +47,7 @@ export async function GET(request: Request) {
       topProducts,
     ] = await Promise.all([
       // 30-day sales
-      prisma.storeOrder.aggregate({
+      prisma.store_orders.aggregate({
         where: {
           vendorStoreId: vendorStore.id,
           paymentStatus: "PAID",
@@ -70,7 +57,7 @@ export async function GET(request: Request) {
       }),
 
       // 90-day sales
-      prisma.storeOrder.aggregate({
+      prisma.store_orders.aggregate({
         where: {
           vendorStoreId: vendorStore.id,
           paymentStatus: "PAID",
@@ -80,7 +67,7 @@ export async function GET(request: Request) {
       }),
 
       // All-time sales
-      prisma.storeOrder.aggregate({
+      prisma.store_orders.aggregate({
         where: {
           vendorStoreId: vendorStore.id,
           paymentStatus: "PAID",
@@ -89,7 +76,7 @@ export async function GET(request: Request) {
       }),
 
       // 30-day orders count
-      prisma.storeOrder.count({
+      prisma.store_orders.count({
         where: {
           vendorStoreId: vendorStore.id,
           paymentStatus: "PAID",
@@ -98,7 +85,7 @@ export async function GET(request: Request) {
       }),
 
       // 90-day orders count
-      prisma.storeOrder.count({
+      prisma.store_orders.count({
         where: {
           vendorStoreId: vendorStore.id,
           paymentStatus: "PAID",
@@ -107,7 +94,7 @@ export async function GET(request: Request) {
       }),
 
       // All-time orders count
-      prisma.storeOrder.count({
+      prisma.store_orders.count({
         where: {
           vendorStoreId: vendorStore.id,
           paymentStatus: "PAID",
@@ -115,7 +102,7 @@ export async function GET(request: Request) {
       }),
 
       // Active products count
-      prisma.product.count({
+      prisma.products.count({
         where: {
           vendorStoreId: vendorStore.id,
           status: "ACTIVE",
@@ -123,7 +110,7 @@ export async function GET(request: Request) {
       }),
 
       // Low stock products count (quantity < 5)
-      prisma.product.count({
+      prisma.products.count({
         where: {
           vendorStoreId: vendorStore.id,
           status: "ACTIVE",
@@ -132,7 +119,7 @@ export async function GET(request: Request) {
       }),
 
       // Top 5 products by sales revenue
-      prisma.product.findMany({
+      prisma.products.findMany({
         where: {
           vendorStoreId: vendorStore.id,
           salesCount: { gt: 0 },
@@ -186,12 +173,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(analyticsData)
   } catch (error) {
-    logger.error("Error fetching analytics:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to fetch analytics",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch analytics')
   }
 }

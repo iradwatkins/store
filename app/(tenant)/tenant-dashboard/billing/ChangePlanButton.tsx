@@ -16,8 +16,8 @@ interface ChangePlanButtonProps {
 
 export default function ChangePlanButton({
   tenantId,
-  currentPlanId,
-  newPlanId,
+  currentPlanId: _currentPlanId,
+  newPlanId: _newPlanId,
   newPlanName,
   newPlanPrice,
   newPriceId,

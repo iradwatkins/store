@@ -21,7 +21,7 @@ export default function RatingSummary({
 }: RatingSummaryProps) {
   // Calculate percentage for each rating
   const getPercentage = (count: number) => {
-    if (totalReviews === 0) return 0
+    if (totalReviews === 0) {return 0}
     return Math.round((count / totalReviews) * 100)
   }
 

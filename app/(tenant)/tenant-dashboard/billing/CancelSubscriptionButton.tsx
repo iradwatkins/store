@@ -65,7 +65,7 @@ export default function CancelSubscriptionButton({
             </h3>
 
             <p className="text-gray-600 mb-4">
-              We're sorry to see you go. Please let us know why you're canceling:
+              We&apos;re sorry to see you go. Please let us know why you&apos;re canceling:
             </p>
 
             <textarea
@@ -89,7 +89,7 @@ export default function CancelSubscriptionButton({
               </label>
               {!cancelImmediately && (
                 <p className="text-xs text-gray-500 mt-2">
-                  By default, you'll have access until the end of your billing period.
+                  By default, you&apos;ll have access until the end of your billing period.
                 </p>
               )}
             </div>

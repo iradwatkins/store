@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const order = await prisma.storeOrder.findFirst({
+    const order = await prisma.store_orders.findFirst({
       where: {
         id: params.id,
         OR: [
@@ -23,12 +23,12 @@ export async function GET(
         ],
       },
       include: {
-        items: {
+        store_order_items: {
           include: {
-            product: {
+            products: {
               select: {
                 slug: true,
-                images: {
+                product_images: {
                   take: 1,
                   select: {
                     url: true,
@@ -39,7 +39,7 @@ export async function GET(
             },
           },
         },
-        vendorStore: {
+        vendor_stores: {
           select: {
             name: true,
             slug: true,
@@ -77,19 +77,19 @@ export async function GET(
       deliveredAt: order.deliveredAt?.toISOString() || null,
       cancelledAt: order.cancelledAt?.toISOString() || null,
       cancelReason: order.cancelReason,
-      items: order.items.map((item) => ({
+      items: order.store_order_items.map((item) => ({
         id: item.id,
         productId: item.productId,
         name: item.name,
         quantity: item.quantity,
         price: Number(item.price),
         imageUrl:
-          item.product?.images[0]?.medium ||
-          item.product?.images[0]?.url ||
+          item.products?.product_images[0]?.medium ||
+          item.products?.product_images[0]?.url ||
           null,
         variantName: item.variantId ? item.sku : null,
       })),
-      vendorStore: order.vendorStore,
+      vendor_stores: order.vendor_stores,
     }
 
     return NextResponse.json({ order: formattedOrder })

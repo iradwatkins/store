@@ -1,8 +1,8 @@
 "use client"
 
 import React from 'react'
-import { logger } from '@/lib/logger'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 export interface ErrorInfo {
   componentStack: string;
@@ -221,7 +221,7 @@ function DefaultErrorFallback({
                 Section temporarily unavailable
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                This section encountered an error and couldn't be displayed.
+                This section encountered an error and couldn&apos;t be displayed.
               </p>
             </div>
             

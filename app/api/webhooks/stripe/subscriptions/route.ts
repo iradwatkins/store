@@ -4,7 +4,7 @@ import prisma from "@/lib/db"
 import { logger } from "@/lib/logger"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-09-30.clover",
 })
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_SUBSCRIPTIONS!
@@ -105,7 +105,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   try {
     const quotas = PLAN_QUOTAS[plan as keyof typeof PLAN_QUOTAS]
 
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: tenantId },
       data: {
         stripeSubscriptionId: subscription.id,
@@ -130,7 +130,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: { stripeSubscriptionId: subscription.id },
     })
 
@@ -141,12 +141,12 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
     // Determine status
     let status: "ACTIVE" | "PAST_DUE" | "CANCELLED" | "PAUSED" = "ACTIVE"
-    if (subscription.status === "past_due") status = "PAST_DUE"
-    else if (subscription.status === "canceled") status = "CANCELLED"
-    else if (subscription.status === "paused") status = "PAUSED"
+    if (subscription.status === "past_due") {status = "PAST_DUE"}
+    else if (subscription.status === "canceled") {status = "CANCELLED"}
+    else if (subscription.status === "paused") {status = "PAUSED"}
 
     // Update tenant
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: tenant.id },
       data: {
         subscriptionStatus: status,
@@ -163,7 +163,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: { stripeSubscriptionId: subscription.id },
     })
 
@@ -173,7 +173,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     }
 
     // Update tenant to cancelled status
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: tenant.id },
       data: {
         subscriptionStatus: "CANCELLED",
@@ -192,7 +192,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 async function handleTrialWillEnd(subscription: Stripe.Subscription) {
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: { stripeSubscriptionId: subscription.id },
       include: {
         owner: {
@@ -229,10 +229,10 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  if (!invoice.subscription) return
+  if (!invoice.subscription) {return}
 
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: { stripeSubscriptionId: invoice.subscription as string },
     })
 
@@ -250,7 +250,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
     const plan = subscription.metadata.plan || tenant.subscriptionPlan
 
-    await prisma.subscriptionHistory.create({
+    await prisma.subscription_history.create({
       data: {
         tenantId: tenant.id,
         plan: plan as any,
@@ -265,7 +265,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
     // Update tenant status to ACTIVE if it was PAST_DUE
     if (tenant.subscriptionStatus === "PAST_DUE") {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: tenant.id },
         data: { subscriptionStatus: "ACTIVE" },
       })
@@ -281,10 +281,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  if (!invoice.subscription) return
+  if (!invoice.subscription) {return}
 
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: { stripeSubscriptionId: invoice.subscription as string },
       include: {
         owner: {
@@ -301,7 +301,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     }
 
     // Update tenant status to PAST_DUE
-    await prisma.tenant.update({
+    await prisma.tenants.update({
       where: { id: tenant.id },
       data: { subscriptionStatus: "PAST_DUE" },
     })
@@ -322,10 +322,10 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
-  if (!invoice.subscription) return
+  if (!invoice.subscription) {return}
 
   try {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await prisma.tenants.findFirst({
       where: { stripeSubscriptionId: invoice.subscription as string },
       include: {
         owner: {

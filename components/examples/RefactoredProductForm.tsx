@@ -12,6 +12,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Save, Plus, Upload } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,8 +20,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Save, Plus, Upload } from 'lucide-react'
-
 // Import our new patterns
 import { useFormValidation, validationSchemas } from '@/hooks/useFormValidation'
 import { useAsyncOperation } from '@/hooks/useAsyncOperation'
@@ -80,7 +79,7 @@ export function RefactoredProductForm({
   })
 
   // Async operations using our reusable hook
-  const { execute: createProduct, isLoading } = useAsyncOperation()
+  const { execute, isLoading } = useAsyncOperation()
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,7 +102,7 @@ export function RefactoredProductForm({
     })
 
     try {
-      const result = await execute(
+      await execute(
         async () => {
           const response = await fetch('/api/vendor/products', {
             method: 'POST',
@@ -128,6 +127,7 @@ export function RefactoredProductForm({
       )
     } catch (error) {
       // Error handling is managed by useAsyncOperation
+      // eslint-disable-next-line no-console
       console.error('Product creation failed:', error)
     }
   }

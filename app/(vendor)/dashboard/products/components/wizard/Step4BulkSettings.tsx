@@ -6,7 +6,6 @@
  * Set default pricing, inventory, and SKU generation for all variant combinations
  */
 
-import { useState } from 'react'
 import { DollarSign, Package, Hash, Zap } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -50,9 +49,9 @@ export function Step4BulkSettings({
   }
 
   const getEstimatedTime = () => {
-    if (totalCombinations <= 20) return '< 1 minute'
-    if (totalCombinations <= 50) return '1-2 minutes'
-    if (totalCombinations <= 100) return '2-3 minutes'
+    if (totalCombinations <= 20) {return '< 1 minute'}
+    if (totalCombinations <= 50) {return '1-2 minutes'}
+    if (totalCombinations <= 100) {return '2-3 minutes'}
     return '3-5 minutes'
   }
 

@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { PRODUCT_CATEGORIES, getSubcategories } from "@/lib/categories"
 import { ProductVariantWizard, type VariantWizardData } from "../components/wizard/ProductVariantWizard"
+import ImageUploadDropzone from "@/components/ImageUploadDropzone"
 
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
@@ -57,8 +58,7 @@ export default function NewProductPage() {
   const selectedCategory = watch("category")
   const trackInventory = watch("trackInventory")
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+  const handleImagesSelected = (files: File[]) => {
     if (files.length + selectedImages.length > 5) {
       setError("Maximum 5 images allowed")
       return
@@ -395,7 +395,7 @@ export default function NewProductPage() {
           ) : (
             <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
               <p className="text-sm text-gray-600">
-                No variants configured. Click "Configure Variants" to add size, color, and other options.
+                No variants configured. Click &quot;Configure Variants&quot; to add size, color, and other options.
               </p>
             </div>
           )}
@@ -421,23 +421,11 @@ export default function NewProductPage() {
           <h2 className="text-lg font-medium text-gray-900 mb-4">Product Images</h2>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Upload Images (Max 5)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageChange}
-                className="mt-1 block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-600
-                  hover:file:bg-blue-100"
-              />
-            </div>
+            <ImageUploadDropzone
+              onImagesSelected={handleImagesSelected}
+              maxImages={5}
+              currentImageCount={selectedImages.length}
+            />
 
             {imagePreviews.length > 0 && (
               <div className="grid grid-cols-5 gap-4">

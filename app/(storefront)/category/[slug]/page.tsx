@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
-import prisma from "@/lib/db"
 import { Suspense } from "react"
+import prisma from "@/lib/db"
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +15,7 @@ async function CategoryProducts({ category }: { category: string }) {
   // Convert slug to category enum (e.g., "art-and-collectibles" -> "ART_AND_COLLECTIBLES")
   const categoryEnum = category.toUpperCase().replace(/-/g, '_')
 
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: {
       status: 'ACTIVE',
       category: categoryEnum,
@@ -28,10 +28,10 @@ async function CategoryProducts({ category }: { category: string }) {
       createdAt: 'desc',
     },
     include: {
-      images: {
+      product_images: {
         take: 1,
       },
-      vendorStore: {
+      vendor_stores: {
         select: {
           name: true,
           slug: true,
@@ -56,13 +56,13 @@ async function CategoryProducts({ category }: { category: string }) {
       {products.map((product) => (
         <Link
           key={product.id}
-          href={`/store/${product.vendorStore.slug}/products/${product.slug}`}
+          href={`/store/${product.vendor_stores.slug}/products/${product.slug}`}
           className="group"
         >
           <div className="aspect-square bg-muted relative overflow-hidden rounded-lg mb-2">
-            {product.images[0] ? (
+            {product.product_images[0] ? (
               <Image
-                src={product.images[0].medium || product.images[0].url}
+                src={product.product_images[0].medium || product.product_images[0].url}
                 alt={product.name}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -77,7 +77,7 @@ async function CategoryProducts({ category }: { category: string }) {
           <h3 className="font-medium text-sm text-card-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          <p className="text-xs text-muted-foreground mb-1">{product.vendorStore.name}</p>
+          <p className="text-xs text-muted-foreground mb-1">{product.vendor_stores.name}</p>
           <p className="text-sm font-semibold text-foreground">${product.price.toFixed(2)}</p>
         </Link>
       ))}

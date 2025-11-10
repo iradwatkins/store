@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server"
 import { z } from "zod"
-import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
 import { logger } from "@/lib/logger"
 
 const shippingSettingsSchema = z.object({
@@ -10,31 +14,19 @@ const shippingSettingsSchema = z.object({
   localPickupEnabled: z.boolean(),
 })
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
-    const session = await auth()
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-        shippingRates: true,
-      },
+    // Get shipping rates
+    const store = await prisma.vendor_stores.findUnique({
+      where: { id: vendorStore.id },
+      select: { shipping_rates: true },
     })
 
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
-
     // Parse shipping rates from JSON field (default to empty object)
-    const shippingRates = (vendorStore.shippingRates as any) || {}
+    const shippingRates = (store?.shippingRates as any) || {}
 
     const settings = {
       flatRate: shippingRates.flatRate ?? null,
@@ -42,79 +34,39 @@ export async function GET(request: Request) {
       localPickupEnabled: shippingRates.localPickupEnabled ?? false,
     }
 
-    return NextResponse.json({ settings })
+    return successResponse({ settings })
   } catch (error) {
-    logger.error("Error fetching shipping settings:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to fetch shipping settings",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch shipping settings')
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Parse and validate request body
     const body = await request.json()
     const validatedData = shippingSettingsSchema.parse(body)
 
     // Update vendor store shipping rates
-    await prisma.vendorStore.update({
+    await prisma.vendor_stores.update({
       where: {
         id: vendorStore.id,
       },
       data: {
-        shippingRates: validatedData as any,
+        shipping_rates: validatedData as any,
       },
     })
 
     // Log for debugging
     logger.info(`Shipping settings updated for store ${vendorStore.id} by user ${session.user.id}`)
 
-    return NextResponse.json({
+    return successResponse({
       message: "Shipping settings updated successfully",
       settings: validatedData,
     })
   } catch (error) {
-    logger.error("Error updating shipping settings:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "Invalid shipping settings data",
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to update shipping settings",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update shipping settings')
   }
 }

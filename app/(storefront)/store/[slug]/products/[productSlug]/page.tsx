@@ -1,19 +1,20 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
+import Link from "next/link"
 import prisma from "@/lib/db"
-import AddToCartButton from "./AddToCartButton"
 import { getOrSetCache, cacheKeys, cacheTTL } from "@/lib/cache"
 import StarRating from "@/components/reviews/StarRating"
 import RatingSummary from "@/components/reviews/RatingSummary"
 import ReviewList from "@/components/reviews/ReviewList"
 import { auth } from "@/lib/auth"
 import OwnerToolbar from "@/app/(storefront)/components/OwnerToolbar"
+import AddToCartButton from "./AddToCartButton"
 
 async function getProduct(storeSlug: string, productSlug: string, isOwner: boolean = false) {
   // Skip cache if owner is viewing (to see draft products)
   if (isOwner) {
     // Owners can view their store even if not active (e.g., during setup)
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: {
         slug: storeSlug,
       },
@@ -27,26 +28,34 @@ async function getProduct(storeSlug: string, productSlug: string, isOwner: boole
       },
     })
 
-    if (!store) return null
+    if (!store) {return null}
 
-    const product = await prisma.product.findFirst({
+    const product = await prisma.products.findFirst({
       where: {
         slug: productSlug,
         vendorStoreId: store.id,
         // Owners can see all product statuses
       },
       include: {
-        images: {
+        product_images: {
           orderBy: {
             sortOrder: "asc",
           },
         },
-        variants: {
+        product_variants: {
           orderBy: {
             name: "asc",
           },
         },
-        vendorStore: {
+        product_addons: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
+        vendor_stores: {
           select: {
             id: true,
             name: true,
@@ -70,33 +79,41 @@ async function getProduct(storeSlug: string, productSlug: string, isOwner: boole
   return getOrSetCache(
     cacheKeys.product(`${storeSlug}:${productSlug}`),
     async () => {
-      const store = await prisma.vendorStore.findUnique({
+      const store = await prisma.vendor_stores.findUnique({
         where: {
           slug: storeSlug,
           isActive: true,
         },
       })
 
-      if (!store) return null
+      if (!store) {return null}
 
-      const product = await prisma.product.findFirst({
+      const product = await prisma.products.findFirst({
         where: {
           slug: productSlug,
           vendorStoreId: store.id,
           status: "ACTIVE",
         },
         include: {
-          images: {
+          product_images: {
             orderBy: {
               sortOrder: "asc",
             },
           },
-          variants: {
+          product_variants: {
             orderBy: {
               name: "asc",
             },
           },
-          vendorStore: {
+          product_addons: {
+            where: {
+              isActive: true,
+            },
+            orderBy: {
+              sortOrder: "asc",
+            },
+          },
+          vendor_stores: {
             select: {
               id: true,
               name: true,
@@ -119,7 +136,7 @@ async function getProduct(storeSlug: string, productSlug: string, isOwner: boole
 }
 
 async function getRelatedProducts(storeId: string, productId: string, category: string) {
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: {
       vendorStoreId: storeId,
       status: "ACTIVE",
@@ -129,7 +146,7 @@ async function getRelatedProducts(storeId: string, productId: string, category: 
       },
     },
     include: {
-      images: {
+      product_images: {
         orderBy: {
           sortOrder: "asc",
         },
@@ -150,7 +167,7 @@ async function getReviewsData(productId: string, page: number = 1) {
   const skip = (page - 1) * limit
 
   const [reviews, totalCount, ratingDistribution] = await Promise.all([
-    prisma.productReview.findMany({
+    prisma.product_reviews.findMany({
       where: {
         productId,
         status: "PUBLISHED",
@@ -173,13 +190,13 @@ async function getReviewsData(productId: string, page: number = 1) {
         createdAt: true,
       },
     }),
-    prisma.productReview.count({
+    prisma.product_reviews.count({
       where: {
         productId,
         status: "PUBLISHED",
       },
     }),
-    prisma.productReview.groupBy({
+    prisma.product_reviews.groupBy({
       by: ["rating"],
       where: {
         productId,
@@ -226,7 +243,7 @@ export default async function ProductDetailPage({
   const resolvedSearchParams = await searchParams
 
   if (session?.user?.id) {
-    const store = await prisma.vendorStore.findUnique({
+    const store = await prisma.vendor_stores.findUnique({
       where: { slug: resolvedParams.slug },
       select: { userId: true },
     })
@@ -242,11 +259,11 @@ export default async function ProductDetailPage({
   const currentPage = parseInt(resolvedSearchParams.page || "1")
 
   const [relatedProducts, reviewsData] = await Promise.all([
-    getRelatedProducts(product.vendorStoreId, product.id, product.category),
+    getRelatedProducts(product.vendor_storesId, product.id, product.category),
     getReviewsData(product.id, currentPage),
   ])
 
-  const hasVariants = product.variants.length > 0
+  // const _hasVariants = product.product_variants.length > 0 // Reserved for variant UI
 
   return (
     <div className="min-h-screen bg-white">
@@ -256,16 +273,16 @@ export default async function ProductDetailPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <nav className="flex mb-8 text-sm">
-          <a href="/" className="text-gray-500 hover:text-gray-700">
+          <Link href="/" className="text-gray-500 hover:text-gray-700">
             Home
-          </a>
+          </Link>
           <span className="mx-2 text-gray-400">/</span>
-          <a
+          <Link
             href={`/store/${resolvedParams.slug}`}
             className="text-gray-500 hover:text-gray-700"
           >
-            {product.vendorStore.name}
-          </a>
+            {product.vendor_stores.name}
+          </Link>
           <span className="mx-2 text-gray-400">/</span>
           <span className="text-gray-900">{product.name}</span>
         </nav>
@@ -273,21 +290,21 @@ export default async function ProductDetailPage({
         <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
           {/* Image Gallery */}
           <div className="space-y-4">
-            {product.images.length > 0 ? (
+            {product.product_images.length > 0 ? (
               <>
                 <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden relative">
                   <Image
-                    src={product.images[0].url}
-                    alt={product.images[0].altText || product.name}
+                    src={product.product_images[0].url}
+                    alt={product.product_images[0].altText || product.name}
                     fill
                     className="object-cover object-center"
                     priority
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
-                {product.images.length > 1 && (
+                {product.product_images.length > 1 && (
                   <div className="grid grid-cols-4 gap-4">
-                    {product.images.slice(1).map((image) => (
+                    {product.product_images.slice(1).map((image) => (
                       <div
                         key={image.id}
                         className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 relative"
@@ -393,16 +410,30 @@ export default async function ProductDetailPage({
                   name: product.name,
                   price: Number(product.price),
                   slug: product.slug,
-                  image: product.images[0]?.url,
+                  image: product.product_images[0]?.url,
                   trackInventory: product.trackInventory,
                   inventoryQuantity: product.quantity,
                 }}
-                variants={product.variants.map((v) => ({
+                variants={product.product_variants.map((v) => ({
                   id: v.id,
                   type: v.type,
                   name: v.name,
                   price: v.price ? Number(v.price) : null,
                   inventoryQuantity: v.quantity,
+                }))}
+                addons={product.product_addons.map((a: any) => ({
+                  id: a.id,
+                  name: a.name,
+                  description: a.description,
+                  price: Number(a.price),
+                  fieldType: a.fieldType,
+                  priceType: a.priceType,
+                  isRequired: a.isRequired,
+                  allowMultiple: a.allowMultiple,
+                  maxQuantity: a.maxQuantity,
+                  options: a.options,
+                  minValue: a.minValue ? Number(a.minValue) : null,
+                  maxValue: a.maxValue ? Number(a.maxValue) : null,
                 }))}
                 storeSlug={resolvedParams.slug}
               />
@@ -439,10 +470,10 @@ export default async function ProductDetailPage({
                   href={`/store/${resolvedParams.slug}`}
                   className="text-blue-500 hover:text-blue-400 font-medium"
                 >
-                  {product.vendorStore.name}
+                  {product.vendor_stores.name}
                 </a>
                 <p className="text-sm text-gray-500 mt-1">
-                  by {product.vendorStore.User.name}
+                  by {product.vendor_stores.User.name}
                 </p>
               </div>
             </div>
@@ -474,7 +505,7 @@ export default async function ProductDetailPage({
             <div className="lg:col-span-2 mt-12 lg:mt-0">
               <ReviewList
                 productId={product.id}
-                storeName={product.vendorStore.name}
+                storeName={product.vendor_stores.name}
                 initialReviews={reviewsData.reviews}
                 totalReviews={reviewsData.totalCount}
                 currentPage={currentPage}
@@ -496,10 +527,10 @@ export default async function ProductDetailPage({
                   className="group bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200"
                 >
                   <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 relative">
-                    {relatedProduct.images[0] ? (
+                    {relatedProduct.product_images[0] ? (
                       <Image
-                        src={relatedProduct.images[0].url}
-                        alt={relatedProduct.images[0].altText || relatedProduct.name}
+                        src={relatedProduct.product_images[0].url}
+                        alt={relatedProduct.product_images[0].altText || relatedProduct.name}
                         fill
                         className="object-cover object-center group-hover:opacity-75"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

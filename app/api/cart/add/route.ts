@@ -1,11 +1,12 @@
+import { randomUUID } from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { cookies } from "next/headers"
 import { redisHelpers } from "@/lib/redis"
 import prisma from "@/lib/db"
-import { randomUUID } from "crypto"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { logger } from "@/lib/logger"
+import { checkStockAvailability } from "@/lib/stock-management"
 
 const addToCartSchema = z.object({
   productId: z.string(),
@@ -47,21 +48,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch product details
-    const product = await prisma.product.findFirst({
+    const product = await prisma.products.findFirst({
       where: {
         id: validatedData.productId,
         status: "ACTIVE",
       },
       include: {
-        images: {
+        product_images: {
           orderBy: {
             sortOrder: "asc",
           },
           take: 1,
         },
-        variants: true, // Old variant system
+        product_variants: true, // Old variant system
         variantCombinations: true, // New multi-variant system
-        vendorStore: true,
+        vendor_stores: true,
       },
     })
 
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     // Handle old single-variant system
     let variant = null
     if (validatedData.variantId) {
-      variant = product.variants.find((v) => v.id === validatedData.variantId)
+      variant = product.product_variants.find((v) => v.id === validatedData.variantId)
       if (!variant) {
         return NextResponse.json({ error: "Variant not found" }, { status: 404 })
       }
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     let addonsTotal = 0
     if (validatedData.addons && validatedData.addons.length > 0) {
       const addonIds = validatedData.addons.map((a) => a.addonId)
-      const addons = await prisma.productAddon.findMany({
+      const addons = await prisma.product_addons.findMany({
         where: {
           id: { in: addonIds },
           productId: validatedData.productId,
@@ -131,20 +132,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check inventory
-    const availableInventory =
-      variantCombination?.quantity ?? variant?.quantity ?? product.quantity
-    if (
-      product.trackInventory &&
-      availableInventory !== null &&
-      availableInventory < validatedData.quantity
-    ) {
-      return NextResponse.json(
-        {
-          error: `Only ${availableInventory} items available`,
-        },
-        { status: 400 }
+    // Check inventory using advanced stock management
+    if (product.trackInventory) {
+      const stockCheck = await checkStockAvailability(
+        product.id,
+        validatedData.quantity,
+        variant?.id || undefined,
+        variantCombination?.id || undefined
       )
+
+      if (!stockCheck.available) {
+        return NextResponse.json(
+          {
+            error: `Only ${stockCheck.quantity} items available`,
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // Get current cart
@@ -154,11 +158,11 @@ export async function POST(request: NextRequest) {
     if (cart.storeSlug && cart.storeSlug !== validatedData.storeSlug) {
       // Fetch store names for enriched error response
       const [currentStore, attemptedStore] = await Promise.all([
-        prisma.vendorStore.findUnique({
+        prisma.vendor_stores.findUnique({
           where: { slug: cart.storeSlug },
           select: { name: true },
         }),
-        prisma.vendorStore.findUnique({
+        prisma.vendor_stores.findUnique({
           where: { slug: validatedData.storeSlug },
           select: { name: true },
         }),
@@ -223,17 +227,22 @@ export async function POST(request: NextRequest) {
       const newQuantity = cart.items[existingItemIndex].quantity + validatedData.quantity
 
       // Check if new quantity exceeds inventory
-      if (
-        product.trackInventory &&
-        availableInventory !== null &&
-        newQuantity > availableInventory
-      ) {
-        return NextResponse.json(
-          {
-            error: `Only ${availableInventory} items available`,
-          },
-          { status: 400 }
+      if (product.trackInventory) {
+        const stockCheck = await checkStockAvailability(
+          product.id,
+          newQuantity,
+          variant?.id || undefined,
+          variantCombination?.id || undefined
         )
+
+        if (!stockCheck.available) {
+          return NextResponse.json(
+            {
+              error: `Only ${stockCheck.quantity} items available`,
+            },
+            { status: 400 }
+          )
+        }
       }
 
       cart.items[existingItemIndex].quantity = Math.min(newQuantity, 10)
@@ -258,7 +267,7 @@ export async function POST(request: NextRequest) {
         // Add-ons
         addons: selectedAddons,
         quantity: validatedData.quantity,
-        image: variantCombination?.imageUrl || product.images[0]?.url || null,
+        image: variantCombination?.imageUrl || product.product_images[0]?.url || null,
         storeSlug: validatedData.storeSlug,
       }
       cart.items.push(cartItem)
@@ -288,7 +297,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input data", details: error.errors },
+        { error: "Invalid input data", details: error.issues },
         { status: 400 }
       )
     }

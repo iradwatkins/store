@@ -1,23 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { NextRequest } from "next/server"
 import prisma from "@/lib/db"
-import { logger } from "@/lib/logger"
+import {
+  requireAdmin,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
 
 // GET /api/admin/stores - Fetch all stores with related data
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const session = await auth()
-
-    // Admin authentication check
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      )
-    }
+    await requireAdmin()
 
     // Fetch all stores with owner info and counts
-    const stores = await prisma.vendorStore.findMany({
+    const stores = await prisma.vendor_stores.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         User: {
@@ -30,22 +25,18 @@ export async function GET(request: NextRequest) {
         },
         _count: {
           select: {
-            Product: true,
-            StoreOrder: true,
+            products: true,
+            store_orders: true,
           },
         },
       },
     })
 
-    return NextResponse.json({
+    return successResponse({
       stores,
       total: stores.length,
     })
   } catch (error) {
-    logger.error("Admin get stores error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch stores (admin)')
   }
 }

@@ -7,7 +7,8 @@
  * Features: inline editing, bulk operations, inventory tracking
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
+import { MoreHorizontal, Edit2, Save, X, Package, DollarSign, Hash, Image, Upload, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
@@ -16,10 +17,8 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { MoreHorizontal, Edit2, Save, X, Package, DollarSign, Hash, Image, Upload, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { formatCurrency } from '@/lib/utils'
-import { useRef } from 'react'
 
 interface VariantCombination {
   id: string
@@ -99,7 +98,7 @@ export function VariantCombinationTable({
         })
       })
 
-      if (!response.ok) throw new Error('Failed to update')
+      if (!response.ok) {throw new Error('Failed to update')}
 
       cancelEditing(combinationId, field)
       onUpdate()
@@ -108,7 +107,7 @@ export function VariantCombinationTable({
         title: 'Updated',
         description: `${field} updated successfully`,
       })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: `Failed to update ${field}`,
@@ -121,7 +120,7 @@ export function VariantCombinationTable({
 
   // Handle bulk operations
   const handleBulkOperation = async () => {
-    if (!bulkAction || selectedCombinations.length === 0) return
+    if (!bulkAction || selectedCombinations.length === 0) {return}
 
     try {
       setIsLoading(true)
@@ -170,7 +169,7 @@ export function VariantCombinationTable({
         })
       })
 
-      if (!response.ok) throw new Error('Bulk update failed')
+      if (!response.ok) {throw new Error('Bulk update failed')}
 
       setSelectedCombinations([])
       setBulkAction('')
@@ -181,7 +180,7 @@ export function VariantCombinationTable({
         title: 'Bulk Update Complete',
         description: `Updated ${selectedCombinations.length} combinations`,
       })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Bulk update failed',
@@ -213,9 +212,9 @@ export function VariantCombinationTable({
         body: formData,
       })
 
-      if (!response.ok) throw new Error('Failed to upload image')
+      if (!response.ok) {throw new Error('Failed to upload image')}
 
-      const { imageUrl } = await response.json()
+      await response.json()
 
       toast({
         title: 'Image uploaded',
@@ -223,7 +222,7 @@ export function VariantCombinationTable({
       })
 
       onUpdate()
-    } catch (error) {
+    } catch {
       toast({
         title: 'Upload failed',
         description: 'Failed to upload variant image',
@@ -244,7 +243,7 @@ export function VariantCombinationTable({
         body: JSON.stringify({ imageUrl: null })
       })
 
-      if (!response.ok) throw new Error('Failed to delete image')
+      if (!response.ok) {throw new Error('Failed to delete image')}
 
       toast({
         title: 'Image removed',
@@ -252,7 +251,7 @@ export function VariantCombinationTable({
       })
 
       onUpdate()
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to delete variant image',
@@ -434,7 +433,7 @@ export function VariantCombinationTable({
                             accept="image/*"
                             onChange={(e) => {
                               const file = e.target.files?.[0]
-                              if (file) handleImageUpload(combination.id, file)
+                              if (file) {handleImageUpload(combination.id, file)}
                             }}
                             className="hidden"
                           />

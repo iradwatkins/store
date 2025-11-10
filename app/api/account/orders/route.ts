@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { logger } from "@/lib/logger"
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await auth()
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get orders where the customer ID or email matches the session user
-    const orders = await prisma.storeOrder.findMany({
+    const orders = await prisma.store_orders.findMany({
       where: {
         OR: [
           { customerId: session.user.id },
@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
         ],
       },
       include: {
-        items: {
+        store_order_items: {
           include: {
-            product: {
+            products: {
               select: {
                 id: true,
                 name: true,
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        vendorStore: {
+        vendor_stores: {
           select: {
             id: true,
             name: true,
@@ -50,15 +50,15 @@ export async function GET(request: NextRequest) {
       total: Number(order.total),
       status: order.status,
       createdAt: order.createdAt.toISOString(),
-      itemCount: order.items.length,
-      vendorStore: order.vendorStore,
-      items: order.items.map((item) => ({
+      itemCount: order.store_order_items.length,
+      vendor_stores: order.vendor_stores,
+      items: order.store_order_items.map((item) => ({
         id: item.id,
         productName: item.name,
         quantity: item.quantity,
         price: Number(item.price),
         imageUrl: item.imageUrl,
-        product: item.product,
+        product: item.products,
       })),
     }))
 

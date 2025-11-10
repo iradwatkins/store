@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import StarRating from "./StarRating"
 import Image from "next/image"
 import { logger } from "@/lib/logger"
+import StarRating from "./StarRating"
 
 interface Review {
   id: string
@@ -50,7 +50,7 @@ export default function ReviewCard({
   const isLongReview = review.review.length > 300
 
   const handleVote = async (type: "helpful" | "unhelpful") => {
-    if (isVoting) return
+    if (isVoting) {return}
     setIsVoting(true)
 
     try {

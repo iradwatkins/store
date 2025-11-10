@@ -1,6 +1,7 @@
+import { redirect } from "next/navigation"
+import Link from "next/link"
 import { getCurrentTenant } from "@/lib/tenant"
 import { auth } from "@/lib/auth"
-import { redirect } from "next/navigation"
 import { getPriceId } from "@/lib/stripe-prices"
 import prisma from "@/lib/db"
 import SubscribeButton from "./SubscribeButton"
@@ -53,7 +54,7 @@ export default async function BillingPage() {
   const isOnTrial = tenant.subscriptionStatus === "TRIAL"
 
   // Fetch subscription history
-  const subscriptionHistory = await prisma.subscriptionHistory.findMany({
+  const subscriptionHistory = await prisma.subscription_history.findMany({
     where: {
       tenantId: tenant.id,
     },
@@ -68,13 +69,13 @@ export default async function BillingPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <a
+          <Link
             href="/tenant-dashboard"
             className="text-sm font-medium hover:underline mb-4 inline-block"
             style={{ color: tenant.primaryColor }}
           >
             ← Back to Dashboard
-          </a>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900">Subscription & Billing</h1>
           <p className="text-gray-600 mt-1">Manage your plan and payment methods</p>
         </div>
@@ -118,7 +119,7 @@ export default async function BillingPage() {
             {PLANS.map((plan, index) => {
               const isCurrent = plan.id === tenant.subscriptionPlan && !isOnTrial
               const isUpgrade = index > currentPlanIndex
-              const isDowngrade = index < currentPlanIndex && !isOnTrial
+              const _isDowngrade = index < currentPlanIndex && !isOnTrial
 
               return (
                 <div
@@ -278,14 +279,14 @@ export default async function BillingPage() {
                           </span>
                         </div>
                         {record.stripeInvoiceId && record.status === "paid" && (
-                          <a
+                          <Link
                             href={`https://invoice.stripe.com/i/acct_${process.env.STRIPE_ACCOUNT_ID}/${record.stripeInvoiceId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
                           >
                             View Invoice
-                          </a>
+                          </Link>
                         )}
                       </div>
                     </div>

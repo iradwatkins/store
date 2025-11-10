@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { PRODUCT_CATEGORIES, getSubcategories } from "@/lib/categories"
+import ImageUploadDropzone from "@/components/ImageUploadDropzone"
 
 const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
@@ -66,6 +67,27 @@ export default function EditProductPage() {
   const [addingVariant, setAddingVariant] = useState(false)
   const [newVariant, setNewVariant] = useState({ name: '', value: '', price: '', sku: '', quantity: '0' })
 
+  // Product Addons State
+  const [addons, setAddons] = useState<any[]>([])
+  const [loadingAddons, setLoadingAddons] = useState(false)
+  const [addingAddon, setAddingAddon] = useState(false)
+  const [_editingAddon, _setEditingAddon] = useState<any>(null)
+  const [deletingAddonId, setDeletingAddonId] = useState<string | null>(null)
+  const [newAddon, setNewAddon] = useState({
+    name: '',
+    description: '',
+    price: '',
+    fieldType: 'TEXT',
+    priceType: 'FIXED',
+    isRequired: false,
+    allowMultiple: false,
+    maxQuantity: '',
+    options: '[]',
+    minValue: '',
+    maxValue: '',
+    sortOrder: '0'
+  })
+
   const {
     register,
     handleSubmit,
@@ -79,11 +101,7 @@ export default function EditProductPage() {
   const trackInventory = watch("trackInventory")
   const selectedCategory = watch("category")
 
-  useEffect(() => {
-    fetchProduct()
-  }, [productId])
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const response = await fetch(`/api/vendor/products/${productId}`)
 
@@ -110,7 +128,12 @@ export default function EditProductPage() {
     } finally {
       setIsFetching(false)
     }
-  }
+  }, [productId, setValue])
+
+  useEffect(() => {
+    fetchProduct()
+    fetchAddons()
+  }, [productId, fetchProduct, fetchAddons])
 
   const handleDeleteImage = async (imageId: string) => {
     if (!confirm("Are you sure you want to delete this image?")) {
@@ -138,11 +161,8 @@ export default function EditProductPage() {
     }
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files)
-      setNewImages(prev => [...prev, ...files])
-    }
+  const handleImagesSelected = (files: File[]) => {
+    setNewImages(prev => [...prev, ...files])
   }
 
   const handleRemoveNewImage = (index: number) => {
@@ -150,7 +170,7 @@ export default function EditProductPage() {
   }
 
   const handleUploadNewImages = async () => {
-    if (newImages.length === 0) return
+    if (newImages.length === 0) {return}
 
     setUploadingImages(true)
 
@@ -182,7 +202,7 @@ export default function EditProductPage() {
   }
 
   const handleUpdateVariant = async (variantId: string) => {
-    if (!editingVariant) return
+    if (!editingVariant) {return}
 
     try {
       const response = await fetch(`/api/vendor/products/${productId}/variants/${variantId}`, {
@@ -212,7 +232,7 @@ export default function EditProductPage() {
   }
 
   const handleDeleteVariant = async (variantId: string) => {
-    if (!confirm("Are you sure you want to delete this variant?")) return
+    if (!confirm("Are you sure you want to delete this variant?")) {return}
 
     setDeletingVariantId(variantId)
 
@@ -267,6 +287,114 @@ export default function EditProductPage() {
       alert(`Error: ${err instanceof Error ? err.message : "Failed to add variant"}`)
     } finally {
       setAddingVariant(false)
+    }
+  }
+
+  // Product Addons Functions
+  const fetchAddons = useCallback(async () => {
+    setLoadingAddons(true)
+    try {
+      const response = await fetch(`/api/vendor/products/${productId}/addons`)
+      if (response.ok) {
+        const data = await response.json()
+        setAddons(data.addons || [])
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to fetch addons:", err)
+    } finally {
+      setLoadingAddons(false)
+    }
+  }, [productId])
+
+  const handleAddAddon = async () => {
+    if (!newAddon.name || !newAddon.price) {
+      alert("Name and price are required")
+      return
+    }
+
+    setAddingAddon(true)
+
+    try {
+      // Parse options if it's a string
+      let parsedOptions = null
+      if (['SELECT', 'RADIO', 'CHECKBOX', 'IMAGE_BUTTONS'].includes(newAddon.fieldType) && newAddon.options) {
+        try {
+          parsedOptions = JSON.parse(newAddon.options)
+        } catch {
+          alert("Invalid options format. Please use valid JSON array.")
+          setAddingAddon(false)
+          return
+        }
+      }
+
+      const response = await fetch(`/api/vendor/products/${productId}/addons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newAddon.name,
+          description: newAddon.description || null,
+          price: parseFloat(newAddon.price),
+          fieldType: newAddon.fieldType,
+          priceType: newAddon.priceType,
+          isRequired: newAddon.isRequired,
+          allowMultiple: newAddon.allowMultiple,
+          maxQuantity: newAddon.maxQuantity ? parseInt(newAddon.maxQuantity) : null,
+          options: parsedOptions,
+          minValue: newAddon.minValue ? parseFloat(newAddon.minValue) : null,
+          maxValue: newAddon.maxValue ? parseFloat(newAddon.maxValue) : null,
+          sortOrder: parseInt(newAddon.sortOrder),
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to add addon")
+      }
+
+      setNewAddon({
+        name: '',
+        description: '',
+        price: '',
+        fieldType: 'TEXT',
+        priceType: 'FIXED',
+        isRequired: false,
+        allowMultiple: false,
+        maxQuantity: '',
+        options: '[]',
+        minValue: '',
+        maxValue: '',
+        sortOrder: '0'
+      })
+      fetchAddons()
+      alert("Addon added successfully!")
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : "Failed to add addon"}`)
+    } finally {
+      setAddingAddon(false)
+    }
+  }
+
+  const handleDeleteAddon = async (addonId: string) => {
+    if (!confirm("Are you sure you want to delete this addon?")) {return}
+
+    setDeletingAddonId(addonId)
+
+    try {
+      const response = await fetch(`/api/vendor/products/${productId}/addons/${addonId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to delete addon")
+      }
+
+      fetchAddons()
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : "Failed to delete addon"}`)
+    } finally {
+      setDeletingAddonId(null)
     }
   }
 
@@ -518,11 +646,11 @@ export default function EditProductPage() {
           <h2 className="text-lg font-medium text-gray-900 mb-4">Product Images</h2>
 
           {/* Current Images */}
-          {product.images && product.images.length > 0 && (
+          {product.product_images && product.product_images.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Current Images ({product.images.length})</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Current Images ({product.product_images.length})</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                {product.images.map((image: any, index: number) => (
+                {product.product_images.map((image: any, index: number) => (
                   <div key={image.id} className="relative group">
                     <img
                       src={image.url}
@@ -566,22 +694,11 @@ export default function EditProductPage() {
 
             {/* File Input */}
             <div className="mb-4">
-              <label className="block w-full">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-600">Click to upload images or drag and drop</p>
-                  <p className="mt-1 text-xs text-gray-500">PNG, JPG, WebP up to 10MB each</p>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-              </label>
+              <ImageUploadDropzone
+                onImagesSelected={handleImagesSelected}
+                maxImages={10}
+                currentImageCount={existingImages.length + newImages.length}
+              />
             </div>
 
             {/* Preview New Images */}
@@ -848,6 +965,263 @@ export default function EditProductPage() {
                   </span>
                 ) : (
                   "Add Variant"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Addons Management */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            Product Addons (Add-ons & Customizations) {addons.length > 0 && `(${addons.length})`}
+          </h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Add customization options, upgrades, or add-ons that customers can select when purchasing this product.
+          </p>
+
+          {/* Existing Addons */}
+          {loadingAddons ? (
+            <div className="text-center py-6">
+              <p className="text-gray-500">Loading addons...</p>
+            </div>
+          ) : addons.length > 0 ? (
+            <div className="mb-6 space-y-3">
+              {addons.map((addon: any) => (
+                <div key={addon.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{addon.name}</div>
+                      {addon.description && (
+                        <p className="text-sm text-gray-600 mt-1">{addon.description}</p>
+                      )}
+                      <div className="flex items-center space-x-3 mt-2 text-sm text-gray-500">
+                        <span className="font-medium">
+                          {addon.priceType === 'PERCENTAGE' ? `${addon.price}%` : `$${Number(addon.price).toFixed(2)}`}
+                        </span>
+                        <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">
+                          {addon.fieldType}
+                        </span>
+                        {addon.isRequired && (
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                            Required
+                          </span>
+                        )}
+                        {addon.allowMultiple && (
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-xs font-medium">
+                            Multiple
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAddon(addon.id)}
+                      disabled={deletingAddonId === addon.id}
+                      className="p-2 text-red-600 hover:text-red-800 disabled:opacity-50"
+                      title="Delete addon"
+                    >
+                      {deletingAddonId === addon.id ? (
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-lg mb-6">
+              <p className="text-gray-500">No addons yet. Add your first addon below.</p>
+            </div>
+          )}
+
+          {/* Add New Addon */}
+          <div className="border-t pt-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-4">Add New Addon</h3>
+            <div className="space-y-4">
+              {/* Name & Description */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={newAddon.name}
+                    onChange={(e) => setNewAddon({ ...newAddon, name: e.target.value })}
+                    placeholder="e.g., Gift Wrapping, Express Shipping"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Field Type *</label>
+                  <select
+                    value={newAddon.fieldType}
+                    onChange={(e) => setNewAddon({ ...newAddon, fieldType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="TEXT">Text Input</option>
+                    <option value="TEXTAREA">Text Area</option>
+                    <option value="NUMBER">Number</option>
+                    <option value="SELECT">Dropdown Select</option>
+                    <option value="CHECKBOX">Checkbox</option>
+                    <option value="RADIO">Radio Buttons</option>
+                    <option value="DATE">Date Picker</option>
+                    <option value="FILE">File Upload</option>
+                    <option value="COLOR">Color Picker</option>
+                    <option value="IMAGE_BUTTONS">Image Buttons</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={newAddon.description}
+                  onChange={(e) => setNewAddon({ ...newAddon, description: e.target.value })}
+                  placeholder="Optional description of this addon"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                />
+              </div>
+
+              {/* Price Configuration */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Price Type *</label>
+                  <select
+                    value={newAddon.priceType}
+                    onChange={(e) => setNewAddon({ ...newAddon, priceType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="FIXED">Fixed Amount</option>
+                    <option value="PERCENTAGE">Percentage</option>
+                    <option value="FORMULA">Formula</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Price * {newAddon.priceType === 'PERCENTAGE' && '(%)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={newAddon.price}
+                    onChange={(e) => setNewAddon({ ...newAddon, price: e.target.value })}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Sort Order</label>
+                  <input
+                    type="number"
+                    value={newAddon.sortOrder}
+                    onChange={(e) => setNewAddon({ ...newAddon, sortOrder: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Options for SELECT, RADIO, CHECKBOX, IMAGE_BUTTONS */}
+              {['SELECT', 'RADIO', 'CHECKBOX', 'IMAGE_BUTTONS'].includes(newAddon.fieldType) && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Options (JSON array) *
+                  </label>
+                  <textarea
+                    value={newAddon.options}
+                    onChange={(e) => setNewAddon({ ...newAddon, options: e.target.value })}
+                    placeholder='[{"label": "Option 1", "value": "opt1", "price": 0}, {"label": "Option 2", "value": "opt2", "price": 5}]'
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter a JSON array of options. Each option should have &quot;label&quot;, &quot;value&quot;, and optional &quot;price&quot;.
+                  </p>
+                </div>
+              )}
+
+              {/* Min/Max for NUMBER */}
+              {newAddon.fieldType === 'NUMBER' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Min Value</label>
+                    <input
+                      type="text"
+                      value={newAddon.minValue}
+                      onChange={(e) => setNewAddon({ ...newAddon, minValue: e.target.value })}
+                      placeholder="Optional"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Max Value</label>
+                    <input
+                      type="text"
+                      value={newAddon.maxValue}
+                      onChange={(e) => setNewAddon({ ...newAddon, maxValue: e.target.value })}
+                      placeholder="Optional"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Checkboxes */}
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={newAddon.isRequired}
+                    onChange={(e) => setNewAddon({ ...newAddon, isRequired: e.target.checked })}
+                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Required</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={newAddon.allowMultiple}
+                    onChange={(e) => setNewAddon({ ...newAddon, allowMultiple: e.target.checked })}
+                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Allow Multiple</span>
+                </label>
+                {newAddon.allowMultiple && (
+                  <div className="flex items-center">
+                    <label className="text-sm text-gray-700 mr-2">Max Quantity:</label>
+                    <input
+                      type="number"
+                      value={newAddon.maxQuantity}
+                      onChange={(e) => setNewAddon({ ...newAddon, maxQuantity: e.target.value })}
+                      placeholder="Optional"
+                      className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddAddon}
+                disabled={addingAddon || !newAddon.name || !newAddon.price}
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {addingAddon ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Adding Addon...
+                  </span>
+                ) : (
+                  "Add Addon"
                 )}
               </button>
             </div>

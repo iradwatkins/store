@@ -7,12 +7,12 @@
  * on product pages. Handles availability checking and price updates.
  */
 
-import { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useMemo } from 'react'
+import { Check, AlertCircle } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Check, AlertCircle } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
 
 interface VariantOption {

@@ -6,7 +6,6 @@
  */
 
 import prisma from '@/lib/db'
-import { BaseRepository } from './BaseRepository'
 import { 
   Product, 
   ProductStatus, 
@@ -15,6 +14,7 @@ import {
   PaginationResult, 
   FilterParams 
 } from '@/lib/domain/types'
+import { BaseRepository } from './BaseRepository'
 
 export interface ProductFilters extends FilterParams {
   storeId?: string
@@ -37,7 +37,7 @@ export interface ProductWithRelations extends Product {
 }
 
 export class ProductRepository extends BaseRepository<Product> {
-  protected model = prisma.product
+  protected model = prisma.products
   protected entityName = 'Product'
 
   /**
@@ -304,7 +304,7 @@ export class ProductRepository extends BaseRepository<Product> {
 
     return this.findMany(where, pagination, {
       include: {
-        vendorStore: {
+        vendor_stores: {
           select: {
             id: true,
             name: true,

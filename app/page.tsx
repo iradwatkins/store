@@ -1,18 +1,18 @@
 import Link from "next/link"
-import prisma from "@/lib/db"
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
+import prisma from "@/lib/db"
 import { AnimatedHero } from "@/components/animated-hero"
 import { AnimatedCategories } from "@/components/animated-categories"
 import { AnimatedInfoSection } from "@/components/animated-info-section"
 import { AnimatedCTA } from "@/components/animated-cta"
 import { AnimatedSectionHeader } from "@/components/animated-section-header"
 import { auth } from "@/lib/auth"
-import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
 
 async function FeaturedStores() {
-  const stores = await prisma.vendorStore.findMany({
+  const stores = await prisma.vendor_stores.findMany({
     where: {
       isActive: true,
     },
@@ -63,7 +63,7 @@ async function FeaturedStores() {
 }
 
 async function FeaturedProducts() {
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: {
       status: 'ACTIVE',
       quantity: {
@@ -75,10 +75,10 @@ async function FeaturedProducts() {
       createdAt: 'desc',
     },
     include: {
-      images: {
+      product_images: {
         take: 1,
       },
-      vendorStore: {
+      vendor_stores: {
         select: {
           name: true,
           slug: true,
@@ -92,13 +92,13 @@ async function FeaturedProducts() {
       {products.map((product) => (
         <Link
           key={product.id}
-          href={`/store/${product.vendorStore.slug}/products/${product.slug}`}
+          href={`/store/${product.vendor_stores.slug}/products/${product.slug}`}
           className="group"
         >
           <div className="aspect-square bg-muted relative overflow-hidden rounded-lg mb-2">
-            {product.images[0] ? (
+            {product.product_images[0] ? (
               <img
-                src={product.images[0].medium || product.images[0].url}
+                src={product.product_images[0].medium || product.product_images[0].url}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -117,7 +117,7 @@ async function FeaturedProducts() {
 }
 
 async function TrendingProducts() {
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: {
       status: 'ACTIVE',
       quantity: {
@@ -129,10 +129,10 @@ async function TrendingProducts() {
       createdAt: 'desc',
     },
     include: {
-      images: {
+      product_images: {
         take: 1,
       },
-      vendorStore: {
+      vendor_stores: {
         select: {
           name: true,
           slug: true,
@@ -146,13 +146,13 @@ async function TrendingProducts() {
       {products.map((product) => (
         <Link
           key={product.id}
-          href={`/store/${product.vendorStore.slug}/products/${product.slug}`}
+          href={`/store/${product.vendor_stores.slug}/products/${product.slug}`}
           className="group"
         >
           <div className="aspect-square bg-muted relative overflow-hidden rounded-lg mb-2">
-            {product.images[0] ? (
+            {product.product_images[0] ? (
               <img
-                src={product.images[0].medium || product.images[0].url}
+                src={product.product_images[0].medium || product.product_images[0].url}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -177,7 +177,7 @@ export default async function HomePage() {
   if (session?.user) {
     if (session.user.role === "ADMIN") {
       redirect("/admin")
-    } else if (session.user.vendorStore) {
+    } else if (session.user.vendor_stores) {
       redirect("/dashboard")
     }
     // Otherwise show marketplace (for customers without stores)

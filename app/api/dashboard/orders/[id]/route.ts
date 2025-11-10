@@ -1,36 +1,23 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+// NextResponse import removed - unused
 import prisma from "@/lib/db"
-import { logger } from "@/lib/logger"
-
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Fetch order
-    const order = await prisma.storeOrder.findUnique({
+    const order = await prisma.store_orders.findUnique({
       where: {
         id: params.id,
       },
@@ -40,12 +27,12 @@ export async function GET(
     })
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+      throw new BusinessLogicError("Order not found")
     }
 
     // Verify order belongs to this vendor
     if (order.vendorStoreId !== vendorStore.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      throw new BusinessLogicError("Forbidden")
     }
 
     // Format order for response
@@ -82,14 +69,8 @@ export async function GET(
       paidAt: order.paidAt?.toISOString() || null,
     }
 
-    return NextResponse.json({ order: formattedOrder })
+    return successResponse({ order: formattedOrder })
   } catch (error) {
-    logger.error("Error fetching order:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to fetch order",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch order')
   }
 }

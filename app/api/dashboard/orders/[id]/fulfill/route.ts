@@ -1,34 +1,22 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { sendShippingNotification } from "@/lib/email"
 import { logger } from "@/lib/logger"
-
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
+import { commitStock } from "@/lib/stock-management"
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Get request body
     const body = await request.json()
@@ -36,46 +24,37 @@ export async function POST(
 
     // Validate required fields
     if (!carrier || !shippingDate) {
-      return NextResponse.json(
-        { error: "Carrier and shipping date are required" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Carrier and shipping date are required")
     }
 
     // Fetch order
-    const order = await prisma.storeOrder.findUnique({
+    const order = await prisma.store_orders.findUnique({
       where: {
         id: params.id,
       },
     })
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+      throw new BusinessLogicError("Order not found")
     }
 
     // Verify order belongs to this vendor
     if (order.vendorStoreId !== vendorStore.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      throw new BusinessLogicError("Forbidden")
     }
 
     // Verify order is paid
     if (order.paymentStatus !== "PAID") {
-      return NextResponse.json(
-        { error: "Can only fulfill paid orders" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Can only fulfill paid orders")
     }
 
     // Verify order is not already fulfilled
     if (order.fulfillmentStatus !== "UNFULFILLED") {
-      return NextResponse.json(
-        { error: "Order has already been fulfilled" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Order has already been fulfilled")
     }
 
     // Update order
-    const updatedOrder = await prisma.storeOrder.update({
+    const updatedOrder = await prisma.store_orders.update({
       where: {
         id: params.id,
       },
@@ -89,6 +68,8 @@ export async function POST(
       include: {
         items: {
           select: {
+            productId: true,
+            variantId: true,
             name: true,
             variantName: true,
             quantity: true,
@@ -97,6 +78,21 @@ export async function POST(
         },
       },
     })
+
+    // Commit stock (moves from onHold to committed)
+    for (const item of updatedOrder.items) {
+      try {
+        await commitStock(
+          item.productId,
+          item.quantity,
+          item.variantId || undefined,
+          item.variantCombinationId || undefined
+        )
+      } catch (error) {
+        logger.error(`Failed to commit stock for product ${item.productId}:`, error)
+        // Continue - fulfillment already completed
+      }
+    }
 
     // Send shipping notification email to customer
     if (trackingNumber) {
@@ -178,12 +174,6 @@ export async function POST(
       },
     })
   } catch (error) {
-    logger.error("Error fulfilling order:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to fulfill order",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fulfill order')
   }
 }

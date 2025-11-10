@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if slug exists in database
-    const existingTenant = await prisma.tenant.findUnique({
+    const existingTenant = await prisma.tenants.findUnique({
       where: { slug },
       select: { id: true },
     })

@@ -1,29 +1,16 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { NextRequest } from "next/server"
 import prisma from "@/lib/db"
-import { logger } from "@/lib/logger"
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -49,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch reviews
-    const reviews = await prisma.productReview.findMany({
+    const reviews = await prisma.product_reviews.findMany({
       where,
       include: {
         product: {
@@ -65,12 +52,8 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ reviews })
+    return successResponse({ reviews })
   } catch (error) {
-    logger.error("Error fetching reviews:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch reviews" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch reviews')
   }
 }

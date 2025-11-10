@@ -1,12 +1,11 @@
-import NextAuth from "next-auth"
-import type { NextAuthConfig } from "next-auth"
+import NextAuth, { type NextAuthConfig } from "next-auth"
 import Google from "next-auth/providers/google"
 import Resend from "next-auth/providers/resend"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
+import bcrypt from "bcryptjs"
 import prisma from "@/lib/db"
 import { logger } from "@/lib/logger"
-import bcrypt from "bcryptjs"
 
 export const authConfig = {
   // Prisma adapter for database sessions (required for magic links)
@@ -53,7 +52,7 @@ export const authConfig = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            console.error('Missing email or password')
+            logger.error('Missing email or password')
             return null
           }
 
@@ -69,7 +68,7 @@ export const authConfig = {
           })
 
           if (!user || !user.password) {
-            console.error('User not found or no password:', credentials.email)
+            logger.error('Authentication failed: User not found or invalid configuration')
             return null
           }
 
@@ -79,11 +78,10 @@ export const authConfig = {
           )
 
           if (!isValidPassword) {
-            console.error('Invalid password for:', credentials.email)
+            logger.error('Authentication failed: Invalid credentials')
             return null
           }
 
-          console.log('Login successful for:', user.email)
           return {
             id: user.id,
             email: user.email,
@@ -91,7 +89,7 @@ export const authConfig = {
             role: user.role,
           }
         } catch (error) {
-          console.error('Error in authorize:', error)
+          logger.error('Error in authorize:', error)
           return null
         }
       }
@@ -130,7 +128,7 @@ export const authConfig = {
 
         // Fetch vendor store for the user
         try {
-          const vendorStore = await prisma.vendorStore.findFirst({
+          const vendorStore = await prisma.vendor_stores.findFirst({
             where: {
               userId: user.id,
             },
@@ -140,10 +138,10 @@ export const authConfig = {
               name: true,
             },
           })
-          session.user.vendorStore = vendorStore
+          session.user.vendor_stores = vendorStore
         } catch (error) {
-          console.error('Error fetching vendor store:', error)
-          session.user.vendorStore = null
+          logger.error('Error fetching vendor store:', error)
+          session.user.vendor_stores = null
         }
       }
 
@@ -158,7 +156,7 @@ export const authConfig = {
       }
 
       // If URL is on same origin, use it
-      if (new URL(url).origin === baseUrl) return url
+      if (new URL(url).origin === baseUrl) {return url}
 
       // Default: redirect to smart routing page
       return `${baseUrl}/auth-redirect`
@@ -215,7 +213,7 @@ export const authConfig = {
       }
     },
 
-    async signOut(params) {
+    async signOut(_params) {
       logger.info("User signed out")
 
       // For database sessions, we rely on the adapter to handle cleanup

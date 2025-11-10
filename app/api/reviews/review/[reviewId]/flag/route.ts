@@ -28,7 +28,7 @@ export async function POST(
     const validatedData = flagSchema.parse(body)
 
     // Get review
-    const review = await prisma.productReview.findUnique({
+    const review = await prisma.product_reviews.findUnique({
       where: { id: reviewId },
       include: {
         product: {
@@ -66,7 +66,7 @@ export async function POST(
       : reasonText
 
     // Update review status to FLAGGED
-    await prisma.productReview.update({
+    await prisma.product_reviews.update({
       where: { id: reviewId },
       data: {
         status: "FLAGGED",
@@ -85,7 +85,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }

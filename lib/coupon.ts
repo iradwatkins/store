@@ -34,7 +34,7 @@ export async function validateAndCalculateCoupon(
 ): Promise<CouponValidationResult> {
   try {
     // Find coupon
-    const coupon = await prisma.coupon.findUnique({
+    const coupon = await prisma.coupons.findUnique({
       where: {
         vendorStoreId_code: {
           vendorStoreId: context.vendorStoreId,
@@ -84,7 +84,7 @@ export async function validateAndCalculateCoupon(
 
     // Check per-customer limit
     if (coupon.perCustomerLimit && context.customerId) {
-      const customerUsageCount = await prisma.storeOrder.count({
+      const _customerUsageCount = await prisma.store_orders.count({
         where: {
           customerId: context.customerId,
           vendorStoreId: context.vendorStoreId,
@@ -97,7 +97,7 @@ export async function validateAndCalculateCoupon(
 
     // Check first-time customer restriction
     if (coupon.firstTimeCustomersOnly && context.customerId) {
-      const previousOrders = await prisma.storeOrder.count({
+      const previousOrders = await prisma.store_orders.count({
         where: {
           customerId: context.customerId,
           vendorStoreId: context.vendorStoreId,
@@ -211,7 +211,7 @@ export async function validateAndCalculateCoupon(
  */
 export async function incrementCouponUsage(couponId: string): Promise<void> {
   try {
-    await prisma.coupon.update({
+    await prisma.coupons.update({
       where: { id: couponId },
       data: {
         usageCount: { increment: 1 },
@@ -231,7 +231,7 @@ export async function getCouponByCode(
   code: string
 ): Promise<any | null> {
   try {
-    const coupon = await prisma.coupon.findUnique({
+    const coupon = await prisma.coupons.findUnique({
       where: {
         vendorStoreId_code: {
           vendorStoreId,

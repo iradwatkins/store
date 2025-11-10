@@ -81,9 +81,9 @@ function ThankYouContent({
           </div>
         </div>
 
-        {/* What's Next */}
+        {/* What&apos;s Next */}
         <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-md p-8 mb-8 text-white">
-          <h2 className="text-2xl font-bold mb-4">What's Next?</h2>
+          <h2 className="text-2xl font-bold mb-4">What&apos;s Next?</h2>
           <ul className="space-y-3">
             <li className="flex items-center gap-3">
               <span className="text-2xl">🛍️</span>

@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { z } from "zod"
-import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
+import {
+  requireAuth,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
+import { BusinessLogicError } from "@/lib/errors"
 import { logger } from "@/lib/logger"
 
 const updateVariantSchema = z.object({
@@ -18,42 +23,34 @@ export async function PUT(
   { params }: { params: { id: string; variantId: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const isAdmin = session.user.role === "ADMIN"
 
     // Verify variant ownership
-    const variant = await prisma.productVariant.findUnique({
+    const variant = await prisma.product_variants.findUnique({
       where: { id: params.variantId },
       include: {
         product: {
           include: {
-            vendorStore: true,
+            vendor_stores: true,
           },
         },
       },
     })
 
     if (!variant) {
-      return NextResponse.json({ error: "Variant not found" }, { status: 404 })
+      throw new BusinessLogicError("Variant not found")
     }
 
     // Verify variant belongs to this product
     if (variant.productId !== params.id) {
-      return NextResponse.json(
-        { error: "Variant does not belong to this product" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Variant does not belong to this product")
     }
 
     // Check permission
     if (!isAdmin) {
-      if (variant.product.vendorStore.userId !== session.user.id) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      if (variant.product.vendor_stores.userId !== session.user.id) {
+        throw new BusinessLogicError("Forbidden")
       }
     }
 
@@ -61,7 +58,7 @@ export async function PUT(
     const validatedData = updateVariantSchema.parse(body)
 
     // Update variant
-    const updatedVariant = await prisma.productVariant.update({
+    const updatedVariant = await prisma.product_variants.update({
       where: { id: params.variantId },
       data: {
         ...(validatedData.name !== undefined && { name: validatedData.name }),
@@ -75,24 +72,12 @@ export async function PUT(
 
     logger.info(`${isAdmin ? 'Admin' : 'Vendor'} updated variant: ${updatedVariant.name}`)
 
-    return NextResponse.json({
+    return successResponse({
       message: "Variant updated successfully",
       variant: updatedVariant,
     })
   } catch (error) {
-    logger.error("Update variant error:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Update variant')
   }
 }
 
@@ -101,21 +86,16 @@ export async function DELETE(
   { params }: { params: { id: string; variantId: string } }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
+    const session = await requireAuth()
     const isAdmin = session.user.role === "ADMIN"
 
     // Verify variant ownership
-    const variant = await prisma.productVariant.findUnique({
+    const variant = await prisma.product_variants.findUnique({
       where: { id: params.variantId },
       include: {
         product: {
           include: {
-            vendorStore: true,
+            vendor_stores: true,
             variants: true,
           },
         },
@@ -123,32 +103,29 @@ export async function DELETE(
     })
 
     if (!variant) {
-      return NextResponse.json({ error: "Variant not found" }, { status: 404 })
+      throw new BusinessLogicError("Variant not found")
     }
 
     // Verify variant belongs to this product
     if (variant.productId !== params.id) {
-      return NextResponse.json(
-        { error: "Variant does not belong to this product" },
-        { status: 400 }
-      )
+      throw new BusinessLogicError("Variant does not belong to this product")
     }
 
     // Check permission
     if (!isAdmin) {
-      if (variant.product.vendorStore.userId !== session.user.id) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      if (variant.product.vendor_stores.userId !== session.user.id) {
+        throw new BusinessLogicError("Forbidden")
       }
     }
 
     // Delete variant
-    await prisma.productVariant.delete({
+    await prisma.product_variants.delete({
       where: { id: params.variantId },
     })
 
     // If this was the last variant, update product hasVariants flag
     if (variant.product.variants.length === 1) {
-      await prisma.product.update({
+      await prisma.products.update({
         where: { id: variant.productId },
         data: { hasVariants: false },
       })
@@ -156,14 +133,10 @@ export async function DELETE(
 
     logger.info(`${isAdmin ? 'Admin' : 'Vendor'} deleted variant: ${variant.name}`)
 
-    return NextResponse.json({
+    return successResponse({
       message: "Variant deleted successfully",
     })
   } catch (error) {
-    logger.error("Delete variant error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Delete variant')
   }
 }

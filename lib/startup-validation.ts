@@ -73,7 +73,7 @@ export function validateAppStartup(options: {
       if (env.NODE_ENV === 'production' && appUrl.protocol === 'http:') {
         result.warnings.push('Using HTTP in production - consider HTTPS for security')
       }
-    } catch (error) {
+    } catch {
       result.errors.push('NEXT_PUBLIC_APP_URL is not a valid URL')
       result.success = false
     }
@@ -148,21 +148,25 @@ export function validateDevelopmentSetup(): void {
   const validation = validateAppStartup({ requireAllEnvVars: false })
   
   if (!validation.success) {
+    /* eslint-disable no-console */
     console.log('\n❌ Development setup issues found:')
     validation.errors.forEach(error => console.log(`  • ${error}`))
-    
+
     console.log('\n💡 Quick setup guide:')
     console.log('  1. Copy .env.example to .env.local')
     console.log('  2. Fill in required values for your setup')
     console.log('  3. Run `npm run env:validate` to check configuration')
     console.log('  4. Run `npm run env:list` to see all variables')
     console.log('')
+    /* eslint-enable no-console */
   }
 
   if (validation.warnings.length > 0) {
+    /* eslint-disable no-console */
     console.log('\n⚠️  Development recommendations:')
     validation.warnings.forEach(warning => console.log(`  • ${warning}`))
     console.log('')
+    /* eslint-enable no-console */
   }
 }
 
@@ -174,6 +178,7 @@ if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
       validateDevelopmentSetup()
     } catch (error) {
       // Silently handle validation errors during development
+      // eslint-disable-next-line no-console
       console.warn('Development validation warning:', error instanceof Error ? error.message : error)
     }
   }, 100)

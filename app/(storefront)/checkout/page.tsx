@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements } from "@stripe/react-stripe-js"
@@ -8,6 +8,7 @@ import ShippingInfoStep from "./ShippingInfoStep"
 import ShippingMethodStep from "./ShippingMethodStep"
 import PaymentStep from "./PaymentStep"
 import CashPaymentStep from "./CashPaymentStep"
+import OrderBumpSection from "./OrderBumpSection"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -72,11 +73,7 @@ export default function CheckoutPage() {
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchCart()
-  }, [])
-
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       const response = await fetch("/api/cart")
       const data = await response.json()
@@ -99,13 +96,17 @@ export default function CheckoutPage() {
           setCashInstructions(storeData.cashInstructions || "")
         }
       }
-    } catch (error) {
+    } catch {
       // P0 FIX: Don't log sensitive cart data
       router.push("/cart")
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    fetchCart()
+  }, [fetchCart])
 
   const handleShippingInfoComplete = (info: ShippingInfo) => {
     setShippingInfo(info)
@@ -297,6 +298,20 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Order Bumps */}
+              {cart.storeSlug && step >= 2 && (
+                <OrderBumpSection
+                  storeSlug={cart.storeSlug}
+                  cartItems={cart.items.map((item) => ({
+                    productId: item.productId,
+                    price: item.price,
+                    quantity: item.quantity,
+                  }))}
+                  cartTotal={subtotal}
+                  onBumpAdded={fetchCart}
+                />
+              )}
 
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-900">

@@ -1,30 +1,16 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+// NextResponse import removed - unused
 import prisma from "@/lib/db"
-import { logger } from "@/lib/logger"
-
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+  successResponse,
+} from "@/lib/utils/api"
 
 export async function GET(request: Request) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const session = await requireAuth()
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -67,7 +53,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch orders
-    const orders = await prisma.storeOrder.findMany({
+    const orders = await prisma.store_orders.findMany({
       where: {
         vendorStoreId: vendorStore.id,
         ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
@@ -99,14 +85,8 @@ export async function GET(request: Request) {
       paymentStatus: order.paymentStatus,
     }))
 
-    return NextResponse.json({ orders: formattedOrders })
+    return successResponse({ orders: formattedOrders })
   } catch (error) {
-    logger.error("Error fetching orders:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to fetch orders",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch orders')
   }
 }

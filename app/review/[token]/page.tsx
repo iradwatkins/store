@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import prisma from "@/lib/db"
 import { decodeReviewToken } from "@/lib/review-token"
 import ReviewForm from "./ReviewForm"
@@ -22,12 +23,12 @@ export default async function ReviewPage({
           <p className="text-gray-600 mb-6">
             {reason || "This review link is invalid or has expired."}
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -43,7 +44,7 @@ export default async function ReviewPage({
             orderBy: { sortOrder: "asc" },
             take: 1,
           },
-          vendorStore: {
+          vendor_stores: {
             select: {
               name: true,
               slug: true,
@@ -78,15 +79,15 @@ export default async function ReviewPage({
             Already Reviewed
           </h1>
           <p className="text-gray-600 mb-6">
-            You've already left a review for this product. Thank you for your
+            You&apos;ve already left a review for this product. Thank you for your
             feedback!
           </p>
-          <a
-            href={`/store/${orderItem.product.vendorStore.slug}/products/${orderItem.product.slug}`}
+          <Link
+            href={`/store/${orderItem.product.vendor_stores.slug}/products/${orderItem.product.slug}`}
             className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
             View Product
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -105,12 +106,12 @@ export default async function ReviewPage({
           <p className="text-gray-600 mb-6">
             Please wait until your order has been shipped to leave a review.
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -135,12 +136,12 @@ export default async function ReviewPage({
             Please wait {daysRemaining} more day{daysRemaining > 1 ? "s" : ""}{" "}
             after shipment to leave a review.
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -158,19 +159,19 @@ export default async function ReviewPage({
           <p className="text-gray-600 mb-6">
             You cannot review a refunded order.
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     )
   }
 
   const productImage =
-    orderItem.product.images[0]?.url || orderItem.imageUrl || "/placeholder.png"
+    orderItem.product.product_images[0]?.url || orderItem.imageUrl || "/placeholder.png"
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -203,7 +204,7 @@ export default async function ReviewPage({
                 </p>
               )}
               <p className="text-sm text-gray-500 mt-1">
-                from {orderItem.product.vendorStore.name}
+                from {orderItem.product.vendor_stores.name}
               </p>
             </div>
           </div>
@@ -216,7 +217,7 @@ export default async function ReviewPage({
           customerEmail={order.customerEmail}
           productName={orderItem.name}
           productSlug={orderItem.product.slug}
-          storeSlug={orderItem.product.vendorStore.slug}
+          storeSlug={orderItem.product.vendor_stores.slug}
         />
       </div>
     </div>

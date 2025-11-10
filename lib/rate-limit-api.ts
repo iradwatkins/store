@@ -1,6 +1,6 @@
-import redis from './redis'
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from "@/lib/logger"
+import redis from './redis'
 
 export interface RateLimitConfig {
   windowMs: number // Time window in milliseconds

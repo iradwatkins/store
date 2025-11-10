@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 
@@ -27,7 +27,7 @@ type Order = {
   shippingCost: number
   taxAmount: number
   total: number
-  vendorStore: {
+  vendor_stores: {
     name: string
     slug: string
     email: string
@@ -43,16 +43,7 @@ function SuccessContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!paymentIntentId) {
-      router.push("/")
-      return
-    }
-
-    fetchOrderDetails()
-  }, [paymentIntentId])
-
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = useCallback(async () => {
     try {
       const response = await fetch(`/api/orders/confirm?payment_intent=${paymentIntentId}`)
       const data = await response.json()
@@ -67,7 +58,16 @@ function SuccessContent() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [paymentIntentId])
+
+  useEffect(() => {
+    if (!paymentIntentId) {
+      router.push("/")
+      return
+    }
+
+    fetchOrderDetails()
+  }, [paymentIntentId, router, fetchOrderDetails])
 
   if (isLoading) {
     return (
@@ -271,16 +271,16 @@ function SuccessContent() {
         {/* Vendor Info */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Sold by</h2>
-          <p className="text-gray-900 font-medium">{order.vendorStore.name}</p>
+          <p className="text-gray-900 font-medium">{order.vendor_stores.name}</p>
           <p className="text-sm text-gray-500 mt-1">
-            Questions? Contact: {order.vendorStore.email}
+            Questions? Contact: {order.vendor_stores.email}
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Link
-            href={`/store/${order.vendorStore.slug}`}
+            href={`/store/${order.vendor_stores.slug}`}
             className="flex-1 px-6 py-3 border border-gray-300 text-center text-gray-700 font-medium rounded-md hover:bg-gray-50"
           >
             Continue Shopping

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
-import { z } from "zod"
 import { logger } from "@/lib/logger"
 
 // Validation schema for tenant creation
@@ -26,11 +26,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
+    const _searchParams = new URL(request.url).searchParams
     const isAdmin = session.user.role === "ADMIN"
 
     // Admins can see all tenants, users see only their own
-    const tenants = await prisma.tenant.findMany({
+    const tenants = await prisma.tenants.findMany({
       where: isAdmin ? {} : { ownerId: session.user.id },
       select: {
         id: true,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const validated = createTenantSchema.parse(body)
 
     // Check if slug is already taken
-    const existingTenant = await prisma.tenant.findUnique({
+    const existingTenant = await prisma.tenants.findUnique({
       where: { slug: validated.slug },
     })
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
     // Create tenant
-    const tenant = await prisma.tenant.create({
+    const tenant = await prisma.tenants.create({
       data: {
         name: validated.name,
         slug: validated.slug,
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ tenant }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 })
     }
 
     logger.error("Error creating tenant:", error)

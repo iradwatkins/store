@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
 import redis from "@/lib/redis"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { logger } from "@/lib/logger"
+import {
+  requireAuth,
+  requireVendorStore,
+  handleApiError,
+} from "@/lib/utils/api"
 
 const CACHE_TTL = 300 // 5 minutes in seconds
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const session = await requireAuth()
 
     // Rate limiting: 10 requests per minute per user
     const rateLimitResult = await checkRateLimit(`daily-sales:${session.user.id}`, 10, 60)
@@ -21,19 +20,7 @@ export async function GET(request: Request) {
       return rateLimitResult.response!
     }
 
-    // Get vendor store for this user
-    const vendorStore = await prisma.vendorStore.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
-        id: true,
-      },
-    })
-
-    if (!vendorStore) {
-      return NextResponse.json({ error: "Vendor store not found" }, { status: 404 })
-    }
+    const vendorStore = await requireVendorStore(session.user.id)
 
     // Check Redis cache first
     const cacheKey = `daily-sales:${vendorStore.id}`
@@ -48,7 +35,7 @@ export async function GET(request: Request) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     thirtyDaysAgo.setHours(0, 0, 0, 0)
 
-    const orders = await prisma.storeOrder.findMany({
+    const orders = await prisma.store_orders.findMany({
       where: {
         vendorStoreId: vendorStore.id,
         paymentStatus: "PAID",
@@ -96,12 +83,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(responseData)
   } catch (error) {
-    logger.error("Error fetching daily sales:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to fetch daily sales",
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Fetch daily sales')
   }
 }

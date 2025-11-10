@@ -29,10 +29,10 @@ export async function POST(
 
     if (isAdmin) {
       // Admin can upload images to any product
-      product = await prisma.product.findUnique({
+      product = await prisma.products.findUnique({
         where: { id: params.id },
         include: {
-          vendorStore: {
+          vendor_stores: {
             include: {
               Tenant: true,
             },
@@ -45,10 +45,10 @@ export async function POST(
         return NextResponse.json({ error: "Product not found" }, { status: 404 })
       }
 
-      store = product.vendorStore
+      store = product.vendor_stores
     } else {
       // Vendor can only upload images to their own products
-      store = await prisma.vendorStore.findFirst({
+      store = await prisma.vendor_stores.findFirst({
         where: {
           userId: session.user.id,
         },
@@ -61,7 +61,7 @@ export async function POST(
         return NextResponse.json({ error: "Store not found" }, { status: 404 })
       }
 
-      product = await prisma.product.findFirst({
+      product = await prisma.products.findFirst({
         where: {
           id: params.id,
           vendorStoreId: store.id,
@@ -113,8 +113,8 @@ export async function POST(
     let totalUploadedSizeGB = 0
 
     // Get current max sortOrder for this product
-    const maxSortOrder = product.images.length > 0
-      ? Math.max(...product.images.map((img: any) => img.sortOrder))
+    const maxSortOrder = product.product_images.length > 0
+      ? Math.max(...product.product_images.map((img: any) => img.sortOrder))
       : -1
 
     const uploadedImages = []
@@ -166,7 +166,7 @@ export async function POST(
       totalUploadedSizeGB += allSizesTotal / (1024 * 1024 * 1024)
 
       // Create ProductImage record
-      const productImage = await prisma.productImage.create({
+      const productImage = await prisma.product_images.create({
         data: {
           productId: product.id,
           url: imageUrls.large,
@@ -183,7 +183,7 @@ export async function POST(
 
     // Increment storage usage for tenant (if applicable)
     if (store.tenantId && totalUploadedSizeGB > 0) {
-      await prisma.tenant.update({
+      await prisma.tenants.update({
         where: { id: store.tenantId },
         data: {
           currentStorageGB: {

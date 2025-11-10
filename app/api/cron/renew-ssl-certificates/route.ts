@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     logger.info("🔐 Starting SSL certificate renewal cron job...")
 
     // Find all tenants with ACTIVE SSL certificates
-    const tenantsWithSSL = await prisma.tenant.findMany({
+    const tenantsWithSSL = await prisma.tenants.findMany({
       where: {
         customDomain: { not: null },
         sslCertificateStatus: {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Check each certificate
     for (const tenant of tenantsWithSSL) {
-      if (!tenant.customDomain) continue
+      if (!tenant.customDomain) {continue}
 
       const result: RenewalResult = {
         tenantId: tenant.id,
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
           result.error = certInfo.error
 
           // Update database
-          await prisma.tenant.update({
+          await prisma.tenants.update({
             where: { id: tenant.id },
             data: {
               sslCertificateStatus: "FAILED",
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
           logger.info(`✅ ${tenant.customDomain}: ${result.message}`)
 
           // Update last checked time
-          await prisma.tenant.update({
+          await prisma.tenants.update({
             where: { id: tenant.id },
             data: {
               sslLastCheckedAt: new Date(),
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
           )
 
           // Update database
-          await prisma.tenant.update({
+          await prisma.tenants.update({
             where: { id: tenant.id },
             data: {
               sslCertificateStatus: "ACTIVE",
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
           )
 
           // Update database
-          await prisma.tenant.update({
+          await prisma.tenants.update({
             where: { id: tenant.id },
             data: {
               sslCertificateStatus: "FAILED",
