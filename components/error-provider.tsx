@@ -1,12 +1,6 @@
 "use client"
 
 import React from 'react'
-import { 
-  handleBoundaryError, 
-  handleUnhandledRejection, 
-  handleGlobalError,
-  reportError
-} from '@/lib/error-reporting'
 import { ErrorBoundary } from './error-boundary'
 
 interface ErrorProviderProps {
@@ -15,26 +9,28 @@ interface ErrorProviderProps {
 
 /**
  * Application-wide Error Provider
- * 
+ *
  * This provider wraps the entire application with error boundaries
  * and provides global error handling context.
  */
 export function ErrorProvider({ children }: ErrorProviderProps) {
   const handleAppError = React.useCallback((error: Error, errorInfo: any) => {
-    // Use enhanced error reporting system
-    handleBoundaryError(error, errorInfo, 'root-application')
+    // Log error to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Error Boundary]', error, errorInfo)
+    }
   }, [])
 
   // Set up global error handlers
   React.useEffect(() => {
     // Handle uncaught JavaScript errors
     const handleError = (event: ErrorEvent) => {
-      handleGlobalError(event)
+      console.error('[Global Error]', event.error)
     }
 
     // Handle unhandled promise rejections
     const handleRejection = (event: PromiseRejectionEvent) => {
-      handleUnhandledRejection(event.reason)
+      console.error('[Unhandled Rejection]', event.reason)
     }
 
     // Add event listeners
@@ -49,8 +45,8 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
   }, [])
 
   return (
-    <ErrorBoundary 
-      level="page" 
+    <ErrorBoundary
+      level="page"
       context="root-application"
       onError={handleAppError}
     >

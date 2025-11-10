@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Account {
-  id                String  @id
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -27,7 +27,7 @@ model Account {
 }
 
 model Session {
-  id           String   @id
+  id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
@@ -45,7 +45,7 @@ model Store {
 }
 
 model User {
-  id                                 String            @id
+  id                                 String            @id @default(cuid())
   name                               String?
   email                              String?           @unique
   emailVerified                      DateTime?

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Browser Cache</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .status { padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .loading { background: #fef3c7; border: 2px solid #fbbf24; }
+        .success { background: #d1fae5; border: 2px solid #10b981; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧹 Clear Browser Cache</h1>
+    <div id="status" class="status loading">
+        <strong>Working...</strong><br>
+        Clearing all cached data...
+    </div>
+    <div id="results"></div>
+    
+    <script>
+        (async () => {
+            const results = [];
+            
+            // Clear caches
+            if ('caches' in window) {
+                const names = await caches.keys();
+                await Promise.all(names.map(name => caches.delete(name)));
+                results.push(`✅ Cleared ${names.length} cache(s)`);
+            }
+            
+            // Clear service workers
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map(reg => reg.unregister()));
+                results.push(`✅ Unregistered ${regs.length} service worker(s)`);
+            }
+            
+            // Clear storage
+            localStorage.clear();
+            sessionStorage.clear();
+            results.push('✅ Cleared localStorage and sessionStorage');
+            
+            // Update UI
+            document.getElementById('status').className = 'status success';
+            document.getElementById('status').innerHTML = '<strong>✅ Success!</strong><br>All cache cleared';
+            document.getElementById('results').innerHTML = '<ul><li>' + results.join('</li><li>') + '</li></ul>';
+            
+            // Add redirect button
+            const btn = document.createElement('button');
+            btn.textContent = 'Go to Homepage (Fresh Load)';
+            btn.onclick = () => window.location.href = '/?t=' + Date.now();
+            document.body.appendChild(btn);
+        })();
+    </script>
+</body>
+</html>
